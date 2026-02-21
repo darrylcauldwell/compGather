@@ -1,0 +1,28 @@
+services:
+  compgather:
+    build: .
+    container_name: compgather
+    ports:
+      - "127.0.0.1:8001:8000"
+    environment:
+      - HOME_POSTCODE=${HOME_POSTCODE}
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - SCAN_SCHEDULE=06:00
+      - LOG_LEVEL=INFO
+    volumes:
+      - compgather_data:/app/data
+    networks:
+      - web
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+volumes:
+  compgather_data:
+
+networks:
+  web:
+    driver: bridge

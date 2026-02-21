@@ -1,0 +1,83 @@
+from __future__ import annotations
+
+from datetime import date, datetime
+
+from pydantic import BaseModel
+
+
+# --- Sources ---
+class SourceCreate(BaseModel):
+    name: str
+    url: str
+    parser_key: str | None = None
+
+
+class SourceUpdate(BaseModel):
+    name: str | None = None
+    url: str | None = None
+    parser_key: str | None = None
+    enabled: bool | None = None
+
+
+class SourceOut(BaseModel):
+    id: int
+    name: str
+    url: str
+    parser_key: str | None
+    enabled: bool
+    last_scanned_at: datetime | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# --- Competitions ---
+class CompetitionOut(BaseModel):
+    id: int
+    source_id: int
+    name: str
+    date_start: date
+    date_end: date | None
+    venue_name: str
+    venue_postcode: str | None
+    discipline: str | None
+    latitude: float | None
+    longitude: float | None
+    distance_miles: float | None
+    has_pony_classes: bool
+    classes_raw: str | None
+    url: str | None
+    first_seen_at: datetime
+    last_seen_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# --- Scans ---
+class ScanCreate(BaseModel):
+    source_id: int | None = None
+
+
+class ScanOut(BaseModel):
+    id: int
+    source_id: int | None
+    started_at: datetime
+    completed_at: datetime | None
+    status: str
+    competitions_found: int
+    error: str | None
+
+    model_config = {"from_attributes": True}
+
+
+# --- Extractor ---
+class ExtractedCompetition(BaseModel):
+    name: str
+    date_start: str
+    date_end: str | None = None
+    venue_name: str
+    venue_postcode: str | None = None
+    discipline: str | None = None
+    has_pony_classes: bool = False
+    classes: list[str] = []
+    url: str | None = None

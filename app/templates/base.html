@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}compGather{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/output.css" rel="stylesheet">
+    <script>
+        (function() {
+            var saved = localStorage.getItem('cg-theme');
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+            function isDark() { return !document.documentElement.hasAttribute('data-theme'); }
+            function updateIcon() {
+                var btn = document.getElementById('theme-toggle');
+                if (!btn) return;
+                btn.querySelector('.icon-sun').style.display = isDark() ? 'block' : 'none';
+                btn.querySelector('.icon-moon').style.display = isDark() ? 'none' : 'block';
+                btn.title = isDark() ? 'Switch to light mode' : 'Switch to dark mode';
+            }
+            window.addEventListener('DOMContentLoaded', function() {
+                updateIcon();
+                document.getElementById('theme-toggle').addEventListener('click', function() {
+                    if (isDark()) {
+                        document.documentElement.setAttribute('data-theme', 'light');
+                        localStorage.setItem('cg-theme', 'light');
+                    } else {
+                        document.documentElement.removeAttribute('data-theme');
+                        localStorage.setItem('cg-theme', 'dark');
+                    }
+                    updateIcon();
+                });
+            });
+        })();
+    </script>
+</head>
+<body>
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--cg-sky)] focus:text-white focus:rounded-lg focus:text-sm focus:font-medium">Skip to main content</a>
+
+    <header class="header">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+            <div class="branding">
+                <a href="/" class="nav-link">
+                    <i class="bi bi-trophy" style="font-size: 1.5rem; color: var(--cg-sky);"></i>
+                    <span class="title">compGather</span>
+                </a>
+            </div>
+            <div class="header-nav">
+                <a href="/" class="nav-link {% block nav_competitions %}{% endblock %}">
+                    <i class="bi bi-calendar-event"></i>
+                    Competitions
+                </a>
+                <a href="/sources" class="nav-link {% block nav_sources %}{% endblock %}">
+                    <i class="bi bi-globe2"></i>
+                    Sources
+                </a>
+                <button id="theme-toggle" class="nav-link" style="background: none; border: none; cursor: pointer; padding: 0 0.75rem; font-size: 1.1rem;" title="Switch to light mode">
+                    <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main" class="content-container">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm" style="color: var(--cg-text-muted);">
+            <span>compGather &mdash; Show jumping competition finder</span>
+            <a href="https://github.com/darrylcauldwell/compGather" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 hover:text-[var(--cg-sky)] transition-colors" style="color: var(--cg-text-muted);">
+                <i class="bi bi-github"></i>
+                <span>GitHub</span>
+            </a>
+        </div>
+    </footer>
+
+    <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

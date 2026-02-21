@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Competitions - compGather{% endblock %}
+{% block nav_competitions %}active{% endblock %}
+
+{% macro sort_arrow(col, current_sort) %}
+{% if current_sort == col ~ '_asc' %}
+<i class="bi bi-caret-up-fill" style="font-size: 0.65rem;"></i>
+{% elif current_sort == col ~ '_desc' %}
+<i class="bi bi-caret-down-fill" style="font-size: 0.65rem;"></i>
+{% else %}
+<i class="bi bi-caret-up" style="font-size: 0.65rem; opacity: 0.3;"></i>
+{% endif %}
+{% endmacro %}
+
+{% block content %}
+<h1 class="mb-6" style="font-size: 1.5rem;">Competitions</h1>
+
+<!-- Filters -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-funnel"></i> Filters
+    </div>
+    <div class="card-body">
+        <form method="get" action="/" class="flex flex-wrap items-end gap-4">
+            <div>
+                <label class="form-label" for="date_from">From</label>
+                <input type="date" id="date_from" name="date_from" value="{{ date_from }}" class="form-control">
+            </div>
+            <div>
+                <label class="form-label" for="date_to">To</label>
+                <input type="date" id="date_to" name="date_to" value="{{ date_to }}" class="form-control">
+            </div>
+            <div>
+                <label class="form-label" for="postcode">Postcode</label>
+                <div class="flex gap-1">
+                    <input type="text" id="postcode" value="{{ home_postcode }}"
+                           placeholder="e.g. SW1A 1AA" class="form-control" style="width: 8rem; text-transform: uppercase;">
+                    <button type="button" onclick="updatePostcode()" class="btn btn-sm btn-outline-secondary" title="Update postcode">
+                        <i class="bi bi-geo-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label class="form-label" for="max_distance">Max distance (miles)</label>
+                <input type="number" id="max_distance" name="max_distance" value="{{ max_distance }}"
+                       placeholder="e.g. 100" min="0" step="10" class="form-control" style="width: 7rem;">
+            </div>
+            <div>
+                <label class="form-label" for="venue">Venue</label>
+                <input type="text" id="venue" name="venue" value="{{ venue }}" list="venue-list"
+                       placeholder="Type to search..." class="form-control" style="width: 14rem;" autocomplete="off">
+                <datalist id="venue-list">
+                    {% for v in venue_names %}
+                    <option value="{{ v }}">
+                    {% endfor %}
+                </datalist>
+            </div>
+            <div>
+                <label class="form-label" for="discipline">Discipline</label>
+                <select id="discipline" name="discipline" class="form-control" style="width: 10rem;">
+                    <option value="">All</option>
+                    {% for d in disciplines %}
+                    <option value="{{ d }}" {% if discipline == d %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label" for="pony">Pony classes</label>
+                <select id="pony" name="pony" class="form-control" style="width: 7rem;">
+                    <option value="">Any</option>
+                    <option value="yes" {% if pony == 'yes' %}selected{% endif %}>Yes</option>
+                    <option value="no" {% if pony == 'no' %}selected{% endif %}>No</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> Filter
+            </button>
+            <a href="/" class="btn btn-outline-secondary">Clear</a>
+        </form>
+    </div>
+</div>
+
+<!-- Results -->
+{% if competitions %}
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-list-ul"></i>
+        {{ competitions|length }} competition{{ 's' if competitions|length != 1 }} found
+    </div>
+    <div class="table-responsive" style="border-radius: 0 0 0.75rem 0.75rem;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="sortable-th" onclick="sortBy('date')">Date {{ sort_arrow('date', sort) }}</th>
+                    <th class="sortable-th" onclick="sortBy('name')">Name {{ sort_arrow('name', sort) }}</th>
+                    <th class="sortable-th" onclick="sortBy('discipline')">Type {{ sort_arrow('discipline', sort) }}</th>
+                    <th class="sortable-th" onclick="sortBy('venue')">Venue {{ sort_arrow('venue', sort) }}</th>
+                    <th class="sortable-th" onclick="sortBy('distance')">Distance {{ sort_arrow('distance', sort) }}</th>
+                    <th>Pony</th>
+                    <th>Source</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comp in competitions %}
+                <tr>
+                    <td style="white-space: nowrap;">
+                        {{ comp.date_start.strftime('%d %b %Y') }}
+                        {% if comp.date_end %} &ndash; {{ comp.date_end.strftime('%d %b') }}{% endif %}
+                    </td>
+                    <td>
+                        {% if comp.url %}
+                        <a href="{{ comp.url }}" target="_blank" style="color: var(--cg-sky); text-decoration: none;">
+                            {{ comp.name }} <i class="bi bi-box-arrow-up-right" style="font-size: 0.7rem;"></i>
+                        </a>
+                        {% else %}
+                        {{ comp.name }}
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.85rem; white-space: nowrap;">
+                        {% if comp.discipline %}
+                        {{ comp.discipline }}
+                        {% else %}
+                        <span style="color: var(--cg-text-muted);">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ comp.venue_name }}
+                        {% if comp.venue_postcode %}
+                        <span style="color: var(--cg-text-muted); font-size: 0.75rem; margin-left: 0.25rem;">{{ comp.venue_postcode }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="white-space: nowrap;">
+                        {% if comp.distance_miles is not none %}
+                        {{ "%.0f"|format(comp.distance_miles) }} mi
+                        {% else %}
+                        <span style="color: var(--cg-text-muted);">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if comp.has_pony_classes %}
+                        <span class="dot dot-green"></span>
+                        {% else %}
+                        <span class="dot dot-muted"></span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.75rem; color: var(--cg-text-muted);">{{ comp.source.name if comp.source else '&mdash;' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="icon"><i class="bi bi-calendar-x"></i></div>
+        <p>No competitions found</p>
+        <p>Try adjusting your filters or adding sources and running a scan.</p>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.sortable-th { cursor: pointer; user-select: none; }
+.sortable-th:hover { color: var(--cg-sky); }
+</style>
+<script>
+function sortBy(col) {
+    const currentSort = '{{ sort }}';
+    let newSort;
+    if (currentSort === col + '_asc') {
+        newSort = col + '_desc';
+    } else {
+        newSort = col + '_asc';
+    }
+    const url = new URL(window.location);
+    url.searchParams.set('sort', newSort);
+    window.location = url.toString();
+}
+
+async function updatePostcode() {
+    const postcode = document.getElementById('postcode').value.trim();
+    if (!postcode) return;
+    const btn = event.target.closest('button');
+    btn.disabled = true;
+    try {
+        const resp = await fetch('/api/competitions/update-postcode', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({postcode})
+        });
+        if (resp.ok) {
+            location.reload();
+        } else {
+            const data = await resp.json();
+            alert(data.detail || 'Invalid postcode');
+        }
+    } finally {
+        btn.disabled = false;
+    }
+}
+</script>
+{% endblock %}

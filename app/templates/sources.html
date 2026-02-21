@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Sources - compGather{% endblock %}
+{% block nav_sources %}active{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 style="font-size: 1.5rem;">Sources</h1>
+    <button onclick="triggerScanAll()" class="btn btn-primary">
+        <i class="bi bi-arrow-repeat"></i> Scan All
+    </button>
+</div>
+
+<!-- Add Source -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-plus-circle"></i> Add Source
+    </div>
+    <div class="card-body">
+        <form id="add-source-form" class="flex flex-wrap items-end gap-3">
+            <div>
+                <label class="form-label" for="source-name">Name</label>
+                <input type="text" id="source-name" placeholder="e.g. British Showjumping"
+                       class="form-control" style="width: 14rem;" required>
+            </div>
+            <div class="flex-1" style="min-width: 16rem;">
+                <label class="form-label" for="source-url">URL</label>
+                <input type="url" id="source-url" placeholder="https://..."
+                       class="form-control" style="width: 100%;" required>
+            </div>
+            <div>
+                <label class="form-label" for="source-parser">Parser</label>
+                <select id="source-parser" class="form-control" style="width: 12rem;">
+                    <option value="">Generic (LLM)</option>
+                    {% for key in parser_keys %}
+                    <option value="{{ key }}">{{ key }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Add
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Sources + Latest Scan Status -->
+{% if sources %}
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-globe2"></i>
+        {{ sources|length }} source{{ 's' if sources|length != 1 }} configured
+    </div>
+    <div class="table-responsive" style="border-radius: 0 0 0.75rem 0.75rem;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Source</th>
+                    <th>Parser</th>
+                    <th>Last Scan</th>
+                    <th>Status</th>
+                    <th>Future</th>
+                    <th>New</th>
+                    <th>Error</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for source in sources %}
+                {% set scan = latest_scans.get(source.id) %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 500;">{{ source.name }}</div>
+                        <a href="{{ source.url }}" target="_blank" style="color: var(--cg-text-muted); text-decoration: none; font-size: 0.75rem; display: block; max-width: 18rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ source.url }} <i class="bi bi-box-arrow-up-right" style="font-size: 0.6rem;"></i>
+                        </a>
+                    </td>
+                    <td>
+                        <span style="font-size: 0.75rem; color: var(--cg-text-muted);">
+                            {{ source.parser_key or 'generic' }}
+                        </span>
+                    </td>
+                    <td style="white-space: nowrap; color: var(--cg-text-muted); font-size: 0.85rem;">
+                        {% if scan and scan.started_at %}
+                        {{ scan.started_at.strftime('%d %b %H:%M') }}
+                        {% else %}
+                        Never
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if scan %}
+                            {% if scan.status == 'completed' %}
+                            <span class="badge badge-success">Completed</span>
+                            {% elif scan.status == 'running' %}
+                            <span class="badge badge-info">Running</span>
+                            {% elif scan.status == 'failed' %}
+                            <span class="badge badge-danger">Failed</span>
+                            {% else %}
+                            <span class="badge badge-muted">{{ scan.status }}</span>
+                            {% endif %}
+                        {% elif not source.enabled %}
+                        <span class="badge badge-muted">Disabled</span>
+                        {% else %}
+                        <span style="color: var(--cg-text-muted);">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ comp_counts.get(source.id, 0) }}</td>
+                    <td>
+                        {% if scan %}
+                        {{ scan.competitions_found }}
+                        {% else %}
+                        &mdash;
+                        {% endif %}
+                    </td>
+                    <td style="color: var(--cg-red); max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem;">
+                        {% if scan and scan.error %}
+                        <span title="{{ scan.error }}">{{ scan.error }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="flex gap-2">
+                            <button onclick="scanSource({{ source.id }})"
+                                    class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-arrow-repeat"></i> Scan
+                            </button>
+                            <button onclick="toggleSource({{ source.id }}, {{ 'false' if source.enabled else 'true' }})"
+                                    class="btn btn-sm btn-outline-secondary">
+                                {{ 'Disable' if source.enabled else 'Enable' }}
+                            </button>
+                            <button onclick="deleteSource({{ source.id }})"
+                                    class="btn btn-sm btn-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="icon"><i class="bi bi-globe2"></i></div>
+        <p>No sources configured</p>
+        <p>Add a source URL above to get started.</p>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.getElementById('add-source-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('source-name').value;
+    const url = document.getElementById('source-url').value;
+    const parser_key = document.getElementById('source-parser').value || null;
+    const resp = await fetch('/api/sources', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, url, parser_key})
+    });
+    if (resp.ok) location.reload();
+    else alert('Failed to add source');
+});
+
+async function toggleSource(id, enabled) {
+    const resp = await fetch(`/api/sources/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({enabled})
+    });
+    if (resp.ok) location.reload();
+}
+
+async function scanSource(id) {
+    const resp = await fetch('/api/scans', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({source_id: id})
+    });
+    if (resp.ok) location.reload();
+    else alert('Failed to trigger scan');
+}
+
+async function triggerScanAll() {
+    const resp = await fetch('/api/scans', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({})
+    });
+    if (resp.ok) location.reload();
+    else alert('Failed to trigger scan');
+}
+
+async function deleteSource(id) {
+    if (!confirm('Delete this source?')) return;
+    const resp = await fetch(`/api/sources/${id}`, {method: 'DELETE'});
+    if (resp.ok) location.reload();
+}
+</script>
+{% endblock %}

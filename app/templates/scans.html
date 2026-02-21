@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Scans - compGather{% endblock %}
+{% block nav_scans %}active{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 style="font-size: 1.5rem;">Scan History</h1>
+    <button onclick="triggerScan()" class="btn btn-primary">
+        <i class="bi bi-arrow-repeat"></i> Scan All Sources
+    </button>
+</div>
+
+{% if scans %}
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-clock-history"></i> Recent Scans
+    </div>
+    <div class="table-responsive" style="border-radius: 0 0 0.75rem 0.75rem;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Started</th>
+                    <th>Status</th>
+                    <th>Source</th>
+                    <th>Found</th>
+                    <th>Completed</th>
+                    <th>Error</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for scan in scans %}
+                <tr>
+                    <td style="white-space: nowrap;">
+                        {{ scan.started_at.strftime('%d %b %Y %H:%M') }}
+                    </td>
+                    <td>
+                        {% if scan.status == 'completed' %}
+                        <span class="badge badge-success">Completed</span>
+                        {% elif scan.status == 'running' %}
+                        <span class="badge badge-info">Running</span>
+                        {% elif scan.status == 'failed' %}
+                        <span class="badge badge-danger">Failed</span>
+                        {% else %}
+                        <span class="badge badge-muted">{{ scan.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if scan.source %}
+                        {{ scan.source.name }}
+                        {% else %}
+                        All sources
+                        {% endif %}
+                    </td>
+                    <td>{{ scan.competitions_found }}</td>
+                    <td style="white-space: nowrap; color: var(--cg-text-muted);">
+                        {% if scan.completed_at %}
+                        {{ scan.completed_at.strftime('%H:%M:%S') }}
+                        {% else %}
+                        &mdash;
+                        {% endif %}
+                    </td>
+                    <td style="color: var(--cg-red); max-width: 20rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ scan.error or '' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="icon"><i class="bi bi-arrow-repeat"></i></div>
+        <p>No scans yet</p>
+        <p>Trigger a scan above or wait for the daily scheduled scan.</p>
+    </div>
+</div>
+{% endif %}
+
+<script>
+async function triggerScan() {
+    const resp = await fetch('/api/scans', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({})
+    });
+    if (resp.ok) {
+        alert('Scan triggered for all sources');
+        location.reload();
+    } else {
+        alert('Failed to trigger scan');
+    }
+}
+</script>
+{% endblock %}

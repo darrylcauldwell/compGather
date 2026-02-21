@@ -1,0 +1,14 @@
+{
+  "name": "compgather",
+  "private": true,
+  "scripts": {
+    "build:css": "postcss app/static/css/input.css -o app/static/css/output.css",
+    "watch:css": "postcss app/static/css/input.css -o app/static/css/output.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "postcss": "^8.5.1",
+    "postcss-cli": "^11.0.0",
+    "tailwindcss": "^4.0.0"
+  }
+}
