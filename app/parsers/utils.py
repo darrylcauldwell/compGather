@@ -88,6 +88,49 @@ def infer_discipline(text: str) -> str | None:
     return None
 
 
+# Regex to strip BS-style show numbering: "(1)", "(2) - SPONSORED BY DUBARRY", etc.
+_SHOW_NUMBER_RE = re.compile(r"\s*\(\d+\)(\s*-\s*.+)?$")
+
+# Common suffixes to normalise (order matters — longest first)
+_VENUE_SUFFIXES = [
+    " equestrian centre",
+    " equestrian center",
+    " equestrian complex",
+    " equestrian",
+    " riding centre",
+    " riding center",
+    " riding school",
+    " ec",
+]
+
+
+def normalise_venue_name(name: str) -> str:
+    """Normalise a venue name to a canonical form.
+
+    - Title-cases the name
+    - Strips BS show numbering like "(1)", "(2) - SPONSORED BY..."
+    - Normalises common suffixes (e.g. "Equestrian" → "Equestrian Centre")
+    - Trims whitespace
+    """
+    if not name:
+        return name
+
+    # Strip show numbering
+    cleaned = _SHOW_NUMBER_RE.sub("", name)
+
+    # Title-case (handles "ELAND LODGE" → "Eland Lodge")
+    cleaned = cleaned.strip().title()
+
+    # Normalise suffixes: ensure consistent "Equestrian Centre" ending
+    lower = cleaned.lower()
+    for suffix in _VENUE_SUFFIXES:
+        if lower.endswith(suffix):
+            cleaned = cleaned[: len(cleaned) - len(suffix)].rstrip()
+            break
+
+    return cleaned.strip()
+
+
 def extract_json_ld_event(soup: BeautifulSoup) -> dict | None:
     """Extract the first Event-typed JSON-LD block from a page.
 

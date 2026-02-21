@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import async_session
 from app.models import Competition, Scan, Source
 from app.parsers.registry import get_parser
+from app.parsers.utils import normalise_venue_name
 from app.services.geocoder import calculate_distance, geocode_postcode
 
 logger = logging.getLogger(__name__)
@@ -80,6 +81,9 @@ async def _scan_source(session: AsyncSession, source: Source) -> int:
             except ValueError:
                 pass
 
+        # Normalise venue name
+        venue_name = normalise_venue_name(comp_data.venue_name)
+
         # Geocode venue
         lat, lng, distance = None, None, None
         if comp_data.venue_postcode:
@@ -95,7 +99,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> int:
                     Competition.source_id == source.id,
                     Competition.name == comp_data.name,
                     Competition.date_start == date_start,
-                    Competition.venue_name == comp_data.venue_name,
+                    Competition.venue_name == venue_name,
                 )
             )
         ).scalar_one_or_none()
@@ -122,7 +126,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> int:
                 name=comp_data.name,
                 date_start=date_start,
                 date_end=date_end,
-                venue_name=comp_data.venue_name,
+                venue_name=venue_name,
                 venue_postcode=comp_data.venue_postcode,
                 latitude=lat,
                 longitude=lng,
