@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import html
 import logging
-import re
 from datetime import datetime
 
 import httpx
 
 from app.parsers.base import BaseParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes, is_future_event
+from app.parsers.utils import is_future_event
 from app.schemas import ExtractedCompetition
 
 logger = logging.getLogger(__name__)
@@ -106,7 +105,7 @@ class BritishDressageParser(BaseParser):
             discipline="Dressage",
             has_pony_classes=has_pony,
             classes=classes,
-            url=detail_url,
+            url=detail_url or "https://britishdressage.online/",
         )
 
     def _parse_datetime(self, dt_str: str) -> str | None:

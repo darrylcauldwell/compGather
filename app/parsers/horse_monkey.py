@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import date, datetime
 
 import httpx
 
 from app.parsers.base import BaseParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes, extract_postcode, infer_discipline, is_future_event
+from app.parsers.utils import detect_pony_classes, infer_discipline, is_future_event
 from app.schemas import ExtractedCompetition
 
 logger = logging.getLogger(__name__)
@@ -30,8 +30,6 @@ class HorseMonkeyParser(BaseParser):
     """
 
     async def fetch_and_parse(self, url: str) -> list[ExtractedCompetition]:
-        from datetime import date
-
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
@@ -59,26 +57,52 @@ class HorseMonkeyParser(BaseParser):
                 if comp:
                     competitions.append(comp)
 
-            # Phase 3: Enrich with postcodes/coordinates from detail pages
-            sem = asyncio.Semaphore(10)
-            needs_postcode = [c for c in competitions if not c.venue_postcode]
-            if needs_postcode:
-                logger.info(
-                    "Horse Monkey: enriching %d events with detail pages",
-                    len(needs_postcode),
-                )
+            # Phase 3: Enrich with coordinates from detail pages
+            # Cache per venue — only need one detail page fetch per unique venue
+            venue_coords: dict[str, tuple[float, float] | None] = {}
+            venue_to_comps: dict[str, list[ExtractedCompetition]] = {}
+            for c in competitions:
+                if c.latitude is None:
+                    venue_to_comps.setdefault(c.venue_name, []).append(c)
 
-                async def _enrich(comp: ExtractedCompetition) -> None:
+            # Pick one representative event per venue for fetching
+            to_fetch: list[ExtractedCompetition] = []
+            for venue, comps in venue_to_comps.items():
+                to_fetch.append(comps[0])
+
+            if to_fetch:
+                logger.info(
+                    "Horse Monkey: enriching %d venues (%d events) with detail pages",
+                    len(to_fetch), sum(len(v) for v in venue_to_comps.values()),
+                )
+                sem = asyncio.Semaphore(5)
+
+                async def _fetch_venue_coords(comp: ExtractedCompetition) -> None:
                     async with sem:
                         try:
                             await self._enrich_from_detail(client, comp)
+                            if comp.latitude is not None:
+                                venue_coords[comp.venue_name] = (comp.latitude, comp.longitude)
+                            else:
+                                venue_coords[comp.venue_name] = None
                         except Exception as e:
                             logger.debug(
                                 "Horse Monkey: detail enrich failed for %s: %s",
                                 comp.url, e,
                             )
+                            venue_coords[comp.venue_name] = None
 
-                await asyncio.gather(*[_enrich(c) for c in needs_postcode])
+                await asyncio.gather(*[_fetch_venue_coords(c) for c in to_fetch])
+
+                # Apply cached coords to all events at each venue
+                for venue, comps in venue_to_comps.items():
+                    coords = venue_coords.get(venue)
+                    if coords:
+                        for c in comps:
+                            c.latitude, c.longitude = coords
+
+                enriched = sum(1 for c in competitions if c.latitude is not None)
+                logger.info("Horse Monkey: %d/%d events have coordinates", enriched, len(competitions))
 
         logger.info("Horse Monkey: extracted %d competitions", len(competitions))
         return competitions
@@ -173,10 +197,14 @@ class HorseMonkeyParser(BaseParser):
             url=public_url or f"https://horsemonkey.com/uk/equestrian_event/{row.get('id')}",
         )
 
+    _LATLONG_RE = __import__("re").compile(
+        r'"latitude":"(-?[\d.]+)","longitude":"(-?[\d.]+)"'
+    )
+
     async def _enrich_from_detail(
         self, client: httpx.AsyncClient, comp: ExtractedCompetition
     ) -> None:
-        """Fetch the event detail page and extract postcode from page text."""
+        """Fetch the event detail page and extract lat/lng from the embedded m_show JSON."""
         if not comp.url:
             return
         # Detail pages are normal HTML (no XHR header needed)
@@ -186,9 +214,14 @@ class HorseMonkeyParser(BaseParser):
         )
         resp.raise_for_status()
 
-        postcode = extract_postcode(resp.text)
-        if postcode:
-            comp.venue_postcode = postcode
+        # The page embeds m_show: {"...","latitude":"53.056","longitude":"-1.368",...}
+        m = self._LATLONG_RE.search(resp.text)
+        if m:
+            try:
+                comp.latitude = float(m.group(1))
+                comp.longitude = float(m.group(2))
+            except (ValueError, TypeError):
+                pass
 
     def _parse_datetime_to_date(self, dt_str: str) -> str | None:
         """Parse '2026-02-20 00:00:00' or '2026-02-20' to 'YYYY-MM-DD'."""

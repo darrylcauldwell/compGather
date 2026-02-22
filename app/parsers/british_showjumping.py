@@ -219,15 +219,6 @@ class BritishShowjumpingParser(BaseParser):
         if postcode_match:
             postcode = postcode_match.group(0).strip()
 
-        # Extract lat/lng from Google Maps link
-        maps_link = soup.find("a", href=re.compile(r"google\.com/maps"))
-        latitude, longitude = None, None
-        if maps_link:
-            latlng_match = LATLNG_RE.search(maps_link["href"])
-            if latlng_match:
-                latitude = latlng_match.group(1)
-                longitude = latlng_match.group(2)
-
         # Parse date range from h1: "VENUE - FRI 20 TO SUN 22 FEBRUARY 2026"
         date_start = show.get("date_start_override", show["date_text"])
         date_end = show.get("date_end_override")

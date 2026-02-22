@@ -3,8 +3,7 @@
 These tests verify the scan pipeline logic using mocked external services.
 """
 
-import json
-from datetime import date, datetime
+from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

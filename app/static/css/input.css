@@ -473,7 +473,9 @@ a { color: inherit; text-decoration: none; }
    ======================================== */
 
 @media (max-width: 768px) {
-    .content-container { padding: 1rem; }
-    .header-nav { flex-wrap: wrap; }
+    .content-container { padding: 0.5rem; }
+    .header-nav { flex-wrap: wrap; gap: 0.25rem; }
     .table th, .table td { padding: 0.5rem !important; font-size: 0.75rem; }
+    /* Larger touch targets for pagination and small buttons on mobile */
+    .btn-sm { min-height: 2.25rem; min-width: 2.25rem; padding: 0.4rem 0.75rem; }
 }

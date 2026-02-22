@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import require_api_key
 from app.database import get_session
 from app.models import Source
 from app.schemas import SourceCreate, SourceOut, SourceUpdate
@@ -17,7 +18,7 @@ async def list_sources(session: AsyncSession = Depends(get_session)):
     return result.scalars().all()
 
 
-@router.post("", response_model=SourceOut, status_code=201)
+@router.post("", response_model=SourceOut, status_code=201, dependencies=[Depends(require_api_key)])
 async def create_source(data: SourceCreate, session: AsyncSession = Depends(get_session)):
     source = Source(name=data.name, url=data.url, parser_key=data.parser_key)
     session.add(source)
@@ -26,7 +27,7 @@ async def create_source(data: SourceCreate, session: AsyncSession = Depends(get_
     return source
 
 
-@router.put("/{source_id}", response_model=SourceOut)
+@router.put("/{source_id}", response_model=SourceOut, dependencies=[Depends(require_api_key)])
 async def update_source(
     source_id: int, data: SourceUpdate, session: AsyncSession = Depends(get_session)
 ):
@@ -46,7 +47,7 @@ async def update_source(
     return source
 
 
-@router.delete("/{source_id}", status_code=204)
+@router.delete("/{source_id}", status_code=204, dependencies=[Depends(require_api_key)])
 async def delete_source(source_id: int, session: AsyncSession = Depends(get_session)):
     source = await session.get(Source, source_id)
     if not source:

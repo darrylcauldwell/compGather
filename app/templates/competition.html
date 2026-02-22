@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}{{ comp.name }} - EquiCalendar{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+    <a href="/" style="color: var(--cg-text-muted); text-decoration: none; font-size: 0.85rem;">
+        <i class="bi bi-chevron-left"></i> Back to listings
+    </a>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <h1 style="font-size: 1.4rem; margin: 0; font-weight: 600;">{{ comp.name }}</h1>
+    </div>
+    <div class="card-body">
+        <div style="display: flex; flex-wrap: wrap; gap: 2rem;">
+            <!-- Details column -->
+            <div style="flex: 1; min-width: 280px;">
+                <table style="width: 100%; font-size: 0.95rem;">
+                    <tr>
+                        <td style="padding: 0.4rem 0; color: var(--cg-text-muted); width: 7rem;">Date</td>
+                        <td style="padding: 0.4rem 0;">
+                            {{ comp.date_start.strftime('%A %d %B %Y') }}
+                            {% if comp.date_end %} &ndash; {{ comp.date_end.strftime('%A %d %B %Y') }}{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.4rem 0; color: var(--cg-text-muted);">Venue</td>
+                        <td style="padding: 0.4rem 0;">
+                            {{ comp.venue_name }}
+                            {% if comp.venue_postcode %}
+                            <span style="color: var(--cg-text-muted); font-size: 0.85rem;">{{ comp.venue_postcode }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if comp.discipline %}
+                    <tr>
+                        <td style="padding: 0.4rem 0; color: var(--cg-text-muted);">Discipline</td>
+                        <td style="padding: 0.4rem 0;">
+                            <span class="badge badge-info">{{ comp.discipline }}</span>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td style="padding: 0.4rem 0; color: var(--cg-text-muted);">Pony classes</td>
+                        <td style="padding: 0.4rem 0;">
+                            {% if comp.has_pony_classes %}
+                            <span class="badge badge-success">Yes</span>
+                            {% else %}
+                            <span class="badge badge-muted">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if comp.distance_miles is not none %}
+                    <tr>
+                        <td style="padding: 0.4rem 0; color: var(--cg-text-muted);">Distance</td>
+                        <td style="padding: 0.4rem 0;">{{ "%.0f"|format(comp.distance_miles) }} miles</td>
+                    </tr>
+                    {% endif %}
+                    {% if comp.source %}
+                    <tr>
+                        <td style="padding: 0.4rem 0; color: var(--cg-text-muted);">Source</td>
+                        <td style="padding: 0.4rem 0; font-size: 0.85rem;">{{ comp.source.name }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+
+                <div style="margin-top: 1.25rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <a href="/api/competitions/{{ comp.id }}/ical" class="btn btn-primary">
+                        <i class="bi bi-calendar-plus"></i> Add to Calendar
+                    </a>
+                    {% if comp.url %}
+                    <a href="{{ comp.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">
+                        <i class="bi bi-box-arrow-up-right"></i> View on source website
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Mini map column -->
+            {% if comp.latitude and comp.longitude %}
+            <div style="flex: 1; min-width: 280px; min-height: 300px;">
+                <div id="detail-map" style="width: 100%; height: 100%; min-height: 300px; border-radius: 0.5rem; border: 1px solid var(--cg-border);"></div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- JSON-LD structured data -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": {{ comp.name | tojson }},
+    "startDate": "{{ comp.date_start.isoformat() }}",
+    {% if comp.date_end %}"endDate": "{{ comp.date_end.isoformat() }}",{% endif %}
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+    "location": {
+        "@type": "Place",
+        "name": {{ comp.venue_name | tojson }},
+        {% if comp.venue_postcode %}"address": {{ comp.venue_postcode | tojson }},{% endif %}
+        {% if comp.latitude and comp.longitude %}
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": {{ comp.latitude }},
+            "longitude": {{ comp.longitude }}
+        }
+        {% endif %}
+    }
+    {% if comp.url %},"url": {{ comp.url | tojson }}{% endif %}
+}
+</script>
+
+{% if comp.latitude and comp.longitude %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script>
+(function() {
+    var isDark = !document.documentElement.hasAttribute('data-theme');
+    var tiles = isDark
+        ? L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 18
+          })
+        : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap', maxZoom: 18
+          });
+
+    var map = L.map('detail-map', {
+        center: [{{ comp.latitude }}, {{ comp.longitude }}],
+        zoom: 12,
+        layers: [tiles]
+    });
+
+    L.marker([{{ comp.latitude }}, {{ comp.longitude }}])
+     .addTo(map)
+     .bindPopup({{ comp.venue_name | tojson }})
+     .openPopup();
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -10,9 +10,25 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 POSTCODES_IO_URL = "https://api.postcodes.io/postcodes"
+TERMINATED_IO_URL = "https://api.postcodes.io/terminated_postcodes"
+NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+
+# Crown Dependencies not covered by postcodes.io
+_CROWN_DEPENDENCY_PREFIXES = ("GY", "JE", "IM")
+
+# UK + Crown Dependencies bounding box (lat 49-61, lng -11 to 2)
+_UK_LAT_MIN, _UK_LAT_MAX = 49.0, 61.0
+_UK_LNG_MIN, _UK_LNG_MAX = -11.0, 2.0
 
 # Cache: postcode -> (lat, lng) or None for failed lookups
 _postcode_cache: dict[str, tuple[float, float] | None] = {}
+
+
+def _coords_in_uk(lat: float, lng: float) -> bool:
+    """Check coordinates fall within the UK/Crown Dependencies bounding box."""
+    if lat == 0.0 and lng == 0.0:
+        return False
+    return _UK_LAT_MIN <= lat <= _UK_LAT_MAX and _UK_LNG_MIN <= lng <= _UK_LNG_MAX
 
 # Home coordinates, set on startup
 _home_lat: float | None = None
@@ -36,34 +52,82 @@ async def init_home_location():
 
 
 async def geocode_postcode(postcode: str) -> tuple[float, float] | None:
-    """Look up a UK postcode and return (lat, lng) or None."""
+    """Look up a UK postcode and return (lat, lng) or None.
+
+    Tries postcodes.io first (active then terminated), then falls back
+    to Nominatim for Crown Dependency postcodes (GY, JE, IM).
+    """
     normalised = postcode.strip().upper()
     if normalised in _postcode_cache:
         return _postcode_cache[normalised]
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(f"{POSTCODES_IO_URL}/{normalised}")
-            if resp.status_code != 200:
-                logger.warning("Postcode lookup failed for %s: %d", normalised, resp.status_code)
-                _postcode_cache[normalised] = None
-                return None
-            data = resp.json()
-            result = data.get("result")
-            if not result:
-                _postcode_cache[normalised] = None
-                return None
-            lat = result["latitude"]
-            lng = result["longitude"]
-            if lat is None or lng is None:
-                _postcode_cache[normalised] = None
-                return None
-            _postcode_cache[normalised] = (lat, lng)
-            return (lat, lng)
+            # Crown Dependencies: skip postcodes.io, go straight to Nominatim
+            if not normalised.startswith(_CROWN_DEPENDENCY_PREFIXES):
+                resp = await client.get(f"{POSTCODES_IO_URL}/{normalised}")
+                if resp.status_code == 200:
+                    data = resp.json()
+                    result = data.get("result")
+                    if result:
+                        lat = result["latitude"]
+                        lng = result["longitude"]
+                        if lat is not None and lng is not None and _coords_in_uk(lat, lng):
+                            _postcode_cache[normalised] = (lat, lng)
+                            return (lat, lng)
+
+                # Fallback: try terminated postcodes endpoint
+                resp = await client.get(f"{TERMINATED_IO_URL}/{normalised}")
+                if resp.status_code == 200:
+                    data = resp.json()
+                    result = data.get("result")
+                    if result:
+                        lat = result.get("latitude")
+                        lng = result.get("longitude")
+                        if lat is not None and lng is not None and _coords_in_uk(lat, lng):
+                            _postcode_cache[normalised] = (lat, lng)
+                            return (lat, lng)
+
+            # Fallback: Nominatim for Crown Dependencies and any other failures
+            coords = await _nominatim_postcode(client, normalised)
+            if coords and _coords_in_uk(*coords):
+                _postcode_cache[normalised] = coords
+                return coords
+
+            _postcode_cache[normalised] = None
+            return None
     except httpx.HTTPError as e:
         logger.warning("Postcode API error for %s: %s", normalised, e)
         _postcode_cache[normalised] = None
         return None
+
+
+async def _nominatim_postcode(
+    client: httpx.AsyncClient, postcode: str
+) -> tuple[float, float] | None:
+    """Geocode a postcode via Nominatim (OpenStreetMap). Useful for CI/IoM."""
+    try:
+        resp = await client.get(
+            NOMINATIM_URL,
+            params={
+                "q": postcode,
+                "format": "json",
+                "limit": 1,
+                # Restrict to British Isles bounding box to avoid false matches
+                "viewbox": "-11,49,2,61",
+                "bounded": 1,
+            },
+            headers={"User-Agent": "EquiCalendar/1.0"},
+        )
+        if resp.status_code == 200:
+            results = resp.json()
+            if results:
+                lat = float(results[0]["lat"])
+                lng = float(results[0]["lon"])
+                return (lat, lng)
+    except Exception as e:
+        logger.debug("Nominatim lookup failed for %s: %s", postcode, e)
+    return None
 
 
 async def set_home_postcode(postcode: str) -> bool:

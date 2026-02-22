@@ -6,4 +6,8 @@ node_modules/
 data/
 *.db
 .pytest_cache/
+.ruff_cache/
 app/static/css/output.css
+
+# Claude Code / AI artifacts
+.claude/

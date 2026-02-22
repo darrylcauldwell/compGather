@@ -9,6 +9,8 @@ services:
       - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
       - SCAN_SCHEDULE=06:00
       - LOG_LEVEL=INFO
+      - API_KEY=${API_KEY:-}
+      - ANALYTICS_DOMAIN=${ANALYTICS_DOMAIN:-}
     volumes:
       - compgather_data:/app/data
     networks:

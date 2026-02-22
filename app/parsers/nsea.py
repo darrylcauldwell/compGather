@@ -91,7 +91,7 @@ class NSEAParser(BaseParser):
                 discipline="NSEA",
                 has_pony_classes=True,  # All NSEA events are school/pony competitions
                 classes=[],
-                url=detail_url,
+                url=detail_url or "https://www.nsea.org.uk/competitions/",
             )
             results.append((comp, detail_url))
 

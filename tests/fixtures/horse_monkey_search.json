@@ -1,0 +1,25 @@
+{
+  "totalRows": 2,
+  "rows": [
+    {
+      "id": 80001,
+      "name": "Spring Showjumping Extravaganza",
+      "start": "2026-03-15 09:00:00",
+      "end": "2026-03-15 17:00:00",
+      "venue_name": "Meadow Farm",
+      "event_type_id": 1,
+      "publicUrl": "https://horsemonkey.com/uk/equestrian_event/80001",
+      "disciplines": "Show Jumping"
+    },
+    {
+      "id": 80002,
+      "name": "Summer Dressage Championships",
+      "start": "2026-06-20 08:00:00",
+      "end": "2026-06-21 18:00:00",
+      "venue_name": "Bury Farm",
+      "event_type_id": 1,
+      "publicUrl": "https://horsemonkey.com/uk/equestrian_event/80002",
+      "disciplines": "Dressage"
+    }
+  ]
+}

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import logging
+import re
 
 import httpx
 
 from app.parsers.base import BaseParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import is_future_event, infer_discipline
+from app.parsers.utils import infer_discipline, is_future_event
 from app.schemas import ExtractedCompetition
 
 logger = logging.getLogger(__name__)
@@ -98,7 +99,10 @@ class EquipeOnlineParser(BaseParser):
 
         # Try to get classes from schedule API
         classes = []
-        venue_name = name  # Equipe API doesn't provide venue name separately
+        venue_name = self._extract_venue_name(name)
+        if not venue_name:
+            logger.debug("Equipe: skipping event with no identifiable venue: %s", name)
+            return None
 
         try:
             schedule = await self._fetch_schedule(client, meeting_id)
@@ -137,3 +141,40 @@ class EquipeOnlineParser(BaseParser):
             return resp.json()
         except Exception:
             return None
+
+    # Keywords that mark the boundary between venue name and event description
+    _VENUE_SPLIT_RE = re.compile(
+        r"\b(?:British\s+(?:Dressage|Showjumping|Eventing|Riding)|"
+        r"BD\s|BS\s|BE\s|"
+        r"Dressage|Showjumping|Show\s+Jumping|Eventing|"
+        r"Clear\s+Round|Unaffiliated|Arena\s+Eventing|"
+        r"Senior\s+(?:British|BS)|Junior\s+(?:British|BS)|"
+        r"Small\s+Pony|Large\s+Pony|Para\s+Winter|"
+        r"CAT\s+\d|Premier|Training\s+Show|Dress\s+Down|"
+        r"Winter\s+(?:League|Regional|Championship)|"
+        r"Summer\s+(?:League|Regional|Championship)|"
+        r"National|Regional|Championship)"
+        r"|\(\s*(?:P[\s-]|Small|Senior|Junior)"  # BD class codes like (P-AM), (Small Pony...)
+        r"|\b\d{1,2}(?:st|nd|rd|th)\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+        r"|\b(?:Sat|Sun|Mon|Tue|Wed|Thu|Fri)(?:urday|nday|day|sday|nesday|rsday)?\s+\d",
+        re.IGNORECASE,
+    )
+
+    def _extract_venue_name(self, name: str) -> str:
+        """Extract venue name from Equipe event name.
+
+        Equipe's API packs venue + event type + date into one name field, e.g.:
+        'Onley Grounds Senior British Showjumping - 26 Feburary 2026'
+        → venue = 'Onley Grounds'
+        """
+        # Strip trailing parenthesised content that isn't part of the venue
+        cleaned = re.sub(r"\s*\([^)]*\)\s*$", "", name)
+
+        m = self._VENUE_SPLIT_RE.search(cleaned)
+        if m and m.start() > 3:
+            venue = cleaned[: m.start()].strip().rstrip("-:").strip()
+            # Must be a plausible place name (not just a generic word)
+            if venue and len(venue) > 3:
+                return venue
+        # No recognisable venue prefix — return None to signal unknown
+        return None

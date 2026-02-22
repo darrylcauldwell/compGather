@@ -11,7 +11,6 @@ from bs4 import BeautifulSoup
 from app.parsers.base import BaseParser
 from app.parsers.registry import register_parser
 from app.parsers.utils import (
-    POSTCODE_RE,
     detect_pony_classes,
     extract_postcode,
     infer_discipline,
@@ -240,7 +239,7 @@ class EquoEventsParser(BaseParser):
             discipline=discipline,
             has_pony_classes=has_pony,
             classes=[],
-            url=event.get("url"),
+            url=event.get("url") or SEARCH_URL,
         )
 
     def _parse_date(self, text: str) -> str | None:

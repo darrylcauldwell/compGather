@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Sources - compGather{% endblock %}
+{% block title %}Sources - EquiCalendar{% endblock %}
 {% block nav_sources %}active{% endblock %}
 
 {% block content %}
@@ -55,8 +55,8 @@
             <thead>
                 <tr>
                     <th>Source</th>
-                    <th>Parser</th>
                     <th>Last Scan</th>
+                    <th>Last Success</th>
                     <th>Status</th>
                     <th>Future</th>
                     <th>New</th>
@@ -74,14 +74,19 @@
                             {{ source.url }} <i class="bi bi-box-arrow-up-right" style="font-size: 0.6rem;"></i>
                         </a>
                     </td>
-                    <td>
-                        <span style="font-size: 0.75rem; color: var(--cg-text-muted);">
-                            {{ source.parser_key or 'generic' }}
-                        </span>
-                    </td>
                     <td style="white-space: nowrap; color: var(--cg-text-muted); font-size: 0.85rem;">
                         {% if scan and scan.started_at %}
                         {{ scan.started_at.strftime('%d %b %H:%M') }}
+                        {% else %}
+                        Never
+                        {% endif %}
+                    </td>
+                    {% set ok_scan = latest_ok_scans.get(source.id) %}
+                    <td style="white-space: nowrap; color: var(--cg-text-muted); font-size: 0.85rem;">
+                        {% if ok_scan and ok_scan.completed_at %}
+                        {{ ok_scan.completed_at.strftime('%d %b %H:%M') }}
+                        {% elif ok_scan and ok_scan.started_at %}
+                        {{ ok_scan.started_at.strftime('%d %b %H:%M') }}
                         {% else %}
                         Never
                         {% endif %}

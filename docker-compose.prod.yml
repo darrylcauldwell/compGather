@@ -2,6 +2,7 @@ services:
   compgather:
     build: .
     container_name: compgather
+    restart: unless-stopped
     ports:
       - "127.0.0.1:8001:8000"
     environment:
@@ -9,6 +10,8 @@ services:
       - OLLAMA_URL=http://compgather-ollama:11434
       - SCAN_SCHEDULE=06:00
       - LOG_LEVEL=INFO
+      - API_KEY=${API_KEY}
+      - ANALYTICS_DOMAIN=${ANALYTICS_DOMAIN:-}
     volumes:
       - compgather_data:/app/data
     depends_on:
@@ -16,6 +19,16 @@ services:
         condition: service_healthy
     networks:
       - web
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
@@ -26,10 +39,16 @@ services:
   compgather-ollama:
     image: ollama/ollama:latest
     container_name: compgather-ollama
+    restart: unless-stopped
     volumes:
       - ollama_data:/root/.ollama
     networks:
       - web
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 30s

@@ -1,0 +1,13 @@
+target-version = "py313"
+line-length = 100
+
+[lint]
+select = ["E", "F", "W", "I"]
+ignore = [
+    "E501",  # line too long — handled by formatter, not linter
+    "E711",  # comparison to None — required by SQLAlchemy ORM (== None generates IS NULL)
+    "E712",  # comparison to True — required by SQLAlchemy ORM (== True generates = 1)
+]
+
+[lint.isort]
+known-first-party = ["app"]

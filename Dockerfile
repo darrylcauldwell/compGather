@@ -49,6 +49,7 @@ RUN playwright install chromium
 USER root
 
 COPY app/ ./app/
+COPY ruff.toml ./
 COPY --from=css-builder /build/app/static/css/output.css ./app/static/css/output.css
 
 # SQLite data directory

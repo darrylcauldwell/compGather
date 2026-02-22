@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}compGather{% endblock %}</title>
+    <title>{% block title %}EquiCalendar{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="/static/css/output.css" rel="stylesheet">
+    {% if analytics_domain %}
+    <script defer data-domain="{{ analytics_domain }}" src="https://plausible.io/js/script.js"></script>
+    {% endif %}
     <script>
         (function() {
             var saved = localStorage.getItem('cg-theme');
@@ -45,14 +48,18 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
             <div class="branding">
                 <a href="/" class="nav-link">
-                    <i class="bi bi-trophy" style="font-size: 1.5rem; color: var(--cg-sky);"></i>
-                    <span class="title">compGather</span>
+                    <i class="bi bi-calendar3" style="font-size: 1.5rem; color: var(--cg-sky);"></i>
+                    <span class="title">EquiCalendar</span>
                 </a>
             </div>
             <div class="header-nav">
                 <a href="/" class="nav-link {% block nav_competitions %}{% endblock %}">
                     <i class="bi bi-calendar-event"></i>
                     Competitions
+                </a>
+                <a href="/map" class="nav-link {% block nav_map %}{% endblock %}">
+                    <i class="bi bi-geo-alt"></i>
+                    Map
                 </a>
                 <a href="/sources" class="nav-link {% block nav_sources %}{% endblock %}">
                     <i class="bi bi-globe2"></i>
@@ -79,14 +86,16 @@
     </header>
 
     <main id="main" class="content-container">
+        {% block content_wrapper %}
         <div class="max-w-7xl mx-auto px-4 sm:px-6">
             {% block content %}{% endblock %}
         </div>
+        {% endblock %}
     </main>
 
     <footer class="app-footer">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm" style="color: var(--cg-text-muted);">
-            <span>compGather &mdash; Show jumping competition finder</span>
+            <span>EquiCalendar &mdash; The complete calendar for your competition season.</span>
             <a href="https://github.com/darrylcauldwell/compGather" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 hover:text-[var(--cg-sky)] transition-colors" style="color: var(--cg-text-muted);">
                 <i class="bi bi-github"></i>
                 <span>GitHub</span>

@@ -1,0 +1,31 @@
+[
+  {
+    "id": 50001,
+    "name": "Dressage Championships - Hartpury",
+    "start_on": "2026-04-10",
+    "end_on": "2026-04-12",
+    "venue_country": "GBR",
+    "metadata": {
+      "horse_ponies": "ponies",
+      "discipline": "dressage"
+    }
+  },
+  {
+    "id": 50002,
+    "name": "British Showjumping - Eland Lodge",
+    "start_on": "2026-05-20",
+    "end_on": "2026-05-20",
+    "venue_country": "GBR",
+    "metadata": {
+      "discipline": "show_jumping"
+    }
+  },
+  {
+    "id": 50003,
+    "name": "Some Event in France",
+    "start_on": "2026-06-01",
+    "end_on": "2026-06-01",
+    "venue_country": "FRA",
+    "metadata": {}
+  }
+]

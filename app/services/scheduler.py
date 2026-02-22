@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -7,7 +6,7 @@ from sqlalchemy import select
 from app.config import settings
 from app.database import async_session
 from app.models import Scan, Source
-from app.services.scanner import run_scan
+from app.services.scanner import audit_disciplines, run_scan
 
 logger = logging.getLogger(__name__)
 
@@ -58,5 +57,12 @@ async def _run_scan_job():
             scan = scan_result.scalar_one_or_none()
             if scan:
                 await run_scan(source.id, scan_id=scan.id)
+
+    # Post-scan: audit and normalise discipline values
+    async with async_session() as session:
+        try:
+            await audit_disciplines(session)
+        except Exception as e:
+            logger.warning("Discipline audit failed: %s", e)
 
     logger.info("Scheduled scan complete for %d sources", len(sources))

@@ -50,7 +50,6 @@ class BritishEventingParser(BaseParser):
             date_text = tds[0].get_text(strip=True)
             name = tds[1].get_text(strip=True)
             classes_text = tds[2].get_text(strip=True)
-            location = tds[3].get_text(strip=True)
             status = tds[6].get_text(strip=True)
 
             if not name or not date_text:

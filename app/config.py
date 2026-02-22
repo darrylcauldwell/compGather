@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     scan_schedule: str = "06:00"
     log_level: str = "INFO"
     database_url: str = "sqlite+aiosqlite:///data/compgather.db"
+    api_key: str = ""
+    analytics_domain: str = ""
 
     @field_validator("home_postcode", mode="before")
     @classmethod

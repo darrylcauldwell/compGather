@@ -1,5 +1,5 @@
 {
-  "name": "compgather",
+  "name": "equicalendar",
   "private": true,
   "scripts": {
     "build:css": "postcss app/static/css/input.css -o app/static/css/output.css",

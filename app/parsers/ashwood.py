@@ -9,7 +9,12 @@ from bs4 import BeautifulSoup
 
 from app.parsers.base import BaseParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes, infer_discipline, is_competition_event, is_future_event
+from app.parsers.utils import (
+    detect_pony_classes,
+    infer_discipline,
+    is_competition_event,
+    is_future_event,
+)
 from app.schemas import ExtractedCompetition
 
 logger = logging.getLogger(__name__)
@@ -113,7 +118,7 @@ class AshwoodParser(BaseParser):
                 discipline=discipline,
                 has_pony_classes=has_pony,
                 classes=[],
-                url=event_url,
+                url=event_url or EVENTS_URL,
             ))
 
         return events
@@ -230,7 +235,7 @@ class AshwoodParser(BaseParser):
             discipline=discipline,
             has_pony_classes=has_pony,
             classes=[],
-            url=event_url,
+            url=event_url or EVENTS_URL,
         )
 
     def _parse_day_month(self, text: str, year: int) -> str | None:

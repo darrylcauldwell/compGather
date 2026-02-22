@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import require_api_key
 from app.database import get_session
 from app.models import Scan, Source
 from app.schemas import ScanCreate, ScanOut
@@ -14,7 +15,7 @@ from app.services.scanner import run_scan
 router = APIRouter(prefix="/api/scans", tags=["scans"])
 
 
-@router.post("", response_model=list[ScanOut], status_code=202)
+@router.post("", response_model=list[ScanOut], status_code=202, dependencies=[Depends(require_api_key)])
 async def trigger_scan(data: ScanCreate, session: AsyncSession = Depends(get_session)):
     """Trigger a scan in the background and return immediately.
 

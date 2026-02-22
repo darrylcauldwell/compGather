@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Competitions - compGather{% endblock %}
+{% block title %}Competitions - EquiCalendar{% endblock %}
 {% block nav_competitions %}active{% endblock %}
 
 {% macro sort_arrow(col, current_sort) %}
@@ -13,15 +13,10 @@
 {% endmacro %}
 
 {% block content %}
-<h1 class="mb-6" style="font-size: 1.5rem;">Competitions</h1>
-
-<!-- Filters -->
 <div class="card">
-    <div class="card-header">
-        <i class="bi bi-funnel"></i> Filters
-    </div>
-    <div class="card-body">
-        <form method="get" action="/" class="flex flex-wrap items-end gap-4">
+    <!-- Filters -->
+    <div class="card-body" style="border-bottom: 1px solid var(--cg-border);">
+        <form method="get" action="/" class="flex flex-wrap items-end gap-3">
             <div>
                 <label class="form-label" for="date_from">From</label>
                 <input type="date" id="date_from" name="date_from" value="{{ date_from }}" class="form-control">
@@ -41,36 +36,9 @@
                 </div>
             </div>
             <div>
-                <label class="form-label" for="max_distance">Max distance (miles)</label>
+                <label class="form-label" for="max_distance">Max miles</label>
                 <input type="number" id="max_distance" name="max_distance" value="{{ max_distance }}"
-                       placeholder="e.g. 100" min="0" step="10" class="form-control" style="width: 7rem;">
-            </div>
-            <div>
-                <label class="form-label" for="venue">Venue</label>
-                <input type="text" id="venue" name="venue" value="{{ venue }}" list="venue-list"
-                       placeholder="Type to search..." class="form-control" style="width: 14rem;" autocomplete="off">
-                <datalist id="venue-list">
-                    {% for v in venue_names %}
-                    <option value="{{ v }}">
-                    {% endfor %}
-                </datalist>
-            </div>
-            <div>
-                <label class="form-label" for="discipline">Discipline</label>
-                <select id="discipline" name="discipline" class="form-control" style="width: 10rem;">
-                    <option value="">All</option>
-                    {% for d in disciplines %}
-                    <option value="{{ d }}" {% if discipline == d %}selected{% endif %}>{{ d }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="form-label" for="pony">Pony classes</label>
-                <select id="pony" name="pony" class="form-control" style="width: 7rem;">
-                    <option value="">Any</option>
-                    <option value="yes" {% if pony == 'yes' %}selected{% endif %}>Yes</option>
-                    <option value="no" {% if pony == 'no' %}selected{% endif %}>No</option>
-                </select>
+                       placeholder="e.g. 100" min="0" step="10" class="form-control" style="width: 6rem;">
             </div>
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-search"></i> Filter
@@ -78,14 +46,23 @@
             <a href="/" class="btn btn-outline-secondary">Clear</a>
         </form>
     </div>
-</div>
 
-<!-- Results -->
-{% if competitions %}
-<div class="card">
-    <div class="card-header">
-        <i class="bi bi-list-ul"></i>
-        {{ competitions|length }} competition{{ 's' if competitions|length != 1 }} found
+    <!-- Results -->
+    {% if competitions %}
+    <div class="card-header" style="border-radius: 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+        <span>
+            <i class="bi bi-list-ul"></i>
+            {{ total }} competition{{ 's' if total != 1 }} found
+            {% if total_pages > 1 %}<span style="color: var(--cg-text-muted); font-size: 0.85rem;">(page {{ page }} of {{ total_pages }})</span>{% endif %}
+        </span>
+        <span style="display: flex; gap: 0.4rem;">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyLink(this)" title="Copy link to current view">
+                <i class="bi bi-link-45deg"></i> <span class="copy-label">Copy Link</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportIcal()" title="Export visible competitions as calendar file">
+                <i class="bi bi-download"></i> Export .ics
+            </button>
+        </span>
     </div>
     <div class="table-responsive" style="border-radius: 0 0 0.75rem 0.75rem;">
         <table class="table">
@@ -93,11 +70,45 @@
                 <tr>
                     <th class="sortable-th" onclick="sortBy('date')">Date {{ sort_arrow('date', sort) }}</th>
                     <th class="sortable-th" onclick="sortBy('name')">Name {{ sort_arrow('name', sort) }}</th>
-                    <th class="sortable-th" onclick="sortBy('discipline')">Type {{ sort_arrow('discipline', sort) }}</th>
-                    <th class="sortable-th" onclick="sortBy('venue')">Venue {{ sort_arrow('venue', sort) }}</th>
-                    <th class="sortable-th" onclick="sortBy('distance')">Distance {{ sort_arrow('distance', sort) }}</th>
-                    <th>Pony</th>
-                    <th>Source</th>
+                    <th class="sortable-th filterable-th" style="position: relative;">
+                        <span onclick="sortBy('discipline')">Type {{ sort_arrow('discipline', sort) }}</span>
+                        <i class="bi bi-funnel{% if discipline %}-fill{% endif %} filter-icon{% if discipline %} filter-active{% endif %}" onclick="toggleDropdown('dd-discipline')" title="Filter by type"></i>
+                        <div id="dd-discipline" class="col-dropdown" style="display:none;">
+                            <div class="col-dropdown-item{% if not discipline %} active{% endif %}" onclick="filterBy('discipline','')">All</div>
+                            {% for d in disciplines %}
+                            <div class="col-dropdown-item{% if discipline == d %} active{% endif %}" onclick="filterBy('discipline','{{ d }}')">{{ d }}</div>
+                            {% endfor %}
+                        </div>
+                    </th>
+                    <th class="sortable-th filterable-th" style="position: relative;">
+                        <span onclick="sortBy('venue')">Venue {{ sort_arrow('venue', sort) }}</span>
+                        <i class="bi bi-funnel{% if venue %}-fill{% endif %} filter-icon{% if venue %} filter-active{% endif %}" onclick="toggleDropdown('dd-venue')" title="Filter by venue"></i>
+                        <div id="dd-venue" class="col-dropdown" style="display:none; min-width: 14rem;">
+                            <input type="text" id="venue-header-input" class="form-control" style="font-size: 0.8rem; padding: 0.3rem 0.5rem; margin-bottom: 0.25rem;"
+                                   placeholder="Type to search..." value="{{ venue }}" list="venue-list" autocomplete="off"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();filterBy('venue',this.value);}">
+                            <datalist id="venue-list">
+                                {% for v in venue_names %}
+                                <option value="{{ v }}">
+                                {% endfor %}
+                            </datalist>
+                            <div style="display: flex; gap: 0.25rem; margin-top: 0.25rem;">
+                                <button type="button" class="btn btn-sm btn-primary" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;" onclick="filterBy('venue',document.getElementById('venue-header-input').value)">Apply</button>
+                                {% if venue %}<button type="button" class="btn btn-sm btn-outline-secondary" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;" onclick="filterBy('venue','')">Clear</button>{% endif %}
+                            </div>
+                        </div>
+                    </th>
+                    <th class="sortable-th hidden sm:table-cell" onclick="sortBy('distance')">Distance {{ sort_arrow('distance', sort) }}</th>
+                    <th class="filterable-th" style="position: relative;">
+                        <span>Pony</span>
+                        <i class="bi bi-funnel{% if pony %}-fill{% endif %} filter-icon{% if pony %} filter-active{% endif %}" onclick="toggleDropdown('dd-pony')" title="Filter by pony"></i>
+                        <div id="dd-pony" class="col-dropdown" style="display:none;">
+                            <div class="col-dropdown-item{% if not pony %} active{% endif %}" onclick="filterBy('pony','')">Any</div>
+                            <div class="col-dropdown-item{% if pony == 'yes' %} active{% endif %}" onclick="filterBy('pony','yes')">Yes</div>
+                            <div class="col-dropdown-item{% if pony == 'no' %} active{% endif %}" onclick="filterBy('pony','no')">No</div>
+                        </div>
+                    </th>
+                    <th class="hidden sm:table-cell">Source</th>
                 </tr>
             </thead>
             <tbody>
@@ -108,13 +119,12 @@
                         {% if comp.date_end %} &ndash; {{ comp.date_end.strftime('%d %b') }}{% endif %}
                     </td>
                     <td>
-                        {% if comp.url %}
-                        <a href="{{ comp.url }}" target="_blank" style="color: var(--cg-sky); text-decoration: none;">
-                            {{ comp.name }} <i class="bi bi-box-arrow-up-right" style="font-size: 0.7rem;"></i>
+                        <a href="/api/competitions/{{ comp.id }}/ical" title="Download calendar event" style="color: var(--cg-text-muted); text-decoration: none; margin-right: 0.3rem;">
+                            <i class="bi bi-calendar-plus" style="font-size: 0.8rem;"></i>
                         </a>
-                        {% else %}
-                        {{ comp.name }}
-                        {% endif %}
+                        <a href="/competitions/{{ comp.id }}" style="color: var(--cg-sky); text-decoration: none;">
+                            {{ comp.name }}
+                        </a>
                     </td>
                     <td style="font-size: 0.85rem; white-space: nowrap;">
                         {% if comp.discipline %}
@@ -129,7 +139,7 @@
                         <span style="color: var(--cg-text-muted); font-size: 0.75rem; margin-left: 0.25rem;">{{ comp.venue_postcode }}</span>
                         {% endif %}
                     </td>
-                    <td style="white-space: nowrap;">
+                    <td class="hidden sm:table-cell" style="white-space: nowrap;">
                         {% if comp.distance_miles is not none %}
                         {{ "%.0f"|format(comp.distance_miles) }} mi
                         {% else %}
@@ -143,26 +153,65 @@
                         <span class="dot dot-muted"></span>
                         {% endif %}
                     </td>
-                    <td style="font-size: 0.75rem; color: var(--cg-text-muted);">{{ comp.source.name if comp.source else '&mdash;' }}</td>
+                    <td class="hidden sm:table-cell" style="font-size: 0.75rem; color: var(--cg-text-muted);">{{ comp.source.name if comp.source else '&mdash;' }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-</div>
-{% else %}
-<div class="card">
+    {% if total_pages > 1 %}
+    <div style="display: flex; justify-content: center; align-items: center; gap: 0.75rem; padding: 0.75rem;">
+        {% if page > 1 %}
+        <a href="javascript:void(0)" onclick="goToPage({{ page - 1 }})" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-chevron-left"></i> Prev
+        </a>
+        {% else %}
+        <span class="btn btn-sm btn-outline-secondary" style="opacity: 0.4; pointer-events: none;">
+            <i class="bi bi-chevron-left"></i> Prev
+        </span>
+        {% endif %}
+        <span style="font-size: 0.85rem; color: var(--cg-text-muted);">
+            Page {{ page }} of {{ total_pages }}
+        </span>
+        {% if page < total_pages %}
+        <a href="javascript:void(0)" onclick="goToPage({{ page + 1 }})" class="btn btn-sm btn-outline-secondary">
+            Next <i class="bi bi-chevron-right"></i>
+        </a>
+        {% else %}
+        <span class="btn btn-sm btn-outline-secondary" style="opacity: 0.4; pointer-events: none;">
+            Next <i class="bi bi-chevron-right"></i>
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
     <div class="empty-state">
         <div class="icon"><i class="bi bi-calendar-x"></i></div>
         <p>No competitions found</p>
         <p>Try adjusting your filters or adding sources and running a scan.</p>
     </div>
+    {% endif %}
 </div>
-{% endif %}
 
 <style>
 .sortable-th { cursor: pointer; user-select: none; }
-.sortable-th:hover { color: var(--cg-sky); }
+.sortable-th:hover span { color: var(--cg-sky); }
+.filterable-th { user-select: none; }
+.filter-icon { font-size: 0.65rem; margin-left: 0.3rem; cursor: pointer; opacity: 0.4; vertical-align: middle; }
+.filter-icon:hover, .filter-icon.filter-active { opacity: 1; color: var(--cg-sky); }
+.col-dropdown {
+    position: absolute; top: 100%; left: 0; z-index: 50;
+    background: var(--cg-bg-card); border: 1px solid var(--cg-border);
+    border-radius: 0.5rem; padding: 0.35rem; min-width: 10rem;
+    max-height: 15rem; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-weight: normal; font-size: 0.85rem;
+}
+.col-dropdown-item {
+    padding: 0.3rem 0.6rem; border-radius: 0.3rem; cursor: pointer;
+    white-space: nowrap; color: var(--cg-text);
+}
+.col-dropdown-item:hover { background: var(--cg-sky-light, rgba(0,122,255,0.1)); }
+.col-dropdown-item.active { color: var(--cg-sky); font-weight: 600; }
 </style>
 <script>
 function sortBy(col) {
@@ -176,6 +225,59 @@ function sortBy(col) {
     const url = new URL(window.location);
     url.searchParams.set('sort', newSort);
     window.location = url.toString();
+}
+
+function goToPage(p) {
+    const url = new URL(window.location);
+    if (p > 1) {
+        url.searchParams.set('page', p);
+    } else {
+        url.searchParams.delete('page');
+    }
+    window.location = url.toString();
+}
+
+function filterBy(param, value) {
+    const url = new URL(window.location);
+    if (value) {
+        url.searchParams.set(param, value);
+    } else {
+        url.searchParams.delete(param);
+    }
+    url.searchParams.delete('page');
+    window.location = url.toString();
+}
+
+function toggleDropdown(id) {
+    document.querySelectorAll('.col-dropdown').forEach(el => {
+        if (el.id !== id) el.style.display = 'none';
+    });
+    const dd = document.getElementById(id);
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+    /* Auto-focus input if the dropdown has one */
+    const input = dd.querySelector('input');
+    if (input && dd.style.display === 'block') input.focus();
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.filterable-th')) {
+        document.querySelectorAll('.col-dropdown').forEach(el => el.style.display = 'none');
+    }
+});
+
+function copyLink(btn) {
+    navigator.clipboard.writeText(window.location.href).then(function() {
+        var label = btn.querySelector('.copy-label');
+        label.textContent = 'Copied!';
+        setTimeout(function() { label.textContent = 'Copy Link'; }, 1500);
+    });
+}
+
+function exportIcal() {
+    var params = new URL(window.location).searchParams;
+    params.delete('page');
+    params.delete('sort');
+    window.location = '/api/competitions/export-ical?' + params.toString();
 }
 
 async function updatePostcode() {

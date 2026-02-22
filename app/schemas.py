@@ -45,7 +45,7 @@ class CompetitionOut(BaseModel):
     longitude: float | None
     distance_miles: float | None
     has_pony_classes: bool
-    classes_raw: str | None
+    is_competition: bool
     url: str | None
     first_seen_at: datetime
     last_seen_at: datetime
@@ -77,6 +77,8 @@ class ExtractedCompetition(BaseModel):
     date_end: str | None = None
     venue_name: str
     venue_postcode: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     discipline: str | None = None
     has_pony_classes: bool = False
     classes: list[str] = []

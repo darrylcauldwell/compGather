@@ -9,6 +9,23 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 
+class AppSetting(Base):
+    __tablename__ = "app_settings"
+
+    key: Mapped[str] = mapped_column(Text, primary_key=True)
+    value: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class Venue(Base):
+    __tablename__ = "venues"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    postcode: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+
 class Source(Base):
     __tablename__ = "sources"
 
@@ -39,9 +56,7 @@ class Competition(Base):
     distance_miles: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     discipline: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     has_pony_classes: Mapped[bool] = mapped_column(Boolean, default=False)
-    classes_raw: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    entry_fee: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    entry_deadline: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_competition: Mapped[bool] = mapped_column(Boolean, default=True)
     url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     raw_extract: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     first_seen_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
