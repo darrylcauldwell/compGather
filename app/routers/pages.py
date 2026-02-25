@@ -424,6 +424,7 @@ async def admin_page(request: Request, session: AsyncSession = Depends(get_sessi
             "latest_ok_scans": latest_ok_scans,
             "total_comp_counts": total_comp_counts,
             "total_training_counts": total_training_counts,
+            "api_key": settings.api_key or "",
         }
     )
 

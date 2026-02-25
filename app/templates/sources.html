@@ -32,6 +32,7 @@
                     <th>Last Scan Comps</th>
                     <th>Last Scan Training</th>
                     <th>Error</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -97,6 +98,11 @@
                         <span title="{{ scan.error }}">{{ scan.error }}</span>
                         {% endif %}
                     </td>
+                    <td>
+                        <button onclick="triggerScanOne({{ source.id }}, this)" class="btn btn-sm" style="white-space: nowrap;" title="Scan this source">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </button>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -113,6 +119,14 @@
 {% endif %}
 
 <script>
+const API_KEY = '{{ api_key }}';
+
+function scanHeaders() {
+    const h = {'Content-Type': 'application/json'};
+    if (API_KEY) h['X-API-Key'] = API_KEY;
+    return h;
+}
+
 async function triggerScanAll() {
     const runningBadges = document.querySelectorAll('.badge-info');
     if (runningBadges.length > 0) {
@@ -123,13 +137,29 @@ async function triggerScanAll() {
     scanAllBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Starting&hellip;';
     const resp = await fetch('/api/scans', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: scanHeaders(),
         body: JSON.stringify({})
     });
     if (resp.ok) location.reload();
     else {
         alert('Failed to trigger scan');
         location.reload();
+    }
+}
+
+async function triggerScanOne(sourceId, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    const resp = await fetch('/api/scans', {
+        method: 'POST',
+        headers: scanHeaders(),
+        body: JSON.stringify({source_id: sourceId})
+    });
+    if (resp.ok) location.reload();
+    else {
+        alert('Failed to trigger scan');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat"></i>';
     }
 }
 </script>
