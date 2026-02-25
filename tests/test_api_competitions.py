@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_session
-from app.models import Competition, Source
+from app.models import Competition, Source, Venue
 
 # In-memory async engine for tests — StaticPool shares one connection across threads
 TEST_ENGINE = create_async_engine(
@@ -54,7 +54,7 @@ def _get_app():
 
 
 async def _seed(count: int = 3) -> list[int]:
-    """Seed the database with a source and competitions. Returns competition IDs."""
+    """Seed the database with a source, venues, and competitions. Returns competition IDs."""
     async with TestSession() as session:
         src = Source(
             name="Test Source",
@@ -66,17 +66,27 @@ async def _seed(count: int = 3) -> list[int]:
         session.add(src)
         await session.flush()
 
+        # Create venues
+        venues = []
+        for i in range(count):
+            venue = Venue(
+                name=f"Venue {i + 1}",
+                postcode="TE1 2ST" if i == 0 else None,
+            )
+            session.add(venue)
+            await session.flush()
+            venues.append(venue)
+
         ids = []
         for i in range(count):
             comp = Competition(
                 source_id=src.id,
                 name=f"Test Competition {i + 1}",
                 date_start=date(2026, 3, 15 + i),
-                venue_name=f"Venue {i + 1}",
-                venue_postcode="TE1 2ST" if i == 0 else None,
+                venue_id=venues[i].id,
                 discipline="Show Jumping" if i % 2 == 0 else "Dressage",
                 has_pony_classes=i == 0,
-                is_competition=True,
+                event_type="competition",
                 url=f"https://example.com/comp/{i + 1}",
                 first_seen_at=datetime.utcnow(),
                 last_seen_at=datetime.utcnow(),

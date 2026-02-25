@@ -5,6 +5,7 @@ from sqlalchemy import select
 
 from app.config import settings
 from app.database import async_session
+from app.metrics import SCHEDULER_LAST_RUN
 from app.models import Scan, Source
 from app.services.scanner import audit_disciplines, run_scan
 
@@ -37,6 +38,7 @@ def stop_scheduler():
 
 async def _run_scan_job():
     """Scheduled scan: create one scan record per enabled source."""
+    SCHEDULER_LAST_RUN.set_to_current_time()
     logger.info("Scheduled scan starting")
     async with async_session() as session:
         result = await session.execute(select(Source).where(Source.enabled == True))

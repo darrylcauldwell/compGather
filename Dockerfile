@@ -49,6 +49,8 @@ RUN playwright install chromium
 USER root
 
 COPY app/ ./app/
+COPY tests/ ./tests/
+COPY scripts/ ./scripts/
 COPY ruff.toml ./
 COPY --from=css-builder /build/app/static/css/output.css ./app/static/css/output.css
 

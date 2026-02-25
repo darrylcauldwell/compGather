@@ -27,5 +27,39 @@
     "end_on": "2026-06-01",
     "venue_country": "FRA",
     "metadata": {}
+  },
+  {
+    "id": 50004,
+    "name": "Onley Grounds - Senior British Showjumping",
+    "display_name": "Onley Grounds - Senior British Showjumping",
+    "start_on": "2026-03-15",
+    "end_on": "2026-03-15",
+    "venue_country": "GBR",
+    "discipline": "show_jumping"
+  },
+  {
+    "id": 50005,
+    "name": "Bicton : Unaffiliated Arena Eventing",
+    "display_name": "Bicton : Unaffiliated Arena Eventing",
+    "start_on": "2026-03-22",
+    "end_on": "2026-03-22",
+    "venue_country": "GBR",
+    "discipline": "eventing"
+  },
+  {
+    "id": 50006,
+    "name": "Addington Manor Senior British Showjumping",
+    "start_on": "2026-04-01",
+    "end_on": "2026-04-01",
+    "venue_country": "GBR",
+    "discipline": "show_jumping"
+  },
+  {
+    "id": 50007,
+    "name": "Unknown Pattern Event",
+    "start_on": "2026-04-05",
+    "end_on": "2026-04-05",
+    "venue_country": "GBR",
+    "discipline": "show_jumping"
   }
 ]

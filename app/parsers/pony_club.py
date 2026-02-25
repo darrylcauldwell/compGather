@@ -5,13 +5,10 @@ import logging
 import re
 from datetime import datetime
 
-import httpx
-from bs4 import BeautifulSoup
-
-from app.parsers.base import BaseParser
+from app.parsers.bases import HttpParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import infer_discipline, is_future_event
-from app.schemas import ExtractedCompetition
+from app.parsers.utils import extract_postcode, infer_discipline
+from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
 
@@ -24,20 +21,18 @@ BRANCH_BASE = "https://branches.pcuk.org"
 
 
 @register_parser("pony_club")
-class PonyClubParser(BaseParser):
+class PonyClubParser(HttpParser):
     """Parser for pcuk.org — The Pony Club central + branch calendars.
 
     Scrapes the main pcuk.org/calendar/ and also discovers branch calendars
-    at branches.pcuk.org/[area]/calendar/ for comprehensive coverage.
-    All Pony Club events have has_pony_classes=True by definition.
+    at branches.pcuk.org/[area]/calendar/.
     """
 
-    async def fetch_and_parse(self, url: str) -> list[ExtractedCompetition]:
-        seen: set[tuple[str, str, str]] = set()  # (name, date_start, venue_name) for dedup
-        competitions: list[ExtractedCompetition] = []
+    async def fetch_and_parse(self, url: str) -> list[ExtractedEvent]:
+        seen: set[tuple[str, str, str]] = set()
+        competitions: list[ExtractedEvent] = []
 
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
-            # Phase 1: Scrape the main national calendar
+        async with self._make_client() as client:
             main_comps = await self._scrape_calendar(client, url)
             for comp in main_comps:
                 key = (comp.name, comp.date_start, comp.venue_name)
@@ -46,11 +41,9 @@ class PonyClubParser(BaseParser):
                     competitions.append(comp)
             logger.info("Pony Club: %d events from main calendar", len(competitions))
 
-            # Phase 2: Discover branch calendar URLs
             branch_urls = await self._discover_branches(client)
             logger.info("Pony Club: discovered %d branch calendars", len(branch_urls))
 
-            # Phase 3: Scrape each branch calendar with rate limiting
             for branch_url in branch_urls:
                 try:
                     branch_comps = await self._scrape_calendar(client, branch_url)
@@ -59,23 +52,18 @@ class PonyClubParser(BaseParser):
                         if key not in seen:
                             seen.add(key)
                             competitions.append(comp)
-                    await asyncio.sleep(0.5)  # Rate limiting between branches
+                    await asyncio.sleep(0.5)
                 except Exception as e:
                     logger.debug("Pony Club: failed to scrape branch %s: %s", branch_url, e)
 
-        logger.info("Pony Club: extracted %d total competitions", len(competitions))
+        self._log_result("Pony Club", len(competitions))
         return competitions
 
-    async def _discover_branches(self, client: httpx.AsyncClient) -> list[str]:
-        """Discover branch calendar URLs from Pony Club discovery pages."""
+    async def _discover_branches(self, client):
         branch_urls: list[str] = []
-
         for discovery_url in BRANCH_DISCOVERY_URLS:
             try:
-                resp = await client.get(discovery_url)
-                resp.raise_for_status()
-                soup = BeautifulSoup(resp.text, "html.parser")
-
+                soup = await self._fetch_html(client, discovery_url)
                 for a in soup.find_all("a", href=re.compile(r"branches\.pcuk\.org/[^/]+/?$")):
                     href = a["href"].rstrip("/")
                     calendar_url = f"{href}/calendar/"
@@ -84,12 +72,9 @@ class PonyClubParser(BaseParser):
             except Exception as e:
                 logger.debug("Pony Club: branch discovery from %s failed: %s", discovery_url, e)
 
-        # Also try the main site for branch links
         if not branch_urls:
             try:
-                resp = await client.get("https://pcuk.org")
-                resp.raise_for_status()
-                soup = BeautifulSoup(resp.text, "html.parser")
+                soup = await self._fetch_html(client, "https://pcuk.org")
                 for a in soup.find_all("a", href=re.compile(r"branches\.pcuk\.org/[^/]+/?$")):
                     href = a["href"].rstrip("/")
                     calendar_url = f"{href}/calendar/"
@@ -100,17 +85,11 @@ class PonyClubParser(BaseParser):
 
         return branch_urls
 
-    async def _scrape_calendar(self, client: httpx.AsyncClient, url: str) -> list[ExtractedCompetition]:
-        """Scrape a single calendar page (main or branch) for events."""
-        resp = await client.get(url)
-        resp.raise_for_status()
+    async def _scrape_calendar(self, client, url):
+        soup = await self._fetch_html(client, url)
 
-        soup = BeautifulSoup(resp.text, "html.parser")
-
-        # Find all event divs with data-event-date attribute
         event_divs = soup.find_all("div", attrs={"data-event-date": True})
         if not event_divs:
-            # Fallback: look for elements with class "event"
             event_divs = soup.find_all("div", class_="event")
 
         competitions = []
@@ -118,12 +97,9 @@ class PonyClubParser(BaseParser):
             comp = self._parse_event_div(div, url)
             if comp:
                 competitions.append(comp)
-
         return competitions
 
-    def _parse_event_div(self, div, base_url: str) -> ExtractedCompetition | None:
-        """Parse a single event div element."""
-        # Date from data attribute: DD.MM.YYYY
+    def _parse_event_div(self, div, base_url):
         date_str = div.get("data-event-date", "")
         event_type = div.get("data-event-type", "")
         organiser = div.get("data-event-organiser", "")
@@ -131,69 +107,106 @@ class PonyClubParser(BaseParser):
         if not date_str:
             return None
 
-        # Parse date
-        date_start = self._parse_date(date_str)
+        h3 = div.find("h3")
+        title = h3.get_text(strip=True) if h3 else ""
+
+        date_start = self._parse_pc_date(date_str)
         if not date_start:
             return None
 
-        # Filter past events
-        if not is_future_event(date_start):
+        if not self._is_valid_title(title):
             return None
 
-        # Title from h3
-        h3 = div.find("h3")
-        title = h3.get_text(strip=True) if h3 else ""
-        if not title:
-            return None
+        name = title
+        if organiser and organiser.lower() not in name.lower():
+            name = f"{organiser}: {name}"
 
-        # Extract venue/location from paragraph text (pipe-delimited)
         venue_name = "TBC"
+        venue_postcode = None
         p_tag = div.find("p")
         if p_tag:
             p_text = p_tag.get_text(strip=True)
+            venue_postcode = extract_postcode(p_text)
             parts = [part.strip() for part in p_text.split("|")]
-            # Last part is usually location
             if len(parts) >= 2:
                 venue_name = parts[-1] if parts[-1] else parts[0]
+            if venue_postcode and venue_postcode in venue_name:
+                venue_name = venue_name.replace(venue_postcode, "").strip()
 
-        # Booking URL
         booking_link = div.find("a", href=True)
         booking_url = booking_link["href"] if booking_link else None
         if booking_url and not booking_url.startswith("http"):
             booking_url = f"https://pcuk.org{booking_url}"
+        if booking_url and not self._is_valid_booking_url(booking_url):
+            booking_url = None
 
-        # Build a descriptive name including organiser
-        name = title
-        if organiser and organiser.lower() not in title.lower():
-            name = f"{organiser}: {title}"
+        enriched_name = None
+        if booking_url and "horse-events.co.uk" in booking_url.lower():
+            enriched_name = self._extract_event_name_from_horse_events_url(booking_url)
+        if enriched_name and enriched_name.lower() != name.lower():
+            name = enriched_name
 
-        # Detect discipline from event type or title
-        classes = []
-        if event_type:
-            classes.append(event_type)
-        discipline = infer_discipline(f"{event_type} {title}") or event_type or None
+        discipline = infer_discipline(name) or event_type or None
 
-        return ExtractedCompetition(
+        return self._build_event(
             name=name,
             date_start=date_start,
             venue_name=venue_name,
-            venue_postcode=None,  # Not available on calendar page
+            venue_postcode=venue_postcode,
             discipline=discipline,
-            has_pony_classes=True,  # All PC events are pony/junior
-            classes=classes,
+            has_pony_classes=True,
+            classes=[event_type] if event_type else [],
             url=booking_url or base_url,
         )
 
-    def _parse_date(self, date_str: str) -> str | None:
-        """Parse DD.MM.YYYY to YYYY-MM-DD."""
+    def _parse_pc_date(self, date_str):
         try:
             dt = datetime.strptime(date_str.strip(), "%d.%m.%Y")
             return dt.strftime("%Y-%m-%d")
         except ValueError:
-            # Try other formats
             for fmt in ["%d/%m/%Y", "%Y-%m-%d"]:
                 try:
                     return datetime.strptime(date_str.strip(), fmt).strftime("%Y-%m-%d")
                 except ValueError:
                     continue
         return None
+
+    def _is_valid_booking_url(self, url):
+        return bool(url and url.startswith("http"))
+
+    def _is_valid_title(self, title):
+        if not title or len(title) < 3:
+            return False
+        bad_patterns = [
+            "index.php", "ndpcevent", "nzpcevent", "midantrimpc",
+            "iveaghpc", "killultagh", "seskinore", "tpc#event", "error", "404",
+        ]
+        title_lower = title.lower()
+        return not any(bad in title_lower for bad in bad_patterns)
+
+    def _extract_event_name_from_horse_events_url(self, url):
+        try:
+            path = url.split("?")[0]
+            parts = path.rstrip("/").split("/")
+            if len(parts) < 2:
+                return None
+
+            slug = parts[-1]
+            invalid_patterns = ["index.php", "error", "404", "blank", "default"]
+            if any(pattern in slug.lower() for pattern in invalid_patterns):
+                return None
+
+            if not re.search(r"[a-z]", slug, re.IGNORECASE) or "-" not in slug:
+                return None
+
+            slug_no_date = re.sub(r"-\d{8}$", "", slug)
+            if re.search(r"-\d+$", slug_no_date) and not re.search(r"[a-z]-\d+$", slug_no_date):
+                slug_no_date = re.sub(r"-\d+$", "", slug_no_date)
+
+            readable = slug_no_date.replace("-", " ").title()
+            words = readable.split()
+            if len(words) < 2 or len(readable) > 100:
+                return None
+            return readable
+        except Exception:
+            return None

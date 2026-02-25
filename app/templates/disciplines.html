@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+{% block title %}Disciplines - EquiCalendar{% endblock %}
+{% block nav_disciplines %}active{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 style="font-size: 1.5rem;">Disciplines</h1>
+    <button onclick="openCreateModal()" class="btn btn-primary">
+        <i class="bi bi-plus"></i> Add Discipline
+    </button>
+</div>
+
+{% if disciplines %}
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-bookmark"></i>
+        {{ disciplines|length }} discipline{{ 's' if disciplines|length != 1 }}
+    </div>
+    <div class="table-responsive" style="border-radius: 0 0 0.75rem 0.75rem;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Aliases</th>
+                    <th>Description</th>
+                    <th style="text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for disc in disciplines %}
+                <tr>
+                    <td style="font-weight: 500;">{{ disc.name }}</td>
+                    <td>
+                        <div style="font-size: 0.9rem;">
+                            {% if disc.aliases %}
+                            <div style="margin-bottom: 0.25rem;">
+                                <strong>{{ disc.aliases|length }} aliases</strong>
+                            </div>
+                            <div style="margin-top: 0.5rem; max-height: 120px; overflow-y: auto;">
+                                {% for alias in disc.aliases %}
+                                <div style="margin: 0.25rem 0; display: flex; align-items: center; justify-content: space-between; padding: 0.25rem 0.5rem; background: #f5f5f5; border-radius: 0.25rem; color: #333;">
+                                    <span style="font-family: monospace; font-size: 0.85rem; color: #333;">{{ alias }}</span>
+                                    <button onclick="removeAlias('{{ disc.name }}', '{{ alias }}', event)" style="background: none; border: none; color: #dc3545; cursor: pointer; padding: 0 0.25rem;" title="Remove this alias">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <span style="color: #888;">No aliases</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td style="font-size: 0.9rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ disc.description or '—' }}
+                    </td>
+                    <td style="text-align: center; white-space: nowrap;">
+                        <button onclick="openEditModal('{{ disc.name }}', {{ disc.aliases|tojson }})" class="btn btn-sm btn-secondary" title="Edit discipline">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button onclick="openAddAliasModal('{{ disc.name }}')" class="btn btn-sm btn-secondary" title="Add alias">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                        <button onclick="deleteDiscipline('{{ disc.name }}', event)" class="btn btn-sm btn-danger" title="Delete discipline">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: 3rem;">
+    <p style="color: #888; font-size: 1.1rem;">No disciplines found</p>
+</div>
+{% endif %}
+
+<!-- Create Discipline Modal -->
+<div id="createModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; padding: 2rem;">
+    <div style="background: white; padding: 2rem; border-radius: 0.75rem; max-width: 500px; margin: 2rem auto; box-shadow: 0 20px 25px rgba(0,0,0,0.15);">
+        <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Create New Discipline</h2>
+        <form onsubmit="createDiscipline(event)">
+            <div style="margin-bottom: 1.5rem;">
+                <label class="form-label">Discipline Name</label>
+                <input type="text" id="createName" placeholder="e.g., Western Dressage" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem;">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label class="form-label">Aliases (comma-separated)</label>
+                <input type="text" id="createAliases" placeholder="e.g., western dressage, wd" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem;">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="createIsCompetition" checked>
+                    <span>Competition</span>
+                </label>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label class="form-label">Description</label>
+                <input type="text" id="createDescription" placeholder="e.g., Western style dressage competition" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem;">
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="closeCreateModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Discipline Modal -->
+<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; padding: 2rem;">
+    <div style="background: white; padding: 2rem; border-radius: 0.75rem; max-width: 500px; margin: 2rem auto; box-shadow: 0 20px 25px rgba(0,0,0,0.15);">
+        <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Edit Discipline: <span id="editDisciplineName"></span></h2>
+        <form onsubmit="editDiscipline(event)">
+            <div style="margin-bottom: 1.5rem;">
+                <label class="form-label">New Name</label>
+                <input type="text" id="editName" placeholder="Leave blank to keep current name" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem;">
+                <small style="color: #666; display: block; margin-top: 0.25rem;">Current: <span id="editCurrentName"></span></small>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="closeEditModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Alias Modal -->
+<div id="addAliasModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; padding: 2rem;">
+    <div style="background: white; padding: 2rem; border-radius: 0.75rem; max-width: 500px; margin: 2rem auto; box-shadow: 0 20px 25px rgba(0,0,0,0.15);">
+        <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Add Alias to <span id="addAliasDisciplineName"></span></h2>
+        <form onsubmit="addAlias(event)">
+            <div style="margin-bottom: 1.5rem;">
+                <label class="form-label">Alias</label>
+                <input type="text" id="addAliasValue" placeholder="e.g., wd, western" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem;">
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="closeAddAliasModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+}
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+.btn-primary:hover {
+    background: #0056b3;
+}
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+.btn-secondary:hover {
+    background: #545b62;
+}
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+.btn-danger:hover {
+    background: #c82333;
+}
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+.form-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+</style>
+
+<script>
+let currentEditDiscipline = null;
+let currentAddAliasDiscipline = null;
+
+function openCreateModal() {
+    document.getElementById('createModal').style.display = 'block';
+}
+
+function closeCreateModal() {
+    document.getElementById('createModal').style.display = 'none';
+    document.getElementById('createName').value = '';
+    document.getElementById('createAliases').value = '';
+    document.getElementById('createIsCompetition').checked = true;
+    document.getElementById('createDescription').value = '';
+}
+
+function openEditModal(name, aliases) {
+    currentEditDiscipline = name;
+    document.getElementById('editDisciplineName').textContent = name;
+    document.getElementById('editCurrentName').textContent = name;
+    document.getElementById('editName').value = '';
+    document.getElementById('editModal').style.display = 'block';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+    currentEditDiscipline = null;
+}
+
+function openAddAliasModal(name) {
+    currentAddAliasDiscipline = name;
+    document.getElementById('addAliasDisciplineName').textContent = name;
+    document.getElementById('addAliasValue').value = '';
+    document.getElementById('addAliasModal').style.display = 'block';
+}
+
+function closeAddAliasModal() {
+    document.getElementById('addAliasModal').style.display = 'none';
+    currentAddAliasDiscipline = null;
+}
+
+function createDiscipline(event) {
+    event.preventDefault();
+    const name = document.getElementById('createName').value.trim();
+    const aliasesStr = document.getElementById('createAliases').value.trim();
+    const isCompetition = document.getElementById('createIsCompetition').checked;
+    const description = document.getElementById('createDescription').value.trim();
+
+    if (!name) {
+        alert('Discipline name is required');
+        return;
+    }
+
+    const aliases = aliasesStr ? aliasesStr.split(',').map(a => a.trim()).filter(a => a) : [];
+
+    fetch('/api/disciplines/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, aliases, is_competition: isCompetition, description })
+    })
+    .then(r => {
+        if (r.ok) {
+            alert('Discipline created successfully. Please refresh the page.');
+            closeCreateModal();
+            location.reload();
+        } else {
+            return r.text().then(t => {
+                const msg = JSON.parse(t).detail || 'Error creating discipline';
+                alert('Error: ' + msg);
+            });
+        }
+    })
+    .catch(e => alert('Error: ' + e.message));
+}
+
+function editDiscipline(event) {
+    event.preventDefault();
+    const newName = document.getElementById('editName').value.trim();
+
+    if (!newName) {
+        alert('New name cannot be empty');
+        return;
+    }
+
+    fetch(`/api/disciplines/${encodeURIComponent(currentEditDiscipline)}/edit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_name: newName })
+    })
+    .then(r => {
+        if (r.ok) {
+            alert('Discipline renamed successfully. Please refresh the page.');
+            closeEditModal();
+            location.reload();
+        } else {
+            return r.text().then(t => {
+                const msg = JSON.parse(t).detail || 'Error editing discipline';
+                alert('Error: ' + msg);
+            });
+        }
+    })
+    .catch(e => alert('Error: ' + e.message));
+}
+
+function addAlias(event) {
+    event.preventDefault();
+    const alias = document.getElementById('addAliasValue').value.trim();
+
+    if (!alias) {
+        alert('Alias cannot be empty');
+        return;
+    }
+
+    fetch(`/api/disciplines/${encodeURIComponent(currentAddAliasDiscipline)}/aliases/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alias })
+    })
+    .then(r => {
+        if (r.ok) {
+            alert('Alias added successfully. Please refresh the page.');
+            closeAddAliasModal();
+            location.reload();
+        } else {
+            return r.text().then(t => {
+                const msg = JSON.parse(t).detail || 'Error adding alias';
+                alert('Error: ' + msg);
+            });
+        }
+    })
+    .catch(e => alert('Error: ' + e.message));
+}
+
+function removeAlias(discipline, alias, event) {
+    event.preventDefault();
+    if (!confirm(`Remove alias "${alias}" from "${discipline}"?`)) return;
+
+    fetch(`/api/disciplines/${encodeURIComponent(discipline)}/aliases/remove`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alias })
+    })
+    .then(r => {
+        if (r.ok) {
+            alert('Alias removed successfully. Please refresh the page.');
+            location.reload();
+        } else {
+            return r.text().then(t => {
+                const msg = JSON.parse(t).detail || 'Error removing alias';
+                alert('Error: ' + msg);
+            });
+        }
+    })
+    .catch(e => alert('Error: ' + e.message));
+}
+
+function deleteDiscipline(name, event) {
+    event.preventDefault();
+    if (!confirm(`Delete discipline "${name}" and all its aliases? This cannot be undone.`)) return;
+
+    fetch(`/api/disciplines/${encodeURIComponent(name)}/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(r => {
+        if (r.ok) {
+            alert('Discipline deleted successfully. Please refresh the page.');
+            location.reload();
+        } else {
+            return r.text().then(t => {
+                const msg = JSON.parse(t).detail || 'Error deleting discipline';
+                alert('Error: ' + msg);
+            });
+        }
+    })
+    .catch(e => alert('Error: ' + e.message));
+}
+
+// Close modals when clicking outside them
+document.addEventListener('click', function(event) {
+    const createModal = document.getElementById('createModal');
+    const editModal = document.getElementById('editModal');
+    const addAliasModal = document.getElementById('addAliasModal');
+
+    if (event.target === createModal) closeCreateModal();
+    if (event.target === editModal) closeEditModal();
+    if (event.target === addAliasModal) closeAddAliasModal();
+});
+
+// Close modals on Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeCreateModal();
+        closeEditModal();
+        closeAddAliasModal();
+    }
+});
+</script>
+{% endblock %}

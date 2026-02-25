@@ -5,19 +5,14 @@ import logging
 import re
 from datetime import datetime
 
-import httpx
-from bs4 import BeautifulSoup
 from docx import Document
 
-from app.parsers.base import BaseParser
+from app.parsers.bases import SingleVenueParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import infer_discipline, is_future_event
-from app.schemas import ExtractedCompetition
+from app.parsers.utils import infer_discipline
+from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
-
-VENUE_NAME = "Derby College"
-VENUE_POSTCODE = "DE7 6DN"
 
 # Date regex: "27th September", "1st Feb", "23rd Nov"
 _DATE_RE = re.compile(
@@ -72,15 +67,18 @@ def _parse_date_no_year(text: str, schedule_start_year: int) -> str | None:
 
 
 @register_parser("derby_college")
-class DerbyCollegeParser(BaseParser):
+class DerbyCollegeParser(SingleVenueParser):
     """Parser for Derby College Equestrian Centre — events published as .docx files.
 
     The main page links to WordPress Download Manager wrapper pages.
     Each wrapper embeds a data-downloadurl pointing to the actual .docx file.
     """
 
-    async def fetch_and_parse(self, url: str) -> list[ExtractedCompetition]:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+    VENUE_NAME = "Derby College"
+    VENUE_POSTCODE = "DE7 6DN"
+
+    async def fetch_and_parse(self, url: str) -> list[ExtractedEvent]:
+        async with self._make_client() as client:
             # Step 1: Find all .docx download links from the main page
             download_links = await self._find_download_links(client, url)
             logger.info("Derby College: found %d download links", len(download_links))
@@ -95,7 +93,7 @@ class DerbyCollegeParser(BaseParser):
                     schedule_links.append((link_url, link_text))
 
             # Process dedicated schedules first (they have class details)
-            all_competitions: list[ExtractedCompetition] = []
+            all_competitions: list[ExtractedEvent] = []
             seen_dates: set[str] = set()
 
             for link_url, link_text in schedule_links:
@@ -111,12 +109,10 @@ class DerbyCollegeParser(BaseParser):
                     if c.date_start not in seen_dates:
                         all_competitions.append(c)
 
-        logger.info("Derby College: extracted %d competitions total", len(all_competitions))
+        self._log_result("Derby College", len(all_competitions))
         return all_competitions
 
-    async def _process_download(
-        self, client: httpx.AsyncClient, link_url: str, link_text: str
-    ) -> list[ExtractedCompetition]:
+    async def _process_download(self, client, link_url, link_text):
         """Download and parse a single .docx file."""
         try:
             docx_url = await self._resolve_download_url(client, link_url)
@@ -136,13 +132,9 @@ class DerbyCollegeParser(BaseParser):
     # Keywords in download URLs that indicate equestrian schedules
     _SCHEDULE_SLUGS = ["sj-", "dressage", "whats-on", "showjump", "schedule"]
 
-    async def _find_download_links(
-        self, client: httpx.AsyncClient, url: str
-    ) -> list[tuple[str, str]]:
+    async def _find_download_links(self, client, url):
         """Find equestrian schedule download wrapper URLs from the main page."""
-        resp = await client.get(url)
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
+        soup = await self._fetch_html(client, url)
 
         links: list[tuple[str, str]] = []
         for a in soup.find_all("a", href=True):
@@ -156,13 +148,9 @@ class DerbyCollegeParser(BaseParser):
 
         return links
 
-    async def _resolve_download_url(
-        self, client: httpx.AsyncClient, wrapper_url: str
-    ) -> str | None:
+    async def _resolve_download_url(self, client, wrapper_url):
         """Fetch the WPDM wrapper page and extract the actual download URL."""
-        resp = await client.get(wrapper_url)
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
+        soup = await self._fetch_html(client, wrapper_url)
 
         # Look for data-downloadurl attribute on the download link
         dl_link = soup.find("a", class_="wpdm-download-link")
@@ -176,9 +164,7 @@ class DerbyCollegeParser(BaseParser):
 
         return None
 
-    async def _download_docx(
-        self, client: httpx.AsyncClient, url: str
-    ) -> bytes | None:
+    async def _download_docx(self, client, url):
         """Download the actual .docx file."""
         resp = await client.get(url)
         resp.raise_for_status()
@@ -189,7 +175,7 @@ class DerbyCollegeParser(BaseParser):
             return None
         return resp.content
 
-    def _parse_docx(self, docx_bytes: bytes, source_url: str) -> list[ExtractedCompetition]:
+    def _parse_docx(self, docx_bytes, source_url):
         """Parse a .docx file and extract competitions."""
         doc = Document(io.BytesIO(docx_bytes))
 
@@ -205,12 +191,8 @@ class DerbyCollegeParser(BaseParser):
             return self._parse_schedule(doc, source_url, "Dressage")
         return []
 
-    def _detect_schedule_year(self, doc: Document, source_url: str = "") -> int:
-        """Detect the academic year start from document text or URL.
-
-        Looks for patterns like '25-26', '2025/26' in doc text first,
-        then in the URL. Falls back to current year if nothing found.
-        """
+    def _detect_schedule_year(self, doc, source_url=""):
+        """Detect the academic year start from document text or URL."""
         all_text = " ".join(p.text for p in doc.paragraphs)
         search_text = all_text + " " + source_url
 
@@ -222,20 +204,21 @@ class DerbyCollegeParser(BaseParser):
                 return 2000 + int(start)
             return int(start)
 
-        # Look for standalone year after month/season: "sep-2025", "September 2025"
-        m = re.search(r"(?:sep|oct|nov|dec|jan|feb|mar|apr|may|jun|jul|aug)\w*[-\s]+(\d{4})", search_text, re.IGNORECASE)
+        # Look for standalone year after month/season
+        m = re.search(
+            r"(?:sep|oct|nov|dec|jan|feb|mar|apr|may|jun|jul|aug)\w*[-\s]+(\d{4})",
+            search_text,
+            re.IGNORECASE,
+        )
         if m:
-            year = int(m.group(1))
-            return year
+            return int(m.group(1))
 
         return datetime.now().year
 
-    def _parse_schedule(
-        self, doc: Document, source_url: str, discipline: str
-    ) -> list[ExtractedCompetition]:
+    def _parse_schedule(self, doc, source_url, discipline):
         """Parse SJ or Dressage schedule .docx (table with dates in col 0, classes across)."""
         schedule_year = self._detect_schedule_year(doc, source_url)
-        competitions: list[ExtractedCompetition] = []
+        competitions: list[ExtractedEvent] = []
 
         # Find the main schedule table (first table with >2 rows)
         schedule_table = None
@@ -262,9 +245,6 @@ class DerbyCollegeParser(BaseParser):
             if not date_start:
                 continue
 
-            if not is_future_event(date_start):
-                continue
-
             # Collect class descriptions for this date
             classes = []
             is_special = False
@@ -272,28 +252,23 @@ class DerbyCollegeParser(BaseParser):
                 cell_text = cell.text.strip()
                 if cell_text and cell_text not in classes:
                     classes.append(cell_text)
-                    # Check for special events (merged cells with same text)
                     if "separate schedule" in cell_text.lower():
                         is_special = True
 
             if is_special:
-                # Special event like XMAS SHOW — use the cell text as name
                 event_name = classes[0].split("(")[0].strip() if classes else f"{discipline} Special"
                 name = f"Derby College {event_name}"
             else:
                 name = f"Derby College Unaffiliated {discipline}"
-                # Build class list from headers + descriptions
                 classes = [
                     f"{class_names[i]}: {cells[i+1].text.strip()}"
                     for i in range(min(len(class_names), len(cells) - 1))
                     if cells[i+1].text.strip()
                 ]
 
-            competitions.append(ExtractedCompetition(
+            competitions.append(self._build_event(
                 name=name,
                 date_start=date_start,
-                venue_name=VENUE_NAME,
-                venue_postcode=VENUE_POSTCODE,
                 discipline=discipline,
                 has_pony_classes=True,
                 classes=classes,
@@ -302,12 +277,10 @@ class DerbyCollegeParser(BaseParser):
 
         return competitions
 
-    def _parse_whats_on(
-        self, doc: Document, source_url: str
-    ) -> list[ExtractedCompetition]:
+    def _parse_whats_on(self, doc, source_url):
         """Parse the What's On .docx (2-column table: Date | Event)."""
         schedule_year = self._detect_schedule_year(doc, source_url)
-        competitions: list[ExtractedCompetition] = []
+        competitions: list[ExtractedEvent] = []
 
         if not doc.tables:
             return competitions
@@ -346,21 +319,16 @@ class DerbyCollegeParser(BaseParser):
             if not date_start:
                 continue
 
-            if not is_future_event(date_start, date_end):
-                continue
-
             discipline = infer_discipline(event_text)
 
             # Standardise name to match schedule format for upsert dedup
             name = re.sub(r"(?i)\bshowjumping\b", "Show Jumping", event_text)
             name = name.split("-")[0].strip()  # Remove trailing notes like "- fancy dress"
 
-            competitions.append(ExtractedCompetition(
+            competitions.append(self._build_event(
                 name=name,
                 date_start=date_start,
                 date_end=date_end,
-                venue_name=VENUE_NAME,
-                venue_postcode=VENUE_POSTCODE,
                 discipline=discipline,
                 has_pony_classes=True,
                 classes=[],

@@ -8,8 +8,12 @@
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| 26 source parsers | Done | BS, BE, BD, PC, HorseMonkey, Equipe, NSEA, etc. |
-| Venue normalisation | Done | Suffix stripping, alias mapping, title-casing |
+| 43 source parsers | Done | BS, BE, BD, PC, HorseMonkey, Equipe, NSEA, etc. |
+| Pure extraction pattern | Done | All parsers extract without filtering/classification (Feb 2026) |
+| EventClassifier service | Done | Single source of truth for event classification (Feb 2026) |
+| Venue normalisation | Done | Iterative suffix stripping, 170+ aliases, address truncation, junk guards |
+| Venue matching pipeline | Done | VenueMatcher: alias → prefix → postcode → new venue |
+| Postcode normalisation | Done | Uppercase, space insertion, invalid format rejection |
 | Discipline normalisation | Done | 70+ raw values mapped to 15 canonical categories |
 | Non-competition filtering | Done | Venue hire + training hidden by default via `is_competition` |
 | Geocoding + distance | Done | postcodes.io + Nominatim, haversine from home postcode |
@@ -19,7 +23,28 @@
 | iCalendar export | Done | Per-event .ics download with VEVENT |
 | Scheduled daily scans | Done | APScheduler cron at 06:00 |
 | Dark/light theme | Done | CSS custom properties, localStorage persistence |
-| Source management UI | Done | Add/edit/delete sources, trigger scans |
+| Source auto-seeding | Done | `_SOURCE_DEFS` in scanner.py, `seed_sources()` on startup |
+| Admin view | Done | Hidden `/admin` page — scan status + triggers (no nav link) |
+| Data resilience | Done | Full destroy → rebuild → rescan recovers all data |
+| British Dressage seed | Done | JSON fallback when BD API is down |
+| Observability stack | Done | Prometheus metrics, Grafana dashboards, Loki logs, cAdvisor monitoring |
+
+### Recent Major Refactoring (Feb 2026)
+
+**Event Classification Refactoring** — See [REFACTORING_COMPLETE.md](../REFACTORING_COMPLETE.md)
+
+Completed a comprehensive architectural refactoring to centralize event classification:
+
+- ✅ Created `EventClassifier` service as single source of truth
+- ✅ Renamed `ExtractedCompetition` → `ExtractedEvent` for clarity
+- ✅ Updated all 43 parsers to purely extract (no filtering or classification)
+- ✅ Removed 22+ parsers' `is_future_event()` date filtering
+- ✅ Removed 16+ parsers' scattered `classify_event()` calls
+- ✅ Simplified scanner classification logic (13 lines → 4 lines)
+- ✅ All syntax checks passed; ready for integration testing
+
+**Impact**: Abbey Farm training clinics now properly classified and visible. Future
+maintenance is easier with classification rules centralized in one place.
 
 ---
 
@@ -67,17 +92,15 @@
 
 ## Priority 2: Data Quality
 
-### 2.1 Venue Deduplication Dashboard
+### 2.1 Venue Deduplication ~~Dashboard~~ (Done)
 
-**User story**: "As a maintainer, I want to see likely duplicate venues and merge them."
+**Implemented**: Architectural deduplication via three layers:
+1. `normalise_venue_name()` — iterative suffix stripping, address truncation, junk guards
+2. `venue_seeds.json` aliases (230+ entries) — spelling corrections, event-name→venue mappings
+3. `VenueIndex.prefix_match()` — catches variants not covered by suffixes/aliases
+4. `scripts/renormalise_venues.py` — applies normalisation to existing DB records
 
-**Approach**:
-- Add `/admin/venues` page showing venues with similar names (Levenshtein distance < 3)
-- Group candidates: "Eland Lodge" vs "Eland Lodge Equestrian" vs "Eland Lodge EC"
-- One-click merge: update all competition records to the canonical name
-- Log merges for audit trail
-
-**Effort**: Medium. New page + merge logic. ~1 day.
+**Result**: 661 unique venues, 0 exact duplicates, 1 legitimate multi-venue postcode.
 
 ### 2.2 Stale Event Detection
 

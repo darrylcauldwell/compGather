@@ -1,113 +1,81 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import re
 from datetime import date
 
-import httpx
 from bs4 import BeautifulSoup
 
-from app.parsers.base import BaseParser
+from app.parsers.bases import TwoPhaseParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import extract_postcode, is_future_event
-from app.schemas import ExtractedCompetition
+from app.parsers.utils import extract_postcode
+from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.asao.co.uk"
-
-# Search Filter Pro AJAX endpoint for upcoming events (form id 4898)
 LISTING_URL = f"{BASE_URL}/"
 
-# Ordinal date patterns: "2nd April 2026", "13th-16th May 2026", "9-12 July 2024"
 _SINGLE_DATE_RE = re.compile(
     r"(\d{1,2})(?:st|nd|rd|th)?\s+"
     r"(January|February|March|April|May|June|July|August|September|October|November|December)"
-    r"\s+(\d{4})",
-    re.IGNORECASE,
+    r"\s+(\d{4})", re.IGNORECASE,
 )
-
-# Range: "13th-16th May 2026" or "9-12 July 2024" or "28th June - 1st July 2026"
 _RANGE_DATE_RE = re.compile(
     r"(\d{1,2})(?:st|nd|rd|th)?\s*[-–]\s*(\d{1,2})(?:st|nd|rd|th)?\s+"
     r"(January|February|March|April|May|June|July|August|September|October|November|December)"
-    r"\s+(\d{4})",
-    re.IGNORECASE,
+    r"\s+(\d{4})", re.IGNORECASE,
 )
-
-# Cross-month range: "28th June - 1st July 2026"
 _CROSS_MONTH_RE = re.compile(
     r"(\d{1,2})(?:st|nd|rd|th)?\s+"
     r"(January|February|March|April|May|June|July|August|September|October|November|December)"
-    r"\s*[-–]\s*"
-    r"(\d{1,2})(?:st|nd|rd|th)?\s+"
+    r"\s*[-–]\s*(\d{1,2})(?:st|nd|rd|th)?\s+"
     r"(January|February|March|April|May|June|July|August|September|October|November|December)"
-    r"\s+(\d{4})",
-    re.IGNORECASE,
+    r"\s+(\d{4})", re.IGNORECASE,
 )
-
 _MONTH_MAP = {
     "january": 1, "february": 2, "march": 3, "april": 4,
     "may": 5, "june": 6, "july": 7, "august": 8,
     "september": 9, "october": 10, "november": 11, "december": 12,
 }
 
-_CONCURRENCY = 8
-
 
 @register_parser("asao")
-class ASAOParser(BaseParser):
+class ASAOParser(TwoPhaseParser):
     """Parser for ASAO (Association of Show & Agricultural Organisations).
 
-    Phase 1: Paginate through Search Filter Pro AJAX listing (8 events/page).
-    Phase 2: Fetch detail pages concurrently for venue, postcode, and coordinates.
+    Phase 1: Paginate through Search Filter Pro AJAX listing.
+    Phase 2: Fetch detail pages concurrently for venue, postcode, coordinates.
     """
 
-    async def fetch_and_parse(self, url: str) -> list[ExtractedCompetition]:
-        today = date.today()
-        async with httpx.AsyncClient(
-            follow_redirects=True,
-            timeout=30.0,
-            headers={"User-Agent": "EquiCalendar/1.0"},
-        ) as client:
-            # Phase 1: discover events from paginated listing
+    CONCURRENCY = 8
+
+    async def fetch_and_parse(self, url: str) -> list[ExtractedEvent]:
+        async with self._make_client() as client:
             stubs = await self._scrape_listing(client)
             logger.info("ASAO: %d events from listing pages", len(stubs))
 
-            # Phase 2: fetch detail pages concurrently
-            competitions = await self._enrich_all(client, stubs, today)
+            competitions = await self._concurrent_fetch(
+                stubs,
+                lambda stub: self._parse_detail(client, stub),
+                fallback_fn=self._build_from_stub,
+            )
 
-        logger.info("ASAO: %d competitions extracted", len(competitions))
+        self._log_result("ASAO", len(competitions))
         return competitions
 
-    # ------------------------------------------------------------------
-    # Phase 1: Listing pages
-    # ------------------------------------------------------------------
-
-    async def _scrape_listing(self, client: httpx.AsyncClient) -> list[dict]:
-        """Paginate through the Search Filter Pro AJAX endpoint."""
-        stubs: list[dict] = []
-        seen_urls: set[str] = set()
-
-        for page in range(1, 20):  # safety limit
+    async def _scrape_listing(self, client):
+        stubs, seen_urls = [], set()
+        for page in range(1, 20):
             try:
-                resp = await client.get(
-                    LISTING_URL,
-                    params={
-                        "sfid": "4898",
-                        "sf_action": "get_data",
-                        "sf_data": "results",
-                        "sf_paged": str(page),
-                    },
+                data = await self._fetch_json(
+                    client, LISTING_URL,
+                    params={"sfid": "4898", "sf_action": "get_data", "sf_data": "results", "sf_paged": str(page)},
                 )
-                resp.raise_for_status()
-                data = resp.json()
                 html = data.get("results", "")
                 if not html or not html.strip():
                     break
-            except Exception as e:
-                logger.debug("ASAO: listing page %d failed: %s", page, e)
+            except Exception:
                 break
 
             soup = BeautifulSoup(html, "html.parser")
@@ -120,11 +88,9 @@ class ASAOParser(BaseParser):
                 if stub and stub["url"] not in seen_urls:
                     seen_urls.add(stub["url"])
                     stubs.append(stub)
-
         return stubs
 
-    def _parse_listing_item(self, item) -> dict | None:
-        """Parse a listing card for basic event info."""
+    def _parse_listing_item(self, item):
         h2 = item.find("h2")
         if not h2:
             return None
@@ -137,77 +103,34 @@ class ASAOParser(BaseParser):
         if not name or not url:
             return None
 
-        # Date from p.startDate
         date_el = item.find("p", class_="startDate")
-        date_text = date_el.get_text(strip=True) if date_el else ""
-
-        # Region from p.region
         region_el = item.find("p", class_="region")
-        region = region_el.get_text(strip=True) if region_el else ""
 
         return {
-            "name": name,
-            "url": url,
-            "date_text": date_text,
-            "region": region,
+            "name": name, "url": url,
+            "date_text": date_el.get_text(strip=True) if date_el else "",
+            "region": region_el.get_text(strip=True) if region_el else "",
         }
 
-    # ------------------------------------------------------------------
-    # Phase 2: Detail page enrichment
-    # ------------------------------------------------------------------
+    async def _parse_detail(self, client, stub):
+        soup = await self._fetch_html(client, stub["url"])
 
-    async def _enrich_all(
-        self, client: httpx.AsyncClient, stubs: list[dict], today: date
-    ) -> list[ExtractedCompetition]:
-        """Fetch detail pages concurrently."""
-        sem = asyncio.Semaphore(_CONCURRENCY)
-
-        async def enrich_one(stub: dict) -> ExtractedCompetition | None:
-            async with sem:
-                try:
-                    return await self._parse_detail(client, stub, today)
-                except Exception as e:
-                    logger.debug("ASAO: detail failed for %s: %s", stub["url"], e)
-                    return self._build_from_stub(stub, today)
-
-        tasks = [enrich_one(s) for s in stubs]
-        results = await asyncio.gather(*tasks)
-        return [c for c in results if c is not None]
-
-    async def _parse_detail(
-        self, client: httpx.AsyncClient, stub: dict, today: date
-    ) -> ExtractedCompetition | None:
-        """Parse an event detail page."""
-        resp = await client.get(stub["url"])
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
-
-        # Name from h1
         h1 = soup.find("h1")
         name = h1.get_text(strip=True) if h1 else stub["name"]
 
-        # Date from p.bigDate or listing fallback
         date_el = soup.find("p", class_="bigDate")
         date_text = date_el.get_text(strip=True) if date_el else stub["date_text"]
         date_start, date_end = self._parse_date_text(date_text)
-
         if not date_start:
-            # Try listing date as fallback
             date_start, date_end = self._parse_date_text(stub["date_text"])
-
         if not date_start:
             return None
-        if not is_future_event(date_start, date_end):
-            return None
 
-        # Address/postcode from p.address
-        venue_name = "TBC"
-        venue_postcode = None
+        venue_name, venue_postcode = "TBC", None
         addr_el = soup.find("p", class_="address")
         if addr_el:
             addr_text = addr_el.get_text(strip=True)
             venue_postcode = extract_postcode(addr_text)
-            # Use the address text as venue hint (strip postcode and ", UK")
             clean_addr = re.sub(r",?\s*UK\s*$", "", addr_text, flags=re.IGNORECASE)
             if venue_postcode:
                 idx = clean_addr.upper().find(venue_postcode.upper())
@@ -216,94 +139,66 @@ class ASAOParser(BaseParser):
             if clean_addr and len(clean_addr) > 2:
                 venue_name = clean_addr
 
-        # Lat/lng from div.marker
-        latitude = None
-        longitude = None
+        latitude, longitude = None, None
         marker = soup.find("div", class_="marker")
         if marker:
             try:
-                lat_str = marker.get("data-lat", "")
-                lng_str = marker.get("data-lng", "")
+                lat_str, lng_str = marker.get("data-lat", ""), marker.get("data-lng", "")
                 if lat_str and lng_str:
-                    latitude = float(lat_str)
-                    longitude = float(lng_str)
+                    latitude, longitude = float(lat_str), float(lng_str)
             except (ValueError, TypeError):
                 pass
 
-        # Website URL
         website = None
         web_link = soup.find("a", class_="visitWeb")
         if web_link:
             website = web_link.get("href")
 
-        return ExtractedCompetition(
-            name=name,
-            date_start=date_start,
+        return self._build_event(
+            name=name, date_start=date_start,
             date_end=date_end if date_end and date_end != date_start else None,
-            venue_name=venue_name,
-            venue_postcode=venue_postcode,
-            latitude=latitude,
-            longitude=longitude,
-            discipline="Agricultural Show",
-            has_pony_classes=False,
+            venue_name=venue_name, venue_postcode=venue_postcode,
+            latitude=latitude, longitude=longitude,
+            discipline="Agricultural Show", has_pony_classes=False,
             url=website or stub["url"],
         )
 
-    def _build_from_stub(self, stub: dict, today: date) -> ExtractedCompetition | None:
-        """Fallback: build from listing data when detail page fails."""
+    def _build_from_stub(self, stub):
         date_start, date_end = self._parse_date_text(stub["date_text"])
         if not date_start:
             return None
-        if not is_future_event(date_start, date_end):
-            return None
-
-        return ExtractedCompetition(
-            name=stub["name"],
-            date_start=date_start,
+        return self._build_event(
+            name=stub["name"], date_start=date_start,
             date_end=date_end if date_end and date_end != date_start else None,
-            venue_name="TBC",
-            discipline="Agricultural Show",
-            has_pony_classes=False,
-            url=stub["url"],
+            venue_name="TBC", discipline="Agricultural Show",
+            has_pony_classes=False, url=stub["url"],
         )
 
-    # ------------------------------------------------------------------
-    # Date parsing
-    # ------------------------------------------------------------------
-
-    def _parse_date_text(self, text: str) -> tuple[str | None, str | None]:
-        """Parse various date formats from ASAO listings."""
+    def _parse_date_text(self, text):
         if not text:
             return None, None
 
-        # Try cross-month range first: "28th June - 1st July 2026"
         m = _CROSS_MONTH_RE.search(text)
         if m:
             start = self._build_date(m.group(1), m.group(2), m.group(5))
             end = self._build_date(m.group(3), m.group(4), m.group(5))
             return start, end
 
-        # Try same-month range: "13th-16th May 2026" or "9-12 July 2024"
         m = _RANGE_DATE_RE.search(text)
         if m:
             start = self._build_date(m.group(1), m.group(3), m.group(4))
             end = self._build_date(m.group(2), m.group(3), m.group(4))
             return start, end
 
-        # Try single date: "2nd April 2026"
         m = _SINGLE_DATE_RE.search(text)
         if m:
-            start = self._build_date(m.group(1), m.group(2), m.group(3))
-            return start, None
+            return self._build_date(m.group(1), m.group(2), m.group(3)), None
 
         return None, None
 
-    def _build_date(self, day: str, month_name: str, year: str) -> str | None:
-        """Build ISO date from components."""
+    def _build_date(self, day, month_name, year):
         try:
             m = _MONTH_MAP[month_name.lower()]
-            d = int(day)
-            y = int(year)
-            return date(y, m, d).isoformat()
+            return date(int(year), m, int(day)).isoformat()
         except (KeyError, ValueError):
             return None

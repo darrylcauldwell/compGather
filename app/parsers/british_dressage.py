@@ -1,67 +1,68 @@
 from __future__ import annotations
 
 import html
+import json
 import logging
-from datetime import datetime
+from pathlib import Path
 
-import httpx
-
-from app.parsers.base import BaseParser
+from app.parsers.bases import HttpParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import is_future_event
-from app.schemas import ExtractedCompetition
+from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
 
 API_URL = "https://britishdressage.online/api/events/getByPublicFilter"
 DETAIL_URL = "https://britishdressage.online/schedule/{id}"
+SEED_FILE = Path(__file__).parent / "british_dressage_seed.json"
 
-# Status codes: 5 = Cancelled, 6 = Verified
 CANCELLED_STATUS = 5
 
-# Pony/junior keywords in class_range or show name
 PONY_KEYWORDS_BD = [
     "pony", "yr", "jr", "junior", "young horse", "young pony", "yh", "yp",
 ]
 
 
 @register_parser("british_dressage")
-class BritishDressageParser(BaseParser):
+class BritishDressageParser(HttpParser):
     """Parser for britishdressage.online — JSON API.
 
     Single POST request returns all events (~1,300) as structured JSON.
     No authentication or pagination required.
     """
 
-    async def fetch_and_parse(self, url: str) -> list[ExtractedCompetition]:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=60.0) as client:
-            resp = await client.post(
-                API_URL,
-                json={},
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
-            )
-            resp.raise_for_status()
-            data = resp.json()
+    TIMEOUT = 60.0
 
-        rows = data.get("data", [])
-        total = data.get("recordsTotal", len(rows))
-        logger.info("British Dressage: %d events from API (total: %d)", len(rows), total)
+    async def fetch_and_parse(self, url: str) -> list[ExtractedEvent]:
+        try:
+            async with self._make_client() as client:
+                resp = await client.post(
+                    API_URL,
+                    json={},
+                    headers={
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                    },
+                )
+                resp.raise_for_status()
+                data = resp.json()
 
-        competitions: list[ExtractedCompetition] = []
-        for row in rows:
-            comp = self._row_to_competition(row)
-            if comp:
-                competitions.append(comp)
+            rows = data.get("data", [])
+            total = data.get("recordsTotal", len(rows))
+            logger.info("British Dressage: %d events from API (total: %d)", len(rows), total)
 
-        logger.info("British Dressage: extracted %d competitions", len(competitions))
-        return competitions
+            competitions: list[ExtractedEvent] = []
+            for row in rows:
+                comp = self._row_to_competition(row)
+                if comp:
+                    competitions.append(comp)
 
-    def _row_to_competition(self, row: dict) -> ExtractedCompetition | None:
-        """Convert an API row to an ExtractedCompetition."""
-        # Skip cancelled events
+            self._log_result("British Dressage", len(competitions))
+            return competitions
+        except Exception:
+            logger.warning("British Dressage API unavailable, falling back to seed file")
+            return self._load_seed()
+
+    def _row_to_competition(self, row: dict) -> ExtractedEvent | None:
         if row.get("event_status_id") == CANCELLED_STATUS:
             return None
         if row.get("status", "").lower() == "cancelled":
@@ -75,46 +76,53 @@ class BritishDressageParser(BaseParser):
         if not name or not start:
             return None
 
-        date_start = self._parse_datetime(start)
-        date_end = self._parse_datetime(end)
-
+        date_start = self._parse_date(start)
+        date_end = self._parse_date(end)
         if not date_start:
             return None
 
-        if not is_future_event(date_start, date_end):
-            return None
-
-        # Parse class range into classes list
         class_range = row.get("class_range", "") or ""
         classes = [c.strip() for c in class_range.split("+") if c.strip()] if class_range else []
 
-        # Detect pony/junior classes
         check_text = f"{name} {class_range}".lower()
         has_pony = any(kw in check_text for kw in PONY_KEYWORDS_BD)
 
-        # Build detail URL
         event_id = row.get("id")
         detail_url = DETAIL_URL.format(id=event_id) if event_id else None
 
-        return ExtractedCompetition(
+        return self._build_event(
             name=name,
             date_start=date_start,
             date_end=date_end if date_end != date_start else None,
             venue_name=venue_name or "TBC",
-            venue_postcode=None,  # Not available from listing API
             discipline="Dressage",
             has_pony_classes=has_pony,
             classes=classes,
             url=detail_url or "https://britishdressage.online/",
         )
 
-    def _parse_datetime(self, dt_str: str) -> str | None:
-        """Parse 'YYYY-MM-DD HH:MM:SS' to 'YYYY-MM-DD'."""
-        if not dt_str:
-            return None
-        for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d"]:
-            try:
-                return datetime.strptime(dt_str.strip(), fmt).strftime("%Y-%m-%d")
-            except ValueError:
+    def _load_seed(self) -> list[ExtractedEvent]:
+        if not SEED_FILE.exists():
+            logger.error("British Dressage seed file not found: %s", SEED_FILE)
+            return []
+        rows = json.loads(SEED_FILE.read_text())
+        competitions: list[ExtractedEvent] = []
+        for row in rows:
+            date_start = row.get("date_start")
+            if not date_start:
                 continue
-        return None
+            competitions.append(self._build_event(
+                name=row["name"],
+                date_start=date_start,
+                date_end=row.get("date_end"),
+                venue_name=row.get("venue_name") or "TBC",
+                venue_postcode=row.get("venue_postcode"),
+                latitude=row.get("latitude"),
+                longitude=row.get("longitude"),
+                discipline=row.get("discipline", "Dressage"),
+                has_pony_classes=row.get("has_pony_classes", False),
+                classes=[],
+                url=row.get("url"),
+            ))
+        logger.info("British Dressage: loaded %d competitions from seed file", len(competitions))
+        return competitions

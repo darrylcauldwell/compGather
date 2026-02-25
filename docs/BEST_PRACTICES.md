@@ -1,6 +1,101 @@
-# Best Practices Audit
+# Engineering Practices & Best Practices
 
-> Common pitfalls for scraping aggregators and how EquiCalendar avoids (or should avoid) them.
+> Architecture patterns, design principles, and common pitfalls for scraping aggregators.
+
+---
+
+## Design Principles
+
+### Pure Extraction Pattern
+
+**Core Rule**: Parsers extract only; they do not filter or classify.
+
+All parsers should:
+- ✅ Extract **all** events from a source (past, present, future)
+- ✅ Return raw data as found, including hints (discipline, description, classes)
+- ❌ NOT filter by date (e.g., `if not is_future_event(date): continue`)
+- ❌ NOT classify events (e.g., `discipline, is_comp = classify_event(name)`)
+- ❌ NOT perform business logic (determining is_competition, type, etc.)
+
+**Why**: Separation of concerns. Parser responsibility is extraction; classification
+happens in `EventClassifier` during scanning. This makes parsers simpler, testable,
+and resilient to classification rule changes.
+
+**Example (Wrong)**:
+```python
+# BAD: Parser is doing classification
+def fetch_and_parse(self, url):
+    for item in items:
+        if not is_future_event(item.date):  # ❌ Filtering
+            continue
+        discipline, is_comp = classify_event(item.name)  # ❌ Classification
+        if is_comp:
+            results.append(item)  # ❌ Only keeping competitions
+```
+
+**Example (Right)**:
+```python
+# GOOD: Parser extracts everything; classification happens in scanner
+def fetch_and_parse(self, url):
+    for item in items:
+        result = ExtractedEvent(
+            name=item.name,
+            date_start=item.date,  # Extract all dates, no filtering
+            discipline=infer_discipline(item.name),  # Raw hint only
+            description=item.description,
+            # ... other fields
+        )
+        results.append(result)  # All events extracted
+```
+
+### Service-Oriented Architecture
+
+The application follows a layered service architecture:
+
+```
+Routers (HTTP endpoints)
+    ↓
+Services (business logic)
+    ├── Scanner (orchestrates extraction pipeline)
+    ├── EventClassifier (determines event type)
+    ├── VenueMatcher (resolves venue identity)
+    ├── Geocoder (resolves coordinates)
+    └── Scheduler (triggers scans)
+    ↓
+Parsers (extract from sources)
+    ├── Specific parsers (per-source)
+    └── Generic parser (LLM fallback)
+    ↓
+Database Layer (SQLAlchemy ORM)
+```
+
+**Benefits**:
+- Clear responsibility boundaries
+- Easy to test services in isolation
+- Changes to one service don't cascade
+- Dependency injection makes testing straightforward
+
+### Registry Pattern for Parsers
+
+Parsers self-register via decorator:
+
+```python
+@register_parser("british_showjumping")
+class BritishShowjumpingParser(BaseParser):
+    async def fetch_and_parse(self, url: str) -> list[ExtractedEvent]:
+        ...
+```
+
+**Mechanism**:
+1. `@register_parser` decorator stores class in a module-level registry dict
+2. `app/parsers/__init__.py` imports all parser modules (triggers registration)
+3. `get_parser(key)` looks up by key; returns instance or falls back to GenericParser
+4. Adding a new parser requires only: 1) implement class, 2) import in `__init__.py`
+
+**Advantages**:
+- No central file to update (no `if key == "x": return XParser()`)
+- Extensible: new parsers auto-register on import
+- Testable: tests can mock parser registry
 
 ---
 
@@ -53,6 +148,63 @@ properly closed after an error, it accumulates and eventually crashes the contai
 
 ---
 
+## EventClassifier: Single Source of Truth
+
+The `EventClassifier` service is responsible for determining event type across the
+entire application. No other code should duplicate this logic.
+
+### How It Works
+
+```python
+# In scanner.py during event processing:
+discipline, is_competition = EventClassifier.classify(
+    name=extracted_event.name,
+    discipline_hint=extracted_event.discipline,
+    description=extracted_event.description or ""
+)
+
+# Returns:
+# - discipline: Normalized canonical value (e.g., "Show Jumping", "Training", None)
+# - is_competition: Boolean indicating if event is a competition
+```
+
+### Classification Strategy
+
+1. **Non-competition keywords**: Check name/description for "Training", "Clinic", "Venue Hire"
+2. **Normalize discipline hint**: If parser provided a discipline, normalize it
+3. **Competition keywords**: Check name/description for "Show", "Competition", "XC", etc.
+4. **Default**: If no match, return `(None, True)` — assume competition unless proven otherwise
+
+### Why This Pattern
+
+- **Single Responsibility**: EventClassifier owns all classification logic
+- **Testable**: Unit test classification rules with parametrized test cases
+- **Maintainable**: Change rules in one place; affects entire app
+- **Replaceable**: Can swap strategy (e.g., ML classifier) without touching parsers/scanner
+- **Prevents Drift**: No scattered `classify_event()` calls in 16 different parsers
+
+### Adding New Classification Rules
+
+To handle a new event type:
+
+1. Add keyword check to `EventClassifier.classify()`:
+```python
+if "masterclass" in name.lower() or "masterclass" in description.lower():
+    return ("Training", False)
+```
+
+2. Add test case:
+```python
+def test_masterclass_is_training():
+    disc, is_comp = EventClassifier.classify("Mary's Masterclass")
+    assert is_comp is False
+    assert disc == "Training"
+```
+
+3. No parser changes needed. All parsers automatically use the new rule.
+
+---
+
 ## 2. Data Quality
 
 ### Pitfall: Venue name proliferation
@@ -61,15 +213,28 @@ The same physical venue can appear under 20+ spellings across different sources.
 "Eland Lodge", "Eland Lodge Equestrian Centre", "Eland Lodge EC", "ELAND LODGE
 EQUESTRIAN" all refer to one place.
 
-**Current mitigations**:
-- `normalise_venue_name()` strips suffixes, title-cases, applies aliases
-- Venues table provides a single source of truth for coordinates
+**Current mitigations (three layers of defence)**:
+1. **`normalise_venue_name()`** — catches most variants at ingest time:
+   - Iterative suffix stripping (handles "X Equestrian Centre Ltd" across passes)
+   - 30+ common suffixes (equestrian, equine, riding, etc.)
+   - Address truncation: strips trailing address parts after commas
+   - Junk guards: rejects URLs, postcodes, plus codes, very long strings (>100 chars)
+2. **`venue_seeds.json` aliases** (230+ entries) — known spelling corrections and
+   event-name-to-venue mappings (e.g. "Royal Bath & West Show" → "Royal Bath & West Showground")
+3. **`VenueIndex.prefix_match()`** — safety net catches incomplete suffix stripping.
+   If "Allens Hill" (known) is a prefix of "Allens Hill Competition & Livery Centre"
+   (incoming), auto-matches. Only fires when unambiguous (one unique venue_id).
 
-**Recommended additions**:
-- **Fuzzy matching on insert**: Before creating a new venue record, check if
-  any existing venue has a Levenshtein distance < 3. Flag for manual review.
-- **Periodic venue audit**: Query distinct `venue_name` values and cluster by
-  similarity. Surface groups with 2+ names to a maintenance dashboard.
+**Results**: 661 unique venues from 6,295 competitions across 26 sources.
+Zero exact duplicates. One legitimate multi-venue postcode (two showgrounds
+in rural Cornwall sharing TR3 7DP).
+
+**Ongoing maintenance**:
+- When a new venue variant appears: add to the venue's `"aliases"` array in
+  `app/venue_seeds.json`, rebuild, then run `scripts/renormalise_venues.py`
+  to fix existing DB records
+- British Showjumping county shows use event names as venue names — these need
+  manual alias mapping when new shows appear
 
 ### Pitfall: Discipline category drift
 
@@ -189,16 +354,13 @@ A malicious source could inject `javascript:` URLs.
 
 ### Pitfall: No authentication on admin endpoints
 
-`POST /api/scans`, `POST /api/sources`, `DELETE /api/sources` are open to anyone
-who can reach the app.
-
 **Current mitigations**:
-- Docker binds to `127.0.0.1:8001` only — not exposed to the internet
-
-**Recommendations for production exposure**:
-- Add API key authentication for write endpoints
-- Consider basic auth or OAuth2 for the sources management UI
-- Rate-limit the scan trigger endpoint to prevent abuse
+- Write API endpoints (`POST /api/scans`, source CRUD) require `X-API-Key` header
+- Sources are auto-seeded from code (`_SOURCE_DEFS` in scanner.py) — no runtime
+  creation needed
+- Admin UI (`GET /admin`) is a hidden page with no navigation link; provides
+  scan triggers only (no disable/delete controls)
+- Docker binds to `127.0.0.1:8001` only in dev
 
 ---
 
@@ -220,10 +382,19 @@ or support rollbacks.
 SQLite file is stored in a Docker named volume (`compgather_data`). This
 survives container recreates but NOT `docker compose down -v`.
 
-**Recommendations**:
-- Document the backup procedure (`docker cp` the .db file)
-- Add a periodic backup script (cron job that copies to host or S3)
-- For production: migrate to PostgreSQL with managed backups
+**Current mitigations (data resilience)**:
+- **Source auto-seeding**: All 26 sources defined in `_SOURCE_DEFS` in scanner.py.
+  `seed_sources()` runs on startup — a fresh DB auto-creates all sources.
+- **Venue seed data**: `app/venue_seeds.json` provides known postcodes, coordinates,
+  and aliases for ~570 venues. `seed_venue_postcodes()` runs on startup.
+- **Venue aliases**: 230+ aliases from `venue_seeds.json` migrated to DB on startup.
+- **British Dressage seed**: Temporary JSON fallback (`british_dressage_seed.json`)
+  ships in the Docker image for when the BD API is down.
+- **Full rebuild tested**: `docker compose down -v && docker compose up -d --build`
+  + full rescan recovers all data from source websites.
+- Backup script: `scripts/backup.sh` (7-day rotation)
+
+**For production**: migrate to PostgreSQL with managed backups.
 
 ### Pitfall: No structured logging
 
@@ -259,3 +430,219 @@ no frontend tests.
 **Target**: >80% coverage on `app/parsers/utils.py`, `app/services/scanner.py`,
 and `app/routers/`. Parsers are harder to test (fragile fixtures) but each
 should have at least one happy-path test.
+
+---
+
+## 7. Error Handling & Resilience
+
+### Parser Failure Modes
+
+Parsers can fail in several ways:
+
+| Failure | Symptom | Recovery |
+|---------|---------|----------|
+| **Source offline** | HTTP 500, connection timeout | Scan retries; old data kept; marked as stale |
+| **Source changed structure** | 0 competitions returned | Threshold alert; manual parser fix required |
+| **Invalid event data** | Missing required fields | Skip event, log warning, continue scanning |
+| **Rate limiting** | HTTP 429 | Backoff + retry in future scan |
+| **Playwright crash** | Browser OOM | Container restart; APScheduler reschedules |
+
+### Mitigation Strategies
+
+**1. Graceful Degradation**
+- If a parser fails, scanning continues with other sources
+- Old data is retained (competitions aren't deleted if a source fails)
+- Events marked with `last_seen_at` track freshness
+
+**2. Threshold Alerting**
+Monitor `competitions_found` count per source:
+- If count drops >50% vs. previous scan → log warning
+- If count is 0 → treat as error (possible parser breakage)
+- Alerts integrate with monitoring stack (Grafana)
+
+**3. Timeout & Resource Limits**
+- Parser timeout: 60 seconds hard limit
+- Playwright memory limit: container memory constraint
+- HTTP timeout: 30 seconds with connect timeout
+
+**4. Validation at Ingest**
+```python
+# In scanner.py: validate extracted event
+try:
+    parsed_date = datetime.fromisoformat(comp_data.date_start)
+except ValueError:
+    logger.warning(f"Invalid date for {comp_data.name}: {comp_data.date_start}")
+    continue  # Skip this event, don't crash
+```
+
+**5. Database Transactions**
+- Scanner wraps all upserts in transactions
+- Partial failures don't leave DB in inconsistent state
+- Scan record tracks `status` (pending, running, completed, failed)
+
+---
+
+## 8. Code Organization Principles
+
+### File Structure by Responsibility
+
+- **`app/models.py`**: SQLAlchemy ORM models (no business logic)
+- **`app/schemas.py`**: Pydantic request/response + ExtractedEvent (data contracts)
+- **`app/services/`**: Business logic (Scanner, EventClassifier, VenueMatcher, Geocoder)
+- **`app/parsers/`**: Data extraction (all parsers extend BaseParser)
+- **`app/routers/`**: HTTP endpoints (thin wrappers around services)
+- **`app/parsers/utils.py`**: Shared utilities (normalisation, regex, inference)
+
+**Why**: Clear separation of concerns. Models don't contain logic. Services don't
+know about HTTP. Routers don't contain business logic. Easy to test, refactor, extend.
+
+### Async/Await Principles
+
+The entire stack is async:
+
+```python
+# ✅ Good: All async, proper awaits
+async def fetch_and_parse(self, url: str) -> list[ExtractedEvent]:
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url)
+    return results
+
+# ✅ Good: Gather multiple async operations
+tasks = [parser.fetch_and_parse(url) for parser in parsers]
+results = await asyncio.gather(*tasks)
+
+# ❌ Bad: Blocking call in async context
+import requests  # ← blocking HTTP
+resp = requests.get(url)  # ← blocks entire event loop
+
+# ❌ Bad: No await on async function
+task = fetch_data()  # ← Task object, never executed
+```
+
+**Rationale**: Equestrian sources are slow (1-5s per source). Concurrent fetching
+reduces total scan time from ~2 minutes (sequential) to ~20 seconds (parallel).
+
+### Type Hints & Validation
+
+**Use Pydantic for all external data**:
+```python
+# Schema for parser output (validated at extraction time)
+class ExtractedEvent(BaseModel):
+    name: str  # Required
+    date_start: str  # ISO format
+    discipline: str | None = None  # Optional
+    has_pony_classes: bool = False  # Default
+
+# Usage: Parser returns ExtractedEvent instances
+# Pydantic validates on construction; invalid data raises ValidationError
+```
+
+**Use type hints for function signatures**:
+```python
+async def fetch_and_parse(self, url: str) -> list[ExtractedEvent]:
+    ...
+
+def normalise_venue_name(raw: str) -> str:
+    ...
+```
+
+**Benefits**: IDE autocomplete, type checking with `mypy`, self-documenting code.
+
+---
+
+## 9. Recent Lessons: Abbey Farm Training Clinics Issue
+
+### The Problem
+
+Training clinic events detected by Abbey Farm parser but missing from the UI. Investigation revealed a **logic bug caused by scattered classification responsibilities**.
+
+### Root Cause
+
+Multiple systems were trying to classify events:
+
+1. Parser called `classify_event("Maddy Moffet Training Clinic")` → `("Training", False)`
+2. Parser ignored the `is_competition=False` return value (logic was lost)
+3. Scanner called `normalise_discipline()` on the parser's discipline hint → `(None, True)`
+4. Scanner checked parser result and tried to override → complex 13-line override logic
+5. Result: `is_competition=True` was stored, but event was actually training → hidden from default view
+
+### The Solution
+
+**Centralize all classification in EventClassifier; parser is purely extractive.**
+
+**Before** (scattered logic):
+```python
+# In parser:
+disc, is_comp = classify_event(name)  # ← Parser classifies
+parsed_event = ExtractedCompetition(
+    name=name,
+    discipline=disc,
+    # ← is_competition NOT in schema
+)
+
+# In scanner:
+disc, is_comp = normalise_discipline(comp.discipline)
+name_disc, name_is_comp = classify_event(comp.name)  # ← Re-classifying!
+if not name_is_comp:
+    is_competition = False
+    if not disc or disc == comp.discipline:  # ← Complex override logic
+        disc = name_disc
+```
+
+**After** (single source of truth):
+```python
+# In parser:
+parsed_event = ExtractedEvent(
+    name=name,
+    discipline=infer_discipline(name),  # ← Just a hint, no classification
+    description=description,
+    # ← No is_competition; not parser's job
+)
+
+# In scanner:
+disc, is_comp = EventClassifier.classify(
+    name=comp.name,
+    discipline_hint=comp.discipline,
+    description=comp.description
+)
+# ← All classification logic in one place, tested independently
+```
+
+### Lessons Learned
+
+1. **Single Responsibility**: Each component should have one reason to change.
+   - Parser: changes when source structure changes
+   - EventClassifier: changes when classification rules change
+   - Scanner: changes when pipeline logic changes
+
+2. **Don't Scatter Logic**: When classification logic lives in 16 different parsers
+   AND in the scanner, bugs are inevitable. Bugs become architectural.
+
+3. **Pure Functions Are Easier to Test**: `EventClassifier.classify()` can be unit
+   tested with 20 parametrized cases. No HTTP mocking, no DB needed.
+
+4. **Composition Over Inheritance**: Use services that call other services, not
+   base classes with overrideable methods.
+
+---
+
+## 10. Checklist: Adding a New Parser
+
+When adding a new equestrian event source:
+
+- [ ] **Create** `app/parsers/source_name.py`
+- [ ] **Extend** `BaseParser` abstract class
+- [ ] **Implement** `fetch_and_parse()` → `list[ExtractedEvent]`
+- [ ] **Extract** all events (no filtering by date or type)
+- [ ] **Populate** all ExtractedEvent fields available from source
+  - `name`, `date_start`, `venue_name` required
+  - `discipline` optional (use `infer_discipline()` if available)
+  - `description` optional but helps EventClassifier
+- [ ] **Register** with `@register_parser("key")`
+- [ ] **Import** in `app/parsers/__init__.py` (triggers registration)
+- [ ] **Add source** to `_SOURCE_DEFS` in `app/services/scanner.py`
+- [ ] **Test** with fixture HTML; verify ExtractedEvent output
+- [ ] **Document** in `CONTRIBUTING.md` if source has quirks
+
+**Remember**: Your parser is purely extractive. Classification rules, filtering,
+and business logic belong in services, not in the parser.

@@ -11,7 +11,7 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.database import Base
-from app.models import Competition, Source
+from app.models import Competition, Source, Venue
 from app.schemas import ExtractedCompetition
 
 
@@ -58,16 +58,33 @@ async def test_scan_creates_competitions(db_session):
     ):
         from app.services.scanner import _scan_source
 
-        count = await _scan_source(db_session, source)
+        count, match_counts, scan_comp_count, scan_training_count = await _scan_source(db_session, source)
 
     assert count == 1
+    assert match_counts.get("new", 0) == 1
+    assert scan_comp_count == 1
+    assert scan_training_count == 0
 
     from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
 
-    result = await db_session.execute(select(Competition))
+    result = await db_session.execute(
+        select(Competition).options(selectinload(Competition.venue))
+    )
     comps = result.scalars().all()
     assert len(comps) == 1
     assert comps[0].name == "Summer Show"
     assert comps[0].has_pony_classes is True
+    assert comps[0].venue_id is not None
+    assert comps[0].venue_match_type == "new"
     assert comps[0].distance_miles == 5.0
     assert comps[0].date_start == date(2026, 7, 15)
+
+    # Verify venue was created correctly
+    venue_result = await db_session.execute(
+        select(Venue).where(Venue.name == "Test Arena")
+    )
+    venue = venue_result.scalar_one_or_none()
+    assert venue is not None
+    assert venue.distance_miles == 5.0
+    assert venue.postcode == "SW1A 1AA"

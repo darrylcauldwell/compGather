@@ -3,14 +3,14 @@ from __future__ import annotations
 import logging
 import re
 
-import httpx
-
-from app.parsers.base import BaseParser
+from app.parsers.bases import HttpParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import infer_discipline, is_future_event
-from app.schemas import ExtractedCompetition
+from app.parsers.utils import infer_discipline
+from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
+
+_POSTCODE_RE = re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b", re.IGNORECASE)
 
 MEETINGS_API = "https://online.equipe.com/api/v1/meetings"
 SCHEDULE_API = "https://online.equipe.com/api/v1/meetings/{id}/schedule"
@@ -18,26 +18,19 @@ SHOW_URL = "https://online.equipe.com/shows/{id}"
 
 
 @register_parser("equipe_online")
-class EquipeOnlineParser(BaseParser):
-    """Parser for online.equipe.com — JSON API for all GBR competition listings.
+class EquipeOnlineParser(HttpParser):
+    """Parser for online.equipe.com — JSON API for all GBR competition listings."""
 
-    Fetches all disciplines (show jumping, dressage, eventing, etc.) for GBR venues.
-    """
+    _org_postcode_cache: dict[str, str | None] = {}
 
-    async def fetch_and_parse(self, url: str) -> list[ExtractedCompetition]:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
-            # Fetch all meetings from the API
+    async def fetch_and_parse(self, url: str) -> list[ExtractedEvent]:
+        async with self._make_client() as client:
             meetings = await self._fetch_meetings(client)
             logger.info("Equipe Online: %d total meetings from API", len(meetings))
 
-            # Filter to GBR, future events (all disciplines)
-            relevant = [
-                m for m in meetings
-                if self._is_relevant(m)
-            ]
+            relevant = [m for m in meetings if self._is_relevant(m)]
             logger.info("Equipe Online: %d relevant GBR meetings", len(relevant))
 
-            # Optionally enrich with schedule data for class details
             competitions = []
             for meeting in relevant:
                 try:
@@ -47,34 +40,20 @@ class EquipeOnlineParser(BaseParser):
                 except Exception as e:
                     logger.debug("Equipe: failed to build comp for meeting %s: %s", meeting.get("id"), e)
 
-        logger.info("Equipe Online: extracted %d competitions", len(competitions))
+        self._log_result("Equipe Online", len(competitions))
         return competitions
 
-    async def _fetch_meetings(self, client: httpx.AsyncClient) -> list[dict]:
-        """Fetch all meetings from the Equipe API."""
+    async def _fetch_meetings(self, client):
         try:
-            resp = await client.get(MEETINGS_API)
-            resp.raise_for_status()
-            data = resp.json()
-            if isinstance(data, list):
-                return data
-            return []
+            return await self._fetch_json(client, MEETINGS_API)
         except Exception as e:
             logger.error("Equipe Online: API request failed: %s", e)
             return []
 
-    def _is_relevant(self, meeting: dict) -> bool:
-        """Filter for GBR events that haven't passed (all disciplines)."""
-        # Must be in GBR
-        if meeting.get("venue_country", "") != "GBR":
-            return False
+    def _is_relevant(self, meeting):
+        return meeting.get("venue_country", "") == "GBR"
 
-        # Must not have ended
-        end_date = meeting.get("end_on") or meeting.get("start_on", "")
-        return is_future_event(meeting.get("start_on", ""), end_date)
-
-    async def _build_competition(self, client: httpx.AsyncClient, meeting: dict) -> ExtractedCompetition | None:
-        """Build competition from meeting data, optionally enriched with schedule."""
+    async def _build_competition(self, client, meeting):
         meeting_id = meeting.get("id")
         name = meeting.get("display_name") or meeting.get("name", "")
         start_date = meeting.get("start_on", "")
@@ -83,11 +62,9 @@ class EquipeOnlineParser(BaseParser):
         if not name or not start_date:
             return None
 
-        # Detect pony classes from the meeting metadata
         horse_ponies = meeting.get("horse_ponies", [])
         has_pony = "pony" in horse_ponies
 
-        # Determine discipline from API metadata
         discipline_raw = meeting.get("discipline", "")
         discipline = {
             "show_jumping": "Show Jumping",
@@ -97,52 +74,69 @@ class EquipeOnlineParser(BaseParser):
             "endurance": "Endurance",
         }.get(discipline_raw) or infer_discipline(name)
 
-        # Try to get classes from schedule API
         classes = []
         venue_name = self._extract_venue_name(name)
-        if not venue_name:
-            logger.debug("Equipe: skipping event with no identifiable venue: %s", name)
-            return None
+        organiser_url = None
 
         try:
             schedule = await self._fetch_schedule(client, meeting_id)
             if schedule:
-                # Extract class names
                 for mc in schedule.get("meeting_classes", []):
                     class_name = mc.get("name", "")
                     if class_name:
                         classes.append(class_name)
-                # Check for pony classes in class names too
                 if not has_pony:
                     class_text = " ".join(classes).lower()
                     has_pony = any(kw in class_text for kw in ["pony", "junior"])
+                organiser_url = schedule.get("organizer_url") or None
         except Exception as e:
             logger.debug("Equipe: schedule fetch failed for %d: %s", meeting_id, e)
 
+        postcode = None
+        if organiser_url:
+            postcode = await self._fetch_organiser_postcode(client, organiser_url)
+
         show_url = SHOW_URL.format(id=meeting_id)
 
-        return ExtractedCompetition(
+        return self._build_event(
             name=name,
             date_start=start_date,
             date_end=end_date if end_date and end_date != start_date else None,
             venue_name=venue_name,
-            venue_postcode=None,  # Not available from Equipe API
+            venue_postcode=postcode,
             discipline=discipline,
             has_pony_classes=has_pony,
             classes=classes,
             url=show_url,
         )
 
-    async def _fetch_schedule(self, client: httpx.AsyncClient, meeting_id: int) -> dict | None:
-        """Fetch the schedule for a meeting to get class details."""
+    async def _fetch_organiser_postcode(self, client, base_url):
+        if base_url in self._org_postcode_cache:
+            return self._org_postcode_cache[base_url]
+
+        for path in ["", "/contact", "/contact-us", "/find-us"]:
+            url = base_url.rstrip("/") + path
+            try:
+                resp = await client.get(url, timeout=10.0)
+                if resp.status_code == 200:
+                    m = _POSTCODE_RE.search(resp.text)
+                    if m:
+                        postcode = re.sub(r"\s+", " ", m.group(0).strip().upper())
+                        self._org_postcode_cache[base_url] = postcode
+                        logger.debug("Equipe: found postcode %s for %s", postcode, base_url)
+                        return postcode
+            except Exception as e:
+                logger.debug("Equipe: organiser fetch failed for %s: %s", url, e)
+
+        self._org_postcode_cache[base_url] = None
+        return None
+
+    async def _fetch_schedule(self, client, meeting_id):
         try:
-            resp = await client.get(SCHEDULE_API.format(id=meeting_id))
-            resp.raise_for_status()
-            return resp.json()
+            return await self._fetch_json(client, SCHEDULE_API.format(id=meeting_id))
         except Exception:
             return None
 
-    # Keywords that mark the boundary between venue name and event description
     _VENUE_SPLIT_RE = re.compile(
         r"\b(?:British\s+(?:Dressage|Showjumping|Eventing|Riding)|"
         r"BD\s|BS\s|BE\s|"
@@ -154,27 +148,27 @@ class EquipeOnlineParser(BaseParser):
         r"Winter\s+(?:League|Regional|Championship)|"
         r"Summer\s+(?:League|Regional|Championship)|"
         r"National|Regional|Championship)"
-        r"|\(\s*(?:P[\s-]|Small|Senior|Junior)"  # BD class codes like (P-AM), (Small Pony...)
+        r"|\(\s*(?:P[\s-]|Small|Senior|Junior)"
         r"|\b\d{1,2}(?:st|nd|rd|th)\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
         r"|\b(?:Sat|Sun|Mon|Tue|Wed|Thu|Fri)(?:urday|nday|day|sday|nesday|rsday)?\s+\d",
         re.IGNORECASE,
     )
 
-    def _extract_venue_name(self, name: str) -> str:
-        """Extract venue name from Equipe event name.
-
-        Equipe's API packs venue + event type + date into one name field, e.g.:
-        'Onley Grounds Senior British Showjumping - 26 Feburary 2026'
-        → venue = 'Onley Grounds'
-        """
-        # Strip trailing parenthesised content that isn't part of the venue
+    def _extract_venue_name(self, name):
         cleaned = re.sub(r"\s*\([^)]*\)\s*$", "", name)
+
+        for sep in [" - ", " : ", " | "]:
+            if sep in cleaned:
+                parts = cleaned.split(sep, 1)
+                venue = parts[0].strip()
+                if len(venue) > 3:
+                    return venue
 
         m = self._VENUE_SPLIT_RE.search(cleaned)
         if m and m.start() > 3:
-            venue = cleaned[: m.start()].strip().rstrip("-:").strip()
-            # Must be a plausible place name (not just a generic word)
+            venue = cleaned[:m.start()].strip().rstrip("-:").strip()
             if venue and len(venue) > 3:
                 return venue
-        # No recognisable venue prefix — return None to signal unknown
-        return None
+
+        logger.debug("Equipe: could not extract venue from '%s', using placeholder", name)
+        return "Tbc"

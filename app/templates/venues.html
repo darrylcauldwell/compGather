@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+{% block title %}Venues - EquiCalendar{% endblock %}
+{% block nav_venues %}active{% endblock %}
+
+{% block content_wrapper %}
+{# --- View toggle bar --- #}
+<div style="background: var(--cg-bg-card); border-bottom: 1px solid var(--cg-border-card);">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between" style="height: 48px;">
+        <h1 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Venues</h1>
+        <div style="display: flex; border-radius: 0.375rem; overflow: hidden; border: 1px solid var(--cg-border-card);">
+            <button id="btn-map" class="view-pill" onclick="setView('map')" style="padding: 6px 16px; min-height: 2.25rem; border: none; cursor: pointer; font-size: 0.8rem; font-family: inherit; font-weight: 500; background: var(--cg-bg-card); color: var(--cg-text-muted); transition: background 0.15s, color 0.15s;">
+                <i class="bi bi-map"></i> Map
+            </button>
+            <button id="btn-table" class="view-pill" onclick="setView('table')" style="padding: 6px 16px; min-height: 2.25rem; border: none; cursor: pointer; font-size: 0.8rem; font-family: inherit; font-weight: 500; background: var(--cg-bg-card); color: var(--cg-text-muted); transition: background 0.15s, color 0.15s;">
+                <i class="bi bi-table"></i> Table
+            </button>
+        </div>
+    </div>
+</div>
+
+{# --- Map view (full width) --- #}
+<div id="view-map" style="display: none;">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <style>
+        #venue-map { height: calc(100vh - 64px - 48px); width: 100%; }
+        @media (max-width: 767px) {
+            #venue-map { height: calc(100vh - 56px - 48px); }
+        }
+        .leaflet-popup-content-wrapper {
+            background: var(--cg-bg-card) !important;
+            color: var(--cg-text) !important;
+            border: 1px solid var(--cg-border-card) !important;
+            border-radius: 0.5rem !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        }
+        .leaflet-popup-tip { background: var(--cg-bg-card) !important; }
+        .leaflet-popup-content { margin: 12px 16px !important; font-size: 0.875rem; line-height: 1.4; }
+        .popup-venue-name { font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
+        .popup-postcode { color: var(--cg-text-muted); font-size: 0.8rem; }
+        .popup-distance { color: var(--cg-text-muted); font-size: 0.8rem; margin-top: 2px; }
+        .popup-events { margin-top: 6px; font-size: 0.85rem; }
+        .popup-disciplines { color: var(--cg-text-muted); font-size: 0.8rem; margin-top: 4px; }
+        .popup-link {
+            display: inline-block; margin-top: 8px; padding: 8px 16px;
+            background: var(--cg-sky); color: #fff !important; border-radius: 0.375rem;
+            text-decoration: none; font-size: 0.85rem; font-weight: 500;
+        }
+        .popup-link:hover { opacity: 0.9; }
+        .cluster-toggle {
+            display: flex; border-radius: 0.375rem; overflow: hidden;
+            border: 1px solid var(--cg-border-card);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            font-size: 0.8rem; font-family: inherit;
+        }
+        .cluster-toggle button {
+            padding: 5px 12px; border: none; cursor: pointer;
+            font-size: 0.8rem; font-family: inherit; font-weight: 500;
+            background: var(--cg-bg-card); color: var(--cg-text-muted);
+            transition: background 0.15s, color 0.15s;
+        }
+        .cluster-toggle button.active {
+            background: var(--cg-sky); color: #fff;
+        }
+        .cluster-toggle button:not(.active):hover {
+            background: var(--cg-bg-card); color: var(--cg-text);
+        }
+    </style>
+    <div style="position: relative;">
+        <div id="venue-map"></div>
+        {% if not venues_json %}
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; padding: 24px 32px; border-radius: 0.75rem; background: var(--cg-bg-card); border: 1px solid var(--cg-border-card); color: var(--cg-text); text-align: center; font-size: 1rem;">
+            <p style="font-weight: 600; margin-bottom: 4px;">No active venues found</p>
+            <p style="color: var(--cg-text-muted); font-size: 0.875rem;">There are no venues with upcoming events to display.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# --- Table view (contained) --- #}
+<div id="view-table" style="display: none;">
+    <style>
+        .col-hide-sm { display: none; }
+        .col-hide-md { display: none; }
+        .col-hide-lg { display: none; }
+        @media (min-width: 640px) { .col-hide-sm { display: table-cell; } }
+        @media (min-width: 768px) { .col-hide-md { display: table-cell; } }
+        @media (min-width: 1024px) { .col-hide-lg { display: table-cell; } }
+    </style>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6" style="padding-top: 1.5rem;">
+        {% if venues %}
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-geo-alt"></i>
+                {{ venues|length }} venue{{ 's' if venues|length != 1 }}
+            </div>
+            <div class="table-responsive" style="border-radius: 0 0 0.75rem 0.75rem;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <a href="?view=table&sort=name_{% if sort == 'name_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
+                                    Name
+                                    {% if sort == 'name_asc' %}<i class="bi bi-sort-up" style="font-size: 0.75rem;"></i>{% elif sort == 'name_desc' %}<i class="bi bi-sort-down" style="font-size: 0.75rem;"></i>{% endif %}
+                                </a>
+                            </th>
+                            <th class="col-hide-md">Source / Parser</th>
+                            <th class="col-hide-sm">
+                                <a href="?view=table&sort=postcode_{% if sort == 'postcode_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
+                                    Postcode
+                                    {% if sort == 'postcode_asc' %}<i class="bi bi-sort-up" style="font-size: 0.75rem;"></i>{% elif sort == 'postcode_desc' %}<i class="bi bi-sort-down" style="font-size: 0.75rem;"></i>{% endif %}
+                                </a>
+                            </th>
+                            <th class="col-hide-lg">Latitude</th>
+                            <th class="col-hide-lg">Longitude</th>
+                            <th>
+                                <a href="?view=table&sort=distance_{% if sort == 'distance_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
+                                    Dist.
+                                    {% if sort == 'distance_asc' %}<i class="bi bi-sort-up" style="font-size: 0.75rem;"></i>{% elif sort == 'distance_desc' %}<i class="bi bi-sort-down" style="font-size: 0.75rem;"></i>{% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?view=table&sort=competitions_{% if sort == 'competitions_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
+                                    Events
+                                    {% if sort == 'competitions_asc' %}<i class="bi bi-sort-up" style="font-size: 0.75rem;"></i>{% elif sort == 'competitions_desc' %}<i class="bi bi-sort-down" style="font-size: 0.75rem;"></i>{% endif %}
+                                </a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for venue in venues %}
+                        <tr>
+                            <td style="font-weight: 500;">
+                                {{ venue.name }}
+                                {% set aliases = venue_aliases.get(venue.id, []) %}
+                                {% if aliases %}
+                                <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #666; font-weight: normal;">
+                                    {% for alias in aliases %}
+                                    <div style="margin: 0.25rem 0;">
+                                        <span>• {{ alias }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="col-hide-md" style="white-space: nowrap; font-size: 0.9rem;">
+                                {% set detail = venue_details.get(venue.id, {}) %}
+                                {% if detail.get('parser_sources') %}
+                                {% for source in detail.get('parser_sources', []) %}
+                                <div>{{ source }}</div>
+                                {% endfor %}
+                                {% else %}
+                                <span style="color: #888;">Seed Data</span>
+                                {% endif %}
+                            </td>
+                            <td class="col-hide-sm" style="white-space: nowrap;">{{ venue.postcode or '&mdash;' }}</td>
+                            <td class="col-hide-lg" style="white-space: nowrap;">
+                                {% if venue.latitude is not none %}
+                                {{ '%.4f'|format(venue.latitude) }}
+                                {% else %}
+                                &mdash;
+                                {% endif %}
+                            </td>
+                            <td class="col-hide-lg" style="white-space: nowrap;">
+                                {% if venue.longitude is not none %}
+                                {{ '%.4f'|format(venue.longitude) }}
+                                {% else %}
+                                &mdash;
+                                {% endif %}
+                            </td>
+                            <td style="white-space: nowrap;">
+                                {% if venue.distance_miles is not none %}
+                                {{ '%.0f'|format(venue.distance_miles) }} mi
+                                {% else %}
+                                &mdash;
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set comp_links = venue_comp_links.get(venue.id) %}
+                                {% if comp_links %}
+                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                    {% for link in comp_links %}
+                                    <a href="{{ link.url or '#' }}" {% if link.url %}target="_blank" rel="noopener noreferrer"{% endif %} style="color: #007bff; text-decoration: none; cursor: pointer; font-weight: 500;" title="View event {{ loop.index }}">{{ loop.index }}</a>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                {{ comp_counts.get(venue.id, 0) }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="empty-state">
+                <div class="icon"><i class="bi bi-geo-alt"></i></div>
+                <p>No venues found</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# --- Scripts --- #}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+(function() {
+    var activeView = '{{ active_view }}';
+    var mapInitialized = false;
+    var map, tileLayer, clusterGroup;
+
+    // Determine initial view: URL param > localStorage > server default
+    var urlView = new URLSearchParams(window.location.search).get('view');
+    if (urlView === 'map' || urlView === 'table') {
+        activeView = urlView;
+    } else {
+        var saved = localStorage.getItem('cg-venues-view');
+        if (saved === 'map' || saved === 'table') {
+            activeView = saved;
+        }
+    }
+
+    function updatePills(view) {
+        var btnMap = document.getElementById('btn-map');
+        var btnTable = document.getElementById('btn-table');
+        btnMap.style.background = view === 'map' ? 'var(--cg-sky)' : 'var(--cg-bg-card)';
+        btnMap.style.color = view === 'map' ? '#fff' : 'var(--cg-text-muted)';
+        btnTable.style.background = view === 'table' ? 'var(--cg-sky)' : 'var(--cg-bg-card)';
+        btnTable.style.color = view === 'table' ? '#fff' : 'var(--cg-text-muted)';
+    }
+
+    function showView(view) {
+        document.getElementById('view-map').style.display = view === 'map' ? 'block' : 'none';
+        document.getElementById('view-table').style.display = view === 'table' ? 'block' : 'none';
+        updatePills(view);
+
+        if (view === 'map' && !mapInitialized) {
+            initMap();
+            mapInitialized = true;
+        }
+        if (view === 'map' && map) {
+            setTimeout(function() { map.invalidateSize(); }, 50);
+        }
+    }
+
+    window.setView = function(view) {
+        activeView = view;
+        showView(view);
+        localStorage.setItem('cg-venues-view', view);
+        // Update URL without reload
+        var url = new URL(window.location);
+        url.searchParams.set('view', view);
+        history.replaceState(null, '', url);
+    };
+
+    function initMap() {
+        var venues = {{ venues_json | tojson }};
+
+        var darkTiles  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        var lightTiles = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+        var tileAttr   = '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>';
+
+        function isDark() {
+            return !document.documentElement.hasAttribute('data-theme');
+        }
+
+        map = L.map('venue-map').setView([53.5, -1.5], 6);
+
+        tileLayer = L.tileLayer(isDark() ? darkTiles : lightTiles, {
+            attribution: tileAttr,
+            maxZoom: 18
+        }).addTo(map);
+
+        // Watch for theme changes and swap tiles
+        var observer = new MutationObserver(function() {
+            var url = isDark() ? darkTiles : lightTiles;
+            tileLayer.setUrl(url);
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+        function escHtml(str) {
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        var allMarkers = [];
+        venues.forEach(function(v) {
+            var popupParts = [];
+            popupParts.push('<div class="popup-venue-name">' + escHtml(v.name) + '</div>');
+            if (v.postcode) {
+                popupParts.push('<div class="popup-postcode">' + escHtml(v.postcode) + '</div>');
+            }
+            if (v.distance_miles !== null) {
+                popupParts.push('<div class="popup-distance">' + v.distance_miles + ' miles from home</div>');
+            }
+            popupParts.push('<div class="popup-events"><i class="bi bi-calendar3"></i> ' + v.event_count + ' upcoming event' + (v.event_count !== 1 ? 's' : '') + '</div>');
+            if (v.disciplines.length > 0) {
+                popupParts.push('<div class="popup-disciplines">' + v.disciplines.map(escHtml).join(' &bull; ') + '</div>');
+            }
+            popupParts.push('<a class="popup-link" href="/?venue=' + encodeURIComponent(v.name) + '">Browse events &rarr;</a>');
+
+            var marker = L.marker([v.lat, v.lng]);
+            marker.options.eventCount = v.event_count || 0;
+            marker.bindPopup(popupParts.join(''), { maxWidth: 260 });
+            allMarkers.push(marker);
+        });
+
+        function eventsIconCreate(cluster) {
+            var children = cluster.getAllChildMarkers();
+            var total = 0;
+            for (var i = 0; i < children.length; i++) {
+                total += children[i].options.eventCount || 0;
+            }
+            var size = total < 20 ? 'small' : total < 50 ? 'medium' : 'large';
+            return L.divIcon({
+                html: '<div><span>' + total + '</span></div>',
+                className: 'marker-cluster marker-cluster-' + size,
+                iconSize: L.point(40, 40)
+            });
+        }
+
+        var clusterMode = 'venues';
+
+        function buildClusterGroup(mode) {
+            var opts = { maxClusterRadius: 60 };
+            if (mode === 'events') {
+                opts.iconCreateFunction = eventsIconCreate;
+            }
+            var group = L.markerClusterGroup(opts);
+            allMarkers.forEach(function(m) { group.addLayer(m); });
+            return group;
+        }
+
+        clusterGroup = buildClusterGroup(clusterMode);
+        map.addLayer(clusterGroup);
+
+        // Cluster toggle control (Venues/Events)
+        var ToggleControl = L.Control.extend({
+            options: { position: 'topright' },
+            onAdd: function() {
+                var container = L.DomUtil.create('div', 'cluster-toggle leaflet-bar');
+                L.DomEvent.disableClickPropagation(container);
+
+                var btnVenues = L.DomUtil.create('button', 'active', container);
+                btnVenues.textContent = 'Venues';
+                var btnEvents = L.DomUtil.create('button', '', container);
+                btnEvents.textContent = 'Events';
+
+                function setMode(mode) {
+                    if (mode === clusterMode) return;
+                    clusterMode = mode;
+                    btnVenues.className = mode === 'venues' ? 'active' : '';
+                    btnEvents.className = mode === 'events' ? 'active' : '';
+                    map.removeLayer(clusterGroup);
+                    clusterGroup = buildClusterGroup(mode);
+                    map.addLayer(clusterGroup);
+                }
+
+                btnVenues.addEventListener('click', function() { setMode('venues'); });
+                btnEvents.addEventListener('click', function() { setMode('events'); });
+
+                return container;
+            }
+        });
+        map.addControl(new ToggleControl());
+    }
+
+    // Show initial view on DOM ready
+    showView(activeView);
+})();
+</script>
+{% endblock %}

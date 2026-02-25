@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Aliases - EquiCalendar{% endblock %}
+{% block nav_aliases %}active{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 style="font-size: 1.5rem;">Venue Aliases</h1>
+</div>
+
+{% if aliases %}
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-arrow-repeat"></i>
+        {{ aliases|length }} alias{{ 'es' if aliases|length != 1 }}
+    </div>
+    <div class="table-responsive" style="border-radius: 0 0 0.75rem 0.75rem;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Alias</th>
+                    <th>Canonical Venue</th>
+                    <th>Source</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alias, venue_name in aliases %}
+                <tr>
+                    <td style="font-weight: 500;">{{ alias.alias }}</td>
+                    <td>{{ venue_name }}</td>
+                    <td>
+                        {% if alias.source %}
+                        <span class="badge badge-muted">{{ alias.source }}</span>
+                        {% else %}
+                        &mdash;
+                        {% endif %}
+                    </td>
+                    <td style="white-space: nowrap; color: var(--cg-text-muted); font-size: 0.85rem;">
+                        {% if alias.created_at %}
+                        {{ alias.created_at.strftime('%d %b %Y') }}
+                        {% else %}
+                        &mdash;
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="icon"><i class="bi bi-arrow-repeat"></i></div>
+        <p>No aliases found</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

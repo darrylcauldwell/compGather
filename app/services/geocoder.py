@@ -65,7 +65,9 @@ async def geocode_postcode(postcode: str) -> tuple[float, float] | None:
         async with httpx.AsyncClient(timeout=10.0) as client:
             # Crown Dependencies: skip postcodes.io, go straight to Nominatim
             if not normalised.startswith(_CROWN_DEPENDENCY_PREFIXES):
-                resp = await client.get(f"{POSTCODES_IO_URL}/{normalised}")
+                # postcodes.io API expects postcodes without spaces
+                postcode_for_api = normalised.replace(" ", "")
+                resp = await client.get(f"{POSTCODES_IO_URL}/{postcode_for_api}")
                 if resp.status_code == 200:
                     data = resp.json()
                     result = data.get("result")
@@ -77,7 +79,7 @@ async def geocode_postcode(postcode: str) -> tuple[float, float] | None:
                             return (lat, lng)
 
                 # Fallback: try terminated postcodes endpoint
-                resp = await client.get(f"{TERMINATED_IO_URL}/{normalised}")
+                resp = await client.get(f"{TERMINATED_IO_URL}/{postcode_for_api}")
                 if resp.status_code == 200:
                     data = resp.json()
                     result = data.get("result")
@@ -127,6 +129,24 @@ async def _nominatim_postcode(
                 return (lat, lng)
     except Exception as e:
         logger.debug("Nominatim lookup failed for %s: %s", postcode, e)
+    return None
+
+
+async def reverse_geocode(lat: float, lng: float) -> str | None:
+    """Look up the nearest UK postcode for given coordinates, or None."""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                POSTCODES_IO_URL,
+                params={"lat": lat, "lon": lng, "limit": 1},
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                result = data.get("result")
+                if result and len(result) > 0:
+                    return result[0]["postcode"]
+    except httpx.HTTPError as e:
+        logger.warning("Reverse geocode error for (%.4f, %.4f): %s", lat, lng, e)
     return None
 
 

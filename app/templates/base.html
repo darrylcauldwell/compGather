@@ -55,17 +55,13 @@
             <div class="header-nav">
                 <a href="/" class="nav-link {% block nav_competitions %}{% endblock %}">
                     <i class="bi bi-calendar-event"></i>
-                    Competitions
+                    Events
                 </a>
-                <a href="/map" class="nav-link {% block nav_map %}{% endblock %}">
+                <a href="/venues" class="nav-link {% block nav_venues %}{% endblock %}">
                     <i class="bi bi-geo-alt"></i>
-                    Map
+                    Venues
                 </a>
-                <a href="/sources" class="nav-link {% block nav_sources %}{% endblock %}">
-                    <i class="bi bi-globe2"></i>
-                    Sources
-                </a>
-                <button id="theme-toggle" class="nav-link" style="background: none; border: none; cursor: pointer; padding: 0 0.75rem; font-size: 1.1rem;" title="Switch to light mode">
+<button id="theme-toggle" class="nav-link" style="background: none; border: none; cursor: pointer; padding: 0 0.75rem; font-size: 1.1rem;" title="Switch to light mode">
                     <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="5"></circle>
                         <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -84,6 +80,8 @@
             </div>
         </div>
     </header>
+
+    {% block location_strip %}{% endblock %}
 
     <main id="main" class="content-container">
         {% block content_wrapper %}

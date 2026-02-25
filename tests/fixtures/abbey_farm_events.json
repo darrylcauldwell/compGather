@@ -1,0 +1,33 @@
+{
+  "events": [
+    {
+      "title": "Spring Show Jumping Show",
+      "start_date": "2026-03-15 09:00:00",
+      "end_date": "2026-03-15 16:00:00",
+      "url": "https://abbeyfarmequestrian.co.uk/event/spring-showjumping-show/",
+      "categories": [{"name": "Show Jumping"}]
+    },
+    {
+      "title": "Maddy Moffet Polework Training Clinic",
+      "start_date": "2026-03-20 12:00:00",
+      "end_date": "2026-03-20 20:00:00",
+      "url": "https://abbeyfarmequestrian.co.uk/event/maddy-moffet-polework-training-clinic/",
+      "categories": [{"name": "Clinic"}]
+    },
+    {
+      "title": "Spring Dressage Show",
+      "start_date": "2026-04-05 09:00:00",
+      "end_date": "2026-04-05 15:00:00",
+      "url": "https://abbeyfarmequestrian.co.uk/event/spring-dressage-show/",
+      "categories": [{"name": "Dressage"}]
+    },
+    {
+      "title": "Indoor Arena Hire",
+      "start_date": "2026-04-10 10:00:00",
+      "end_date": "2026-04-10 18:00:00",
+      "url": "https://abbeyfarmequestrian.co.uk/event/indoor-arena-hire/",
+      "categories": []
+    }
+  ],
+  "total_pages": 1
+}

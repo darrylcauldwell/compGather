@@ -6,7 +6,7 @@
 
 ## 1. System Overview
 
-EquiCalendar is a **scrape-normalise-store-serve** pipeline that aggregates UK equestrian competition data from 26 heterogeneous sources into a single searchable interface.
+EquiCalendar is a **scrape-normalise-store-serve** pipeline that aggregates UK equestrian competition data from 43 heterogeneous sources into a single searchable interface.
 
 ```
                        +-------------------+
@@ -23,10 +23,11 @@ EquiCalendar is a **scrape-normalise-store-serve** pipeline that aggregates UK e
                        |   LLM generic)    |
                        +---------+---------+
                                  |
-                      ExtractedCompetition[]
+                        ExtractedEvent[]
                                  |
                        +---------v---------+
                        |     Scanner       |
+                       | - classify event  |
                        | - normalise venue |
                        | - normalise disc. |
                        | - geocode         |
@@ -60,13 +61,15 @@ compGather/
 │   ├── database.py            # async SQLAlchemy engine + migrations
 │   ├── main.py                # FastAPI lifespan, router wiring
 │   ├── models.py              # SQLAlchemy ORM models
-│   ├── schemas.py             # Pydantic request/response + ExtractedCompetition
+│   ├── schemas.py             # Pydantic request/response + ExtractedEvent
 │   ├── parsers/
 │   │   ├── __init__.py        # auto-imports all parsers (triggers registration)
 │   │   ├── base.py            # BaseParser ABC
 │   │   ├── registry.py        # @register_parser decorator + get_parser()
 │   │   ├── utils.py           # shared: postcode regex, discipline normalisation,
 │   │   │                      #   venue normalisation, pony detection, JSON-LD
+│   ├── venue_seeds.json       # single source of truth for venue seed data
+│   ├── seed_data.py           # thin loader for venue_seeds.json
 │   │   ├── generic.py         # LLM fallback via Ollama
 │   │   ├── british_showjumping.py
 │   │   ├── british_dressage.py
@@ -74,13 +77,14 @@ compGather/
 │   │   └── ... (26 parsers total)
 │   ├── routers/
 │   │   ├── health.py          # GET /health
-│   │   ├── pages.py           # GET / (competitions table), GET /sources
+│   │   ├── pages.py           # GET / (competitions), GET /admin (sources)
 │   │   ├── competitions.py    # REST API + iCal export
-│   │   ├── sources.py         # CRUD for sources
+│   │   ├── sources.py         # CRUD for sources (API key protected)
 │   │   └── scanner.py         # POST /api/scans trigger
 │   ├── services/
-│   │   ├── scanner.py         # scan orchestration, upsert, venue backfill,
-│   │   │                      #   discipline audit
+│   │   ├── scanner.py         # scan orchestration, upsert, source auto-seeding
+│   │   ├── event_classifier.py # single source of truth for event classification
+│   │   ├── venue_matcher.py   # VenueIndex: alias → prefix → postcode matching
 │   │   ├── scheduler.py       # APScheduler daily cron
 │   │   ├── geocoder.py        # postcodes.io + Nominatim + haversine
 │   │   ├── fetcher.py         # HTTP helpers
@@ -90,9 +94,10 @@ compGather/
 │   └── templates/
 │       ├── base.html          # layout: header, nav, footer, theme toggle
 │       ├── competitions.html  # table + filters + pagination + iCal icons
-│       └── sources.html       # source management + scan status
+│       └── sources.html       # admin view: scan status + triggers
 ├── scripts/
-│   └── seed_new_sources.py    # one-off data seeding
+│   ├── renormalise_venues.py  # apply venue normalisation + aliases to existing data
+│   └── seed_new_sources.py    # (legacy) one-off data seeding
 ├── tests/
 │   ├── test_scanner.py        # scan pipeline integration tests (in-memory DB)
 │   ├── test_extractor.py      # LLM response parsing
@@ -119,6 +124,7 @@ compGather/
 | **Templating** | Jinja2 | Server-rendered HTML; avoids SPA complexity for a data table |
 | **CSS** | Tailwind 4 + custom properties | Utility-first; CSS variables enable dark/light toggle without JS rebuild |
 | **Browser automation** | Playwright (Chromium) | Required for JS-rendered sources (MyRidingLife, ASAO) |
+| **Venue matching** | VenueIndex + VenueMatcher | Multi-step: alias → prefix → postcode → fuzzy → new |
 | **Scheduling** | APScheduler | In-process cron; no external job queue needed |
 | **Geocoding** | postcodes.io + Nominatim | Free, no API keys; Nominatim covers Crown Dependencies |
 | **LLM fallback** | Ollama (qwen2.5:1.5b) | Local model for generic parser; no API costs |
@@ -152,6 +158,27 @@ compGather/
 
 **Dedup key**: `(source_id, name, date_start, venue_name)`
 
+### ExtractedEvent (Parser Output Schema)
+
+The `ExtractedEvent` schema represents raw event data extracted from a source.
+It contains no classification; parsers should extract all events without filtering.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `name` | str | Event name as scraped |
+| `date_start` | str | Start date (ISO format) |
+| `date_end` | str? | End date for multi-day events |
+| `venue_name` | str | Venue name as found in source |
+| `venue_postcode` | str? | Postcode if available |
+| `latitude` / `longitude` | float? | Coordinates if available |
+| `discipline` | str? | Raw discipline hint from source (not normalized) |
+| `has_pony_classes` | bool | Detected from name/classes |
+| `classes` | list[str] | List of class names if available |
+| `url` | str? | Direct link to event |
+| `description` | str? | Event description text |
+
+**No `is_competition` field**: Classification happens later in `EventClassifier`.
+
 ### Venue (lookup/cache)
 
 | Column | Type | Notes |
@@ -173,6 +200,12 @@ Audit log of each scan run (status, timing, error, competition count).
 ## 5. Data Flow: Scan Pipeline
 
 ```
+0. Startup (lifespan)
+   a. init_db() — create tables, run ALTER TABLE migrations
+   b. seed_sources() — auto-create sources from _SOURCE_DEFS (26 entries)
+   c. seed_venue_postcodes() — populate venue table from venue_seeds.json
+   d. migrate_venue_aliases() — sync venue_seeds.json aliases to venue_aliases DB table
+
 1. Trigger
    ├── Scheduled: APScheduler cron (daily 06:00)
    ├── Manual: POST /api/scans {source_id}
@@ -180,14 +213,16 @@ Audit log of each scan run (status, timing, error, competition count).
 
 2. For each source:
    a. get_parser(source.parser_key) → parser instance
-   b. parser.fetch_and_parse(url) → list[ExtractedCompetition]
-   c. For each competition:
+   b. parser.fetch_and_parse(url) → list[ExtractedEvent]
+   c. For each event:
       i.   Parse dates → skip if invalid
-      ii.  normalise_venue_name(raw_venue)
-      iii. normalise_discipline(raw_discipline) → (canonical, is_competition)
-      iv.  Resolve coordinates:
-           venues table → parser coords → postcode geocode
-      v.   Upsert on (source_id, name, date_start, venue_name)
+      ii.  normalise_venue_name(raw_venue) — suffix strip, junk guard, address truncation
+      iii. normalise_postcode(raw_postcode) — uppercase, insert space, reject invalid
+      iv.  EventClassifier.classify(name, discipline_hint, description) → (canonical_discipline, is_competition)
+      v.   match_venue() — alias → prefix → postcode → new (via VenueMatcher)
+      vi.  Resolve coordinates:
+           venues table → parser coords → postcode geocode → reverse geocode
+      vii. Upsert on (source_id, name, date_start, venue_name)
 
 3. Post-scan:
    a. _backfill_venue_data() — propagate coords across same-venue events
@@ -203,10 +238,15 @@ All parsers extend `BaseParser` and are registered via decorator:
 ```python
 @register_parser("british_showjumping")
 class BritishShowjumpingParser(BaseParser):
-    async def fetch_and_parse(self, url: str) -> list[ExtractedCompetition]:
-        # site-specific scraping logic
+    async def fetch_and_parse(self, url: str) -> list[ExtractedEvent]:
+        # Extract all raw event data with no filtering or classification
         ...
 ```
+
+**Core Principle**: Parsers are **purely extractive**. They return all raw event data
+without filtering by date, classification of event type, or any business logic.
+Classification (determining `is_competition`, discipline, etc.) happens later in
+`EventClassifier` during the scanning process.
 
 **Registration**: Importing a parser module triggers `@register_parser`. All parsers
 are imported in `app/parsers/__init__.py`.
@@ -229,16 +269,71 @@ are imported in `app/parsers/__init__.py`.
 
 ---
 
+## 6.5 EventClassifier Service
+
+The `EventClassifier` is the **single source of truth** for determining event type
+and classification. It runs as a service during scanning, replacing scattered
+classification logic that previously existed in individual parsers.
+
+**Purpose**: Classify events into categories:
+- **Competition**: True for competition events (show jumping, dressage, XC, pony club competitions, etc.)
+- **Training**: False (clinics, training sessions, workshops)
+- **Venue Hire**: False (venue rental, private hire, non-equestrian events)
+- **Other**: False (uncertain events)
+
+**Classification Strategy**:
+```python
+EventClassifier.classify(
+    name: str,              # Event name from parser
+    discipline_hint: str,   # Optional discipline from parser
+    description: str        # Optional description
+) -> tuple[Optional[str], bool]  # Returns (canonical_discipline, is_competition)
+```
+
+1. Check name/description for non-competition keywords (`Training`, `Venue Hire`, `Clinic`)
+2. Normalize parser-provided discipline hint
+3. Check name/description for competition keywords
+4. Default to `(None, True)` if no match
+
+**Why This Pattern**:
+- Parsers no longer need to classify; they purely extract
+- Single place to maintain and test classification rules
+- Easy to add new classification patterns without touching parsers
+- Testable in isolation with minimal mocking
+
+---
+
 ## 7. Normalisation Layers
 
 ### Venue normalisation (`normalise_venue_name`)
 1. Strip BS show numbering: `"Arena (2) - SPONSORED BY..."` -> `"Arena"`
 2. Strip trailing event descriptions: `"(Festival)"`, `"(Championship)"`
 3. Title-case
-4. Remove `"Limited"` suffix
-5. Remove trailing abbreviation codes: `"- Chspc"`
-6. Strip common suffixes: `"Equestrian Centre"`, `"Riding School"`, etc.
-7. Apply known aliases: `"Southview"` -> `"South View"`
+4. Remove embedded postcodes: `"Lodge Farm TN12 7ET"` -> `"Lodge Farm"`
+5. Remove `"Limited"` suffix
+6. Remove trailing abbreviation codes: `"- Chspc"`
+7. Strip common suffixes (iterative): `"X Equestrian Centre Ltd"` -> `"X"` (two passes)
+8. Collapse whitespace, strip trailing punctuation and orphaned prepositions
+9. **Junk guards**: reject postcodes, plus codes, URLs, empty strings -> `"Tbc"`
+10. **Length guard**: reject names > 100 chars (job adverts, descriptions) -> `"Tbc"`
+11. **Address truncation**: strip trailing address parts after commas
+    - 2+ commas: keep first part (`"Venue, Road, Town"` -> `"Venue"`)
+    - 1 comma + >50 chars: keep first part
+    - Short qualified names preserved: `"Higher Farm, Cheshire"` (1 comma, <40 chars)
+
+### Venue matching (`VenueMatcher` in `venue_matcher.py`)
+After normalisation, the scanner matches venues through a multi-step pipeline:
+1. **Exact match**: venue name already in `venue_aliases` table
+2. **Alias match**: aliases from `venue_seeds.json` (230+ entries)
+3. **Prefix match**: `"Allens Hill"` matches `"Allens Hill Competition Centre"` (unambiguous prefix)
+4. **Postcode match**: same postcode resolves to existing venue
+5. **New venue**: creates a new venue record
+
+### Postcode normalisation (`normalise_postcode`)
+Applied at all ingest points in the scanner:
+- Uppercase, insert space between outward/inward codes
+- Strip trailing dots, reject non-UK formats
+- `"cv129ja"` -> `"CV12 9JA"`, `"LL22 9BP."` -> `"LL22 9BP"`
 
 ### Discipline normalisation (`normalise_discipline`)
 - Maps ~70 raw values to 15 canonical categories
@@ -308,7 +403,8 @@ Server-rendered Jinja2 templates — no SPA, no client-side framework.
 | Page | Route | Features |
 |------|-------|----------|
 | **Competitions** | `GET /` | Paginated table (50/page), column sorting, inline filter dropdowns (discipline, venue, pony), date range + distance filters, iCal download per row |
-| **Sources** | `GET /sources` | Source CRUD, scan triggers, status badges, competition counts |
+| **Competition Detail** | `GET /competitions/{id}` | Full event details, mini map, JSON-LD (schema.org Event) |
+| **Admin** | `GET /admin` | Hidden page (no nav link). Source scan status, triggers, competition counts. Read-only — no disable/delete controls. Sources are managed in code via `_SOURCE_DEFS`. |
 
 ### Styling approach
 - Tailwind 4 utility classes for layout
@@ -325,7 +421,70 @@ Server-rendered Jinja2 templates — no SPA, no client-side framework.
 
 ---
 
-## 10. Recommended Architecture Evolution
+## 10. Observability & Monitoring
+
+The application includes a comprehensive observability stack for production monitoring.
+
+### Metrics (Prometheus)
+
+Custom metrics exported on `/metrics` endpoint:
+- **Request metrics**: Latency, request count, status codes
+- **Scan metrics**: Competitions found per source, scan duration, parse success/failure
+- **Service metrics**: Venue matcher cache hits, geocoder fallback usage, dedup hit rate
+- **Error rates**: Parser failures, normalisation rejections, database errors
+
+**Retention**: Prometheus scrapes every 15 seconds; metrics retained for 15 days in the container.
+
+### Logs (Loki + JSON Logging)
+
+Application uses structured JSON logging (via `python-json-logger`) for production.
+
+Log format includes:
+```json
+{
+  "timestamp": "2026-02-24T06:15:30Z",
+  "level": "INFO",
+  "logger": "app.services.scanner",
+  "source_id": 5,
+  "parser_key": "british_showjumping",
+  "competitions_found": 42,
+  "duration_seconds": 3.2,
+  "message": "Scan completed successfully"
+}
+```
+
+**Loki Integration**: JSON logs are aggregated by Loki for query-based searching and
+alerting. Grafana dashboards query Loki for log analysis.
+
+### Dashboards (Grafana)
+
+Pre-configured Grafana dashboards (in `docker-compose.yml`) display:
+- Scanner health: success rate, average duration, competitions per source trend
+- Parser performance: parse time distribution, error rates by source
+- Venue matcher efficiency: cache hits/misses, new venue creation rate
+- Geocoder fallback usage: postcodes.io vs. Nominatim coverage
+- System health: memory usage, disk I/O, request latency
+
+### Container Monitoring (cAdvisor)
+
+cAdvisor (Google's container metrics exporter) tracks:
+- CPU usage, memory footprint, network I/O
+- Container restarts, uptime
+- Exports to Prometheus for dashboarding
+
+**Docker Compose Stack**:
+```yaml
+services:
+  app: # FastAPI + SQLite
+  prometheus: # Metrics collection
+  grafana: # Dashboards
+  loki: # Log aggregation
+  cadvisor: # Container metrics
+```
+
+---
+
+## 11. Recommended Architecture Evolution
 
 ### Short-term (current → 3 months)
 
