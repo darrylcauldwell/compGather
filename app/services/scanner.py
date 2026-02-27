@@ -110,6 +110,79 @@ _SOURCE_DEFS: list[dict[str, str | None]] = [
     {"name": "Arc de Triomphe", "parser_key": "arc_de_triomphe", "url": "https://billetterie.france-galop.com/en/event/qatar-prix-de-larc-de-triomphe/"},
     {"name": "Spruce Meadows Masters", "parser_key": "spruce_meadows", "url": "https://www.sprucemeadows.com/masters/"},
     {"name": "Aachen World Equestrian Festival", "parser_key": "aachen", "url": "https://www.chioaachen.de/en/"},
+    # Winter circuit / international indoor events
+    {"name": "Azelhof", "parser_key": "azelhof", "url": "https://azelhof.be/en/home/"},
+    {"name": "Sentower Park", "parser_key": "sentower_park", "url": "https://www.sentowerpark.com/en/home/"},
+    {"name": "Keysoe International", "parser_key": "keysoe_international", "url": "https://www.keysoe.com/"},
+    {"name": "Vilamoura Classic", "parser_key": "vilamoura", "url": "https://grandprix-events.com/en/vilamoura-classic/"},
+    {"name": "Jumping Indoor Maastricht", "parser_key": "jumping_indoor_maastricht", "url": "https://jumpingindoormaastricht.com/en/home-en/"},
+    {"name": "Gothenburg Horse Show", "parser_key": "gothenburg", "url": "https://www.gothenburghorseshow.com/en/"},
+    {"name": "Scandinavia Jumping Tour", "parser_key": "scandinavia_jumping", "url": "https://occ.dk/en/nyheder/scandinavia-jumping-tour-2026/"},
+    # UAE winter show jumping
+    {"name": "UAE President's Cup", "parser_key": "uae_presidents_cup", "url": "https://uaeerf.ae/en/Content/Jumping/Calendar"},
+    {"name": "Al Shira'aa International", "parser_key": "al_shiraaa", "url": "https://www.alshiraatour.com/abu-dhabi"},
+    {"name": "Dubai SJ Championship", "parser_key": "dubai_sj_championship", "url": "https://www.emiratesequestriancentre.com/dubai-show-jumping-championship"},
+    # France
+    {"name": "Saut Hermès", "parser_key": "saut_hermes", "url": "https://www.sauthermes.com/en/"},
+    {"name": "Equita Lyon", "parser_key": "equitalyon", "url": "https://www.equitalyon.com/en"},
+    {"name": "Chantilly Classic", "parser_key": "chantilly", "url": "https://grandprix-events.com/en/chantilly-classic/"},
+    # Italy
+    {"name": "Adriatic Tour (Le Siepi)", "parser_key": "le_siepi", "url": "https://lesiepicervia.it/"},
+    # Germany
+    {"name": "Riesenbeck International", "parser_key": "riesenbeck", "url": "https://riesenbeck-international.com/en/"},
+    {"name": "Hof Kasselmann", "parser_key": "hof_kasselmann", "url": "https://horses-and-dreams.de/en/"},
+    {"name": "Pferd International München", "parser_key": "munich_riem", "url": "https://www.pferdinternational.de/"},
+    # Netherlands
+    {"name": "Peelbergen EC", "parser_key": "peelbergen", "url": "https://www.peelbergen.eu/"},
+    {"name": "Jumping Amsterdam", "parser_key": "jumping_amsterdam", "url": "https://www.jumpingamsterdam.nl/en/"},
+    {"name": "The Dutch Masters", "parser_key": "dutch_masters", "url": "https://www.thedutchmasters.com/en/"},
+    {"name": "CHIO Rotterdam", "parser_key": "chio_rotterdam", "url": "https://chio.nl/en"},
+    # Tier 1 prestige international events
+    {"name": "CHI Geneva", "parser_key": "chi_geneva", "url": "https://www.chi-geneve.ch/en/"},
+    {"name": "Dublin Horse Show", "parser_key": "dublin_horse_show", "url": "https://www.dublinhorseshow.com/"},
+    {"name": "CSIO Roma — Piazza di Siena", "parser_key": "csio_roma", "url": "https://www.piazzadisiena.it/en/"},
+    {"name": "Jumping Verona — Fieracavalli", "parser_key": "jumping_verona", "url": "https://www.fieracavalli.it/en/"},
+    {"name": "CSIO Barcelona", "parser_key": "csio_barcelona", "url": "https://www.csiobarcelona.com/en/"},
+    {"name": "Helsinki International Horse Show", "parser_key": "helsinki_horse_show", "url": "https://www.horseshowhelsinki.fi/en/"},
+    {"name": "Falsterbo Horse Show", "parser_key": "falsterbo", "url": "https://www.falsterbohorseshow.com/en/"},
+    {"name": "Madrid Horse Week", "parser_key": "madrid_horse_week", "url": "https://www.madridhorseweek.com/en/"},
+    # Scandinavian & Eastern European
+    {"name": "Oslo Horse Show", "parser_key": "oslo_horse_show", "url": "https://www.oslohorseshow.com/"},
+    {"name": "Stockholm International Horse Show", "parser_key": "stockholm_horse_show", "url": "https://www.stockholmhorseshow.com/"},
+    {"name": "CAVALIADA Krakow", "parser_key": "cavaliada", "url": "https://cavaliada.pl/en/"},
+    {"name": "Samorin X-Bionic Sphere", "parser_key": "samorin", "url": "https://www.x-bionicsphere.com/en/equestrian/"},
+    # France — additional prestige events
+    {"name": "Jumping La Baule", "parser_key": "la_baule", "url": "https://www.jumpinglabaule.com/en/"},
+    {"name": "Grand Parquet Fontainebleau", "parser_key": "fontainebleau", "url": "https://www.grandparquet.com/"},
+    {"name": "Jumping de Dinard", "parser_key": "dinard", "url": "https://www.jumpingdinard.com/"},
+    {"name": "Mondial du Lion", "parser_key": "mondial_du_lion", "url": "https://www.mondialdulion.com/en/"},
+    {"name": "Jumping de Deauville", "parser_key": "deauville", "url": "https://www.pfrancecomplet.com/"},
+    # Belgium & UK — additional
+    {"name": "Brussels Stephex Masters", "parser_key": "brussels_stephex", "url": "https://www.stephexmasters.com/"},
+    {"name": "Bolesworth International", "parser_key": "bolesworth", "url": "https://www.bolesworth.com/"},
+    # Italy — spring circuit
+    {"name": "Toscana Tour", "parser_key": "toscana_tour", "url": "https://www.toscanatour.com/"},
+    # USA — Tier 1 prestige events
+    {"name": "FEI World Cup Finals 2026", "parser_key": "fei_world_cup_finals", "url": "https://www.fortworth2026.com/"},
+    {"name": "Kentucky Three-Day Event", "parser_key": "kentucky_three_day", "url": "https://www.kentuckythreedayevent.com/"},
+    {"name": "Devon Horse Show", "parser_key": "devon_horse_show", "url": "https://www.devonhorseshow.net/"},
+    {"name": "Dressage at Devon", "parser_key": "dressage_at_devon", "url": "https://dressageatdevon.org/"},
+    {"name": "Hampton Classic", "parser_key": "hampton_classic", "url": "https://www.hamptonclassic.com/"},
+    {"name": "Washington International Horse Show", "parser_key": "washington_international", "url": "https://wihs.org/"},
+    {"name": "National Horse Show", "parser_key": "national_horse_show", "url": "https://nhs.org/"},
+    {"name": "Upperville Colt & Horse Show", "parser_key": "upperville", "url": "https://www.upperville.com/"},
+    {"name": "Pennsylvania National Horse Show", "parser_key": "pennsylvania_national", "url": "https://panational.org/"},
+    {"name": "Live Oak International", "parser_key": "live_oak", "url": "https://www.liveoakinternational.com/"},
+    {"name": "Great Meadow International", "parser_key": "great_meadow", "url": "https://greatmeadow.org/"},
+    {"name": "Carolina International", "parser_key": "carolina_international", "url": "https://www.carolinahorsepark.com/"},
+    # USA — multi-fixture competition venues
+    {"name": "Lake Placid Horse Shows", "parser_key": "lake_placid", "url": "https://lakeplacidhorseshow.com/"},
+    {"name": "Old Salem Farm", "parser_key": "old_salem_farm", "url": "https://oldsalemfarm.net/"},
+    # USA — major winter/summer circuits
+    {"name": "Winter Equestrian Festival", "parser_key": "wef", "url": "https://www.wellingtoninternational.com/"},
+    {"name": "Global Dressage Festival", "parser_key": "global_dressage_festival", "url": "https://www.globaldressagefestival.com/"},
+    {"name": "Desert International Horse Park", "parser_key": "desert_international", "url": "https://deserthorsepark.com/"},
+    {"name": "Traverse City Horse Shows", "parser_key": "traverse_city", "url": "https://traversecityhorseshows.com/"},
 ]
 
 

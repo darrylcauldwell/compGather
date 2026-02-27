@@ -1,0 +1,27 @@
+{
+  "payload": {
+    "show_ids": [
+      {
+        "virtual_week_code": "PW1",
+        "description": "CSIYH*",
+        "start_at": "2026-01-26",
+        "end_at": "2026-02-01",
+        "fei_id": "2026_CI_0282"
+      },
+      {
+        "virtual_week_code": "W1",
+        "description": "CSIYH*/CSI1*/CSI4*",
+        "start_at": "2026-02-02",
+        "end_at": "2026-02-08",
+        "fei_id": "2026_CI_0283"
+      },
+      {
+        "virtual_week_code": "W4",
+        "description": "CSIYH*/CSI2*/CSI3*",
+        "start_at": "2026-02-23",
+        "end_at": "2026-03-01",
+        "fei_id": "2026_CI_0286"
+      }
+    ]
+  }
+}
