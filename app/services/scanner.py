@@ -29,7 +29,6 @@ from app.parsers.utils import (
 from app.seed_data import get_venue_seeds
 from app.services.event_classifier import EventClassifier
 from app.services.geocoder import (
-    _coords_in_uk,
     geocode_postcode,
     reverse_geocode,
 )
@@ -428,8 +427,8 @@ async def _ensure_venue_coords(
     if venue.name and venue.name.strip().lower() in ("online", "virtual"):
         return
 
-    # Already has valid coords
-    if venue.latitude is not None and _coords_in_uk(venue.latitude, venue.longitude):
+    # Already has valid coords (non-null and not (0,0))
+    if venue.latitude is not None and venue.longitude is not None and not (venue.latitude == 0.0 and venue.longitude == 0.0):
         if postcode and not venue.postcode:
             venue.postcode = postcode
         return
@@ -449,8 +448,8 @@ async def _ensure_venue_coords(
     is_disambiguated = bool(_DISAMBIGUATED_RE.search(venue.name or ""))
 
     if not is_disambiguated:
-        # Try parser-provided coordinates (must be within UK bounds)
-        if parser_lat is not None and parser_lng is not None and _coords_in_uk(parser_lat, parser_lng):
+        # Try parser-provided coordinates (reject only (0,0) garbage)
+        if parser_lat is not None and parser_lng is not None and not (parser_lat == 0.0 and parser_lng == 0.0):
             lat, lng = parser_lat, parser_lng
         # Try geocoding from postcode param
         elif postcode:
