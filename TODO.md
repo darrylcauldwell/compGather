@@ -117,6 +117,27 @@
 
 ---
 
+### 6. Map View Missing International Shows
+
+**Status**: To investigate
+
+**Issue**: Map view (/venues?view=map) doesn't show international show venues (e.g. LGCT, Aachen). Possibly no `event_type="show"` events are appearing on map at all.
+
+**Likely causes**:
+- Show parsers haven't been scanned yet (new sources, no scan run)
+- International show venues missing coordinates in venue_seeds.json
+- Show events exist but their venues lack lat/lng in the DB
+
+**Investigation steps**:
+1. Run a scan for show sources and check DB for show events
+2. Check if show venue rows have lat/lng populated
+3. Verify map query includes all event types (it does — no event_type filter)
+4. If venues lack coords, add them to venue_seeds.json
+
+**Effort**: Small (~1 hour investigation + fixes)
+
+---
+
 ## Discarded (Not Pursuing)
 
 - Bookmarkable Filters (partial implementation exists, nice-to-have)
