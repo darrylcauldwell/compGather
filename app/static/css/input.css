@@ -1298,8 +1298,9 @@ html[data-theme="light"] .badge-source {
     transition: all 0.15s var(--cg-ease);
 }
 
-/* Calendar download icon */
-.badge-ical {
+/* Share / calendar download icon */
+.badge-ical,
+.badge-share {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1311,7 +1312,8 @@ html[data-theme="light"] .badge-source {
     transition: all 0.15s var(--cg-ease);
 }
 
-.badge-ical:hover {
+.badge-ical:hover,
+.badge-share:hover {
     color: var(--cg-accent);
     transform: translateY(-1px);
 }

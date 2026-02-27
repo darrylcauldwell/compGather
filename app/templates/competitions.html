@@ -347,7 +347,13 @@
             {% if comp.source %}
             <span class="badge-source" title="Source: {{ comp.source.name }}">{{ comp.source.name }}</span>
             {% endif %}
-            <span class="badge-ical" title="Add to calendar" data-ical="/api/competitions/{{ comp.id }}/ical"><i class="bi bi-calendar-plus"></i></span>
+            <span class="badge-share" title="Remind me"
+                  data-ical="/api/competitions/{{ comp.id }}/ical"
+                  data-share-title="Book: {{ comp.name }}"
+                  data-share-text="{{ comp.venue_name }}, {{ comp.date_start.strftime('%-d %b %Y') }}"
+                  data-share-url="{{ comp.url or '' }}">
+                <i class="bi bi-box-arrow-up"></i>
+            </span>
         </div>
     </div>
 </a>
@@ -776,12 +782,21 @@ setupClickableBadges('.badge-disc', 'discipline', function(el) { return el.textC
 setupClickableBadges('.badge-source', 'source', function(el) { return el.textContent.trim(); });
 setupClickableBadges('.badge-venue', 'venue', function(el) { return el.dataset.venue; });
 
-/* Calendar download buttons */
-document.querySelectorAll('.badge-ical').forEach(function(btn) {
+/* Share / Remind me buttons */
+document.querySelectorAll('.badge-share').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        window.location.href = this.dataset.ical;
+        var url = this.dataset.shareUrl;
+        if (navigator.share && url) {
+            navigator.share({
+                title: this.dataset.shareTitle,
+                text: this.dataset.shareText,
+                url: url
+            }).catch(function() {});
+        } else {
+            window.location.href = this.dataset.ical;
+        }
     });
 });
 </script>

@@ -116,30 +116,7 @@ async def export_ical(
     if not comps:
         raise HTTPException(404, "No competitions match the current filters")
 
-    events = []
-    for comp in comps:
-        dtstart = comp.date_start.strftime("%Y%m%d")
-        end_date = comp.date_end if comp.date_end else comp.date_start
-        dtend = (end_date + timedelta(days=1)).strftime("%Y%m%d")
-
-        location_parts = [comp.venue_name]
-        if comp.venue_postcode:
-            location_parts.append(comp.venue_postcode)
-        location = _ical_escape(", ".join(location_parts))
-        summary = _ical_escape(comp.name)
-        url_line = f"URL:{comp.url}\r\n" if comp.url else ""
-        uid = f"comp-{comp.id}@equicalendar"
-
-        events.append(
-            "BEGIN:VEVENT\r\n"
-            f"UID:{uid}\r\n"
-            f"DTSTART;VALUE=DATE:{dtstart}\r\n"
-            f"DTEND;VALUE=DATE:{dtend}\r\n"
-            f"SUMMARY:{summary}\r\n"
-            f"LOCATION:{location}\r\n"
-            f"{url_line}"
-            "END:VEVENT\r\n"
-        )
+    events = [_build_vevent(comp) for comp in comps]
 
     ics = (
         "BEGIN:VCALENDAR\r\n"
@@ -182,6 +159,48 @@ def _ical_escape(text: str) -> str:
     return text
 
 
+def _build_vevent(comp: Competition) -> str:
+    """Build a VEVENT block for a competition, including DESCRIPTION and VALARM."""
+    dtstart = comp.date_start.strftime("%Y%m%d")
+    end_date = comp.date_end if comp.date_end else comp.date_start
+    dtend = (end_date + timedelta(days=1)).strftime("%Y%m%d")
+
+    location_parts = [comp.venue_name]
+    if comp.venue_postcode:
+        location_parts.append(comp.venue_postcode)
+    location = _ical_escape(", ".join(location_parts))
+    summary = _ical_escape(comp.name)
+    url_line = f"URL:{comp.url}\r\n" if comp.url else ""
+    uid = f"comp-{comp.id}@equicalendar"
+
+    # Build DESCRIPTION with booking details
+    desc_parts = [f"Book: {comp.name}"]
+    venue_desc = comp.venue_name
+    if comp.venue_postcode:
+        venue_desc += f", {comp.venue_postcode}"
+    desc_parts.append(f"Venue: {venue_desc}")
+    if comp.url:
+        desc_parts.append(f"Details: {comp.url}")
+    description = _ical_escape("\\n".join(desc_parts))
+
+    return (
+        "BEGIN:VEVENT\r\n"
+        f"UID:{uid}\r\n"
+        f"DTSTART;VALUE=DATE:{dtstart}\r\n"
+        f"DTEND;VALUE=DATE:{dtend}\r\n"
+        f"SUMMARY:{summary}\r\n"
+        f"LOCATION:{location}\r\n"
+        f"DESCRIPTION:{description}\r\n"
+        f"{url_line}"
+        "BEGIN:VALARM\r\n"
+        "TRIGGER:-P7D\r\n"
+        "ACTION:DISPLAY\r\n"
+        f"DESCRIPTION:Reminder: {summary}\r\n"
+        "END:VALARM\r\n"
+        "END:VEVENT\r\n"
+    )
+
+
 @router.get("/{competition_id}/ical")
 async def competition_ical(
     competition_id: int, session: AsyncSession = Depends(get_session)
@@ -196,34 +215,12 @@ async def competition_ical(
     if not comp:
         raise HTTPException(404, "Competition not found")
 
-    dtstart = comp.date_start.strftime("%Y%m%d")
-    # DTEND for all-day events is exclusive, so add 1 day
-    end_date = comp.date_end if comp.date_end else comp.date_start
-    dtend = (end_date + timedelta(days=1)).strftime("%Y%m%d")
-
-    location_parts = [comp.venue_name]
-    if comp.venue_postcode:
-        location_parts.append(comp.venue_postcode)
-    location = _ical_escape(", ".join(location_parts))
-
-    summary = _ical_escape(comp.name)
-    url_line = f"URL:{comp.url}\r\n" if comp.url else ""
-
-    uid = f"comp-{comp.id}@equicalendar"
-
     ics = (
         "BEGIN:VCALENDAR\r\n"
         "VERSION:2.0\r\n"
         "PRODID:-//EquiCalendar//EN\r\n"
-        "BEGIN:VEVENT\r\n"
-        f"UID:{uid}\r\n"
-        f"DTSTART;VALUE=DATE:{dtstart}\r\n"
-        f"DTEND;VALUE=DATE:{dtend}\r\n"
-        f"SUMMARY:{summary}\r\n"
-        f"LOCATION:{location}\r\n"
-        f"{url_line}"
-        "END:VEVENT\r\n"
-        "END:VCALENDAR\r\n"
+        + _build_vevent(comp)
+        + "END:VCALENDAR\r\n"
     )
 
     # Sanitise filename

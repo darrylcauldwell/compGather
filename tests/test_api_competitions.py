@@ -244,6 +244,37 @@ class TestICalExport:
         assert "LOCATION:Venue 1\\, TE1 2ST" in body
 
     @pytest.mark.asyncio
+    async def test_ical_contains_valarm(self):
+        app = _get_app()
+        ids = await _seed(1)
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.get(f"/api/competitions/{ids[0]}/ical")
+
+        body = resp.text
+        assert "BEGIN:VALARM" in body
+        assert "TRIGGER:-P7D" in body
+        assert "ACTION:DISPLAY" in body
+        assert "END:VALARM" in body
+
+    @pytest.mark.asyncio
+    async def test_ical_contains_description(self):
+        app = _get_app()
+        ids = await _seed(1)
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.get(f"/api/competitions/{ids[0]}/ical")
+
+        body = resp.text
+        assert "DESCRIPTION:" in body
+        assert "Book: Test Competition 1" in body
+        assert "Venue: Venue 1" in body
+
+    @pytest.mark.asyncio
     async def test_ical_content_disposition(self):
         app = _get_app()
         ids = await _seed(1)
