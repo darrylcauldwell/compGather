@@ -1,0 +1,547 @@
+{% extends "base.html" %}
+{% block title %}Shows - EquiCalendar{% endblock %}
+{% block nav_shows %}active{% endblock %}
+
+{% block location_strip %}{% endblock %}
+
+{% block content %}
+
+{% set sort_options = [
+    ('date_asc', 'Date (soonest)'),
+    ('date_desc', 'Date (latest)'),
+    ('distance_asc', 'Nearest first'),
+    ('name_asc', 'Name (A-Z)'),
+    ('venue_asc', 'Venue (A-Z)'),
+    ('newest', 'Recently added')
+] %}
+
+<!-- Single form wrapping all filters — hidden fields preserve state across submissions -->
+<form method="get" action="/shows" class="filter-form" id="filter-form">
+    <input type="hidden" name="max_distance" id="max_distance_hidden" value="{{ max_distance or '' }}">
+    <input type="hidden" name="postcode" id="postcode_hidden" value="{{ postcode or '' }}">
+    {% if sort and sort != 'date_asc' %}
+    <input type="hidden" name="sort" id="sort_hidden" value="{{ sort }}">
+    {% endif %}
+
+    <!-- ===== DESKTOP FILTER BAR ===== -->
+    <div class="filter-bar-desktop">
+        <!-- All filters in one row — flex-wrap handles line-breaking -->
+        <div class="filter-row">
+            <input type="date" id="date_from" name="date_from" value="{{ date_from }}" class="filter-date-input" onchange="this.form.submit()">
+            <span style="color:var(--cg-text-muted);font-size:0.75rem;">to</span>
+            <input type="date" id="date_to" name="date_to" value="{{ date_to }}" class="filter-date-input" onchange="this.form.submit()">
+            <button type="button" class="filter-pill" data-preset="weekend">This weekend</button>
+            <button type="button" class="filter-pill" data-preset="7days">Next 7 days</button>
+            <button type="button" class="filter-pill" data-preset="30days">Next 30 days</button>
+
+            <!-- Distance dropdown -->
+            <div class="pill-container" id="distance-container">
+                <button type="button" class="filter-pill" onclick="toggleDropdown('distance-dropdown')">
+                    {% if max_distance %}Within {{ max_distance }} mi{% else %}Distance{% endif %}
+                    <i class="bi bi-chevron-down pill-chevron"></i>
+                </button>
+                <div class="pill-dropdown" id="distance-dropdown" style="min-width:14rem;">
+                    <div class="pill-dropdown-options">
+                        <label class="pill-dropdown-option" onclick="setDistance('')">
+                            <span>Any distance</span>
+                            {% if not max_distance %}<i class="bi bi-check" style="margin-left:auto;color:var(--cg-sky);"></i>{% endif %}
+                        </label>
+                        {% for d in [10, 20, 30, 40, 50] %}
+                        <label class="pill-dropdown-option" onclick="setDistance('{{ d }}')">
+                            <span>Within {{ d }} miles</span>
+                            {% if max_distance == d|string %}<i class="bi bi-check" style="margin-left:auto;color:var(--cg-sky);"></i>{% endif %}
+                        </label>
+                        {% endfor %}
+                        <div style="padding:0.35rem 0.5rem;">
+                            <div style="display:flex;gap:0.25rem;align-items:center;">
+                                <input type="number" id="custom_distance_num" class="filter-date-input" min="1" max="500" placeholder="Custom mi" style="width:6rem;border-radius:0.375rem;" value="{{ max_distance if max_distance and max_distance not in ['10','20','30','40','50'] else '' }}" onkeydown="if(event.key==='Enter'){event.preventDefault();applyCustomDistance();}">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="applyCustomDistance()">Go</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="border-top:1px solid var(--cg-border);padding:0.5rem;">
+                        <div class="distance-loc-bar">
+                            <span>from</span>
+                            <span class="loc-postcode" id="loc-postcode-display">{{ postcode if postcode else 'Set postcode' }}</span>
+                            <button type="button" class="loc-change" onclick="toggleLocEdit(event)">{% if postcode %}change{% else %}set{% endif %}</button>
+                            <button type="button" class="loc-change" id="geolocate-btn" onclick="useMyLocation()" title="Use my location"><i class="bi bi-crosshair"></i></button>
+                            <span id="geolocate-error" style="color:var(--cg-red);font-size:0.75em;display:none;margin-left:0.25rem;"></span>
+                        </div>
+                        <div class="loc-edit{% if not postcode %} visible{% endif %}" id="loc-edit-form">
+                            <input type="text" id="loc-postcode-input" placeholder="e.g. SW1A 1AA" value="{{ postcode or '' }}">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="updatePostcode()">Update</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleLocEdit(event)">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sort pill -->
+            <div class="pill-container" id="sort-container">
+                <button type="button" class="filter-pill" onclick="toggleDropdown('sort-dropdown')">
+                    {% if sort == 'date_desc' %}Latest{% elif sort == 'distance_asc' %}Nearest{% elif sort == 'name_asc' %}A-Z{% elif sort == 'venue_asc' %}Venue{% elif sort == 'newest' %}New{% else %}Soonest{% endif %}
+                    <i class="bi bi-arrow-down-up pill-chevron"></i>
+                </button>
+                <div class="pill-dropdown" id="sort-dropdown" style="right:0;left:auto;">
+                    <div class="pill-dropdown-options">
+                        {% for val, label in sort_options %}
+                        <label class="pill-dropdown-option" onclick="applySort('{{ val }}')">
+                            <span>{{ label }}</span>
+                            {% if sort == val %}<i class="bi bi-check" style="margin-left:auto;color:var(--cg-sky);"></i>{% endif %}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event count -->
+            <span class="results-count" style="margin-left:auto;">
+                <strong>{{ total }}</strong> show{{ 's' if total != 1 }}
+            </span>
+        </div>
+
+        <!-- Active filter chips -->
+        {% if active_filters %}
+        <div class="filter-row">
+            <div class="filter-chips" style="display:flex;flex-wrap:wrap;gap:0.375rem;margin:0;">
+                {% for label, remove_url in active_filters %}
+                <a href="{{ remove_url }}" class="filter-chip">{{ label }} <i class="bi bi-x"></i></a>
+                {% endfor %}
+                <a href="/shows" class="filter-chip">Clear all <i class="bi bi-x"></i></a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ===== MOBILE TRIGGER BAR ===== -->
+    <div class="mobile-filter-trigger">
+        <button type="button" class="filter-pill" onclick="openFilterDrawer()" style="flex:1;">
+            <i class="bi bi-funnel"></i> Filters{% if filter_count %} <span class="pill-count">{{ filter_count }}</span>{% endif %}
+        </button>
+        <div class="pill-container" id="mobile-sort-container">
+            <button type="button" class="filter-pill" onclick="toggleDropdown('mobile-sort-dropdown')">
+                <i class="bi bi-arrow-down-up"></i> Sort
+            </button>
+            <div class="pill-dropdown" id="mobile-sort-dropdown" style="right:0;left:auto;">
+                <div class="pill-dropdown-options">
+                    {% for val, label in sort_options %}
+                    <label class="pill-dropdown-option" onclick="applySort('{{ val }}')">
+                        <span>{{ label }}</span>
+                        {% if sort == val %}<i class="bi bi-check" style="margin-left:auto;color:var(--cg-sky);"></i>{% endif %}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile active chips (always visible) -->
+    {% if active_filters %}
+    <div class="filter-chips" style="display:none;flex-wrap:wrap;gap:0.375rem;margin-bottom:0.5rem;" id="mobile-chips">
+        {% for label, remove_url in active_filters %}
+        <a href="{{ remove_url }}" class="filter-chip">{{ label }} <i class="bi bi-x"></i></a>
+        {% endfor %}
+        <a href="/shows" class="filter-chip">Clear all <i class="bi bi-x"></i></a>
+    </div>
+    {% endif %}
+</form>
+
+<!-- ===== MOBILE FILTER DRAWER ===== -->
+<div class="filter-drawer-backdrop" id="filter-drawer-backdrop" onclick="closeFilterDrawer()"></div>
+<div class="filter-drawer" id="filter-drawer">
+    <div class="filter-drawer-handle"></div>
+
+    <div class="filter-drawer-section">Date Range</div>
+    <div class="filter-row">
+        <input type="date" class="filter-date-input" id="m-date-from" value="{{ date_from }}" style="flex:1;">
+        <span style="color:var(--cg-text-muted);font-size:0.75rem;">to</span>
+        <input type="date" class="filter-date-input" id="m-date-to" value="{{ date_to }}" style="flex:1;">
+    </div>
+    <div class="filter-row" style="margin-top:0.375rem;">
+        <button type="button" class="filter-pill" data-preset="weekend">This weekend</button>
+        <button type="button" class="filter-pill" data-preset="7days">Next 7 days</button>
+        <button type="button" class="filter-pill" data-preset="30days">Next 30 days</button>
+    </div>
+
+    <div class="filter-drawer-section">Distance</div>
+    <div class="filter-row type-pills-row">
+        <button type="button" class="filter-pill{% if not max_distance %} active{% endif %}" onclick="setDistance('')">Any</button>
+        {% for d in [10, 20, 30, 50] %}
+        <button type="button" class="filter-pill{% if max_distance == d|string %} active{% endif %}" onclick="setDistance('{{ d }}')">{{ d }} mi</button>
+        {% endfor %}
+    </div>
+    <div class="distance-loc-bar" style="margin-top:0.25rem;">
+        <span>from</span>
+        <span class="loc-postcode">{{ postcode if postcode else 'Set postcode' }}</span>
+    </div>
+
+    <div class="filter-drawer-actions">
+        <button type="button" class="btn btn-outline-secondary" onclick="clearAllFilters()">Clear all</button>
+        <button type="button" class="btn btn-primary" onclick="applyMobileFilters()">Apply</button>
+    </div>
+</div>
+
+<!-- Competition list -->
+{% macro render_comp(comp) %}
+<a href="{{ comp.url or '#' }}" {% if comp.url %}target="_blank" rel="noopener noreferrer"{% endif %} class="comp-item event-show">
+    <div class="ci-date">
+        <span class="ci-day">{{ comp.date_start.strftime('%-d') }}</span>
+        <span class="ci-mon">{{ comp.date_start.strftime('%b').upper() }}</span>
+        {% if comp.date_end and comp.date_end != comp.date_start %}
+        <span class="ci-range">- {{ comp.date_end.strftime('%-d %b') }}</span>
+        {% endif %}
+    </div>
+    <div class="ci-body">
+        <div class="ci-name">{{ comp.name }}</div>
+        <div class="ci-meta">
+            <span class="badge-venue" title="{{ comp.venue_name }}">{{ comp.venue_name }}</span>
+            {% if comp.distance_miles is not none %}
+            <span class="ci-distance"><i class="bi bi-geo-alt"></i> {{ "%.0f"|format(comp.distance_miles) }} mi</span>
+            {% endif %}
+            {% set tags = comp.tags|format_tags %}
+            {% for tag_info in tags %}
+            {% if tag_info.tag.startswith('discipline:') %}
+            <span class="badge-disc">{{ tag_info.display }}</span>
+            {% elif tag_info.tag.startswith('affiliation:') %}
+            <span class="badge-tag badge-tag-affiliation">{{ tag_info.display }}</span>
+            {% endif %}
+            {% endfor %}
+            {% if comp.source %}
+            <span class="badge-source" title="Source: {{ comp.source.name }}">{{ comp.source.name }}</span>
+            {% endif %}
+            <span class="badge-ical" title="Add to calendar" data-ical="/api/competitions/{{ comp.id }}/ical"><i class="bi bi-calendar-plus"></i></span>
+        </div>
+    </div>
+</a>
+{% endmacro %}
+
+{% if competitions %}
+<div class="comp-list">
+    {% if show_date_groups %}
+        {% for group_date, group_comps in date_groups %}
+        <div class="date-separator" role="heading" aria-level="3">
+            {{ group_date.strftime('%A %-d %B') }}{% if group_date.year != today[:4]|int %} {{ group_date.year }}{% endif %}
+        </div>
+        {% for comp in group_comps %}
+        {{ render_comp(comp) }}
+        {% endfor %}
+        {% endfor %}
+    {% else %}
+        {% for comp in competitions %}
+        {{ render_comp(comp) }}
+        {% endfor %}
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if prev_url %}
+    <a href="{{ prev_url }}" class="page-btn" aria-label="Previous page">
+        <i class="bi bi-chevron-left"></i>
+    </a>
+    {% else %}
+    <span class="page-btn disabled" aria-hidden="true">
+        <i class="bi bi-chevron-left"></i>
+    </span>
+    {% endif %}
+    <span class="page-info">{{ page }} / {{ total_pages }}</span>
+    {% if next_url %}
+    <a href="{{ next_url }}" class="page-btn" aria-label="Next page">
+        <i class="bi bi-chevron-right"></i>
+    </a>
+    {% else %}
+    <span class="page-btn disabled" aria-hidden="true">
+        <i class="bi bi-chevron-right"></i>
+    </span>
+    {% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+<!-- Empty state -->
+<div class="empty-state">
+    <div class="icon"><i class="bi bi-calendar-x"></i></div>
+    {% if max_distance %}
+    <p>No shows within {{ max_distance }} miles</p>
+    <p>Try increasing your distance or adjusting your date range.</p>
+    {% elif q %}
+    <p>No shows matching "{{ q }}"</p>
+    <p>Try a different search term or clear your filters.</p>
+    {% else %}
+    <p>No shows found</p>
+    <p>Try adjusting your filters or date range.</p>
+    {% endif %}
+    <a href="/shows" class="btn btn-outline-primary" style="margin-top: 1rem;">Clear all filters</a>
+</div>
+{% endif %}
+
+<script>
+/* ========================================
+   localStorage postcode restore
+   ======================================== */
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    if (!params.get('postcode')) {
+        var saved = localStorage.getItem('cg_postcode');
+        if (saved) {
+            params.set('postcode', saved);
+            window.location.search = params.toString();
+        }
+    } else {
+        localStorage.setItem('cg_postcode', params.get('postcode'));
+    }
+})();
+
+/* ========================================
+   Unified dropdown system
+   ======================================== */
+function toggleDropdown(id) {
+    var allDropdowns = document.querySelectorAll('.pill-dropdown');
+    allDropdowns.forEach(function(dd) {
+        if (dd.id !== id) dd.classList.remove('open');
+    });
+    var target = document.getElementById(id);
+    target.classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.pill-container')) {
+        document.querySelectorAll('.pill-dropdown').forEach(function(dd) {
+            dd.classList.remove('open');
+        });
+    }
+});
+
+/* ========================================
+   Distance filter
+   ======================================== */
+function setDistance(val) {
+    document.getElementById('max_distance_hidden').value = val;
+    document.getElementById('filter-form').submit();
+}
+
+function applyCustomDistance() {
+    var val = document.getElementById('custom_distance_num').value;
+    var num = parseInt(val, 10);
+    if (!val || isNaN(num) || num < 1) return;
+    setDistance(num);
+}
+
+/* ========================================
+   Sort
+   ======================================== */
+function applySort(value) {
+    var url = new URL(window.location);
+    if (value && value !== 'date_asc') {
+        url.searchParams.set('sort', value);
+    } else {
+        url.searchParams.delete('sort');
+    }
+    url.searchParams.delete('page');
+    window.location = url.toString();
+}
+
+/* ========================================
+   Date presets
+   ======================================== */
+document.querySelectorAll('[data-preset]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var preset = this.dataset.preset;
+        var today = new Date();
+        var fromInput = document.getElementById('date_from') || document.getElementById('m-date-from');
+        var toInput = document.getElementById('date_to') || document.getElementById('m-date-to');
+
+        function fmt(d) {
+            return d.getFullYear() + '-' +
+                String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                String(d.getDate()).padStart(2, '0');
+        }
+
+        if (preset === 'weekend') {
+            var sat = new Date(today);
+            var dayOfWeek = sat.getDay();
+            var daysUntilSat = (6 - dayOfWeek + 7) % 7;
+            if (daysUntilSat === 0 && today.getDay() === 6) daysUntilSat = 0;
+            else if (daysUntilSat === 0) daysUntilSat = 7;
+            if (dayOfWeek === 0) {
+                sat.setDate(sat.getDate() - 1);
+            } else if (dayOfWeek !== 6) {
+                sat.setDate(sat.getDate() + daysUntilSat);
+            }
+            var sun = new Date(sat);
+            sun.setDate(sun.getDate() + 1);
+            fromInput.value = fmt(sat);
+            toInput.value = fmt(sun);
+        } else if (preset === '7days') {
+            fromInput.value = fmt(today);
+            var end7 = new Date(today);
+            end7.setDate(end7.getDate() + 7);
+            toInput.value = fmt(end7);
+        } else if (preset === '30days') {
+            fromInput.value = fmt(today);
+            var end30 = new Date(today);
+            end30.setDate(end30.getDate() + 30);
+            toInput.value = fmt(end30);
+        }
+
+        if (window.innerWidth >= 768) {
+            document.getElementById('filter-form').submit();
+        }
+    });
+});
+
+/* ========================================
+   Location postcode edit
+   ======================================== */
+function toggleLocEdit(e) {
+    if (e) e.preventDefault();
+    var form = document.getElementById('loc-edit-form');
+    form.classList.toggle('visible');
+    if (form.classList.contains('visible')) {
+        document.getElementById('loc-postcode-input').focus();
+    }
+}
+
+async function updatePostcode() {
+    var pc = document.getElementById('loc-postcode-input').value.trim();
+    if (!pc) return;
+    try {
+        var resp = await fetch('/api/geocode?postcode=' + encodeURIComponent(pc));
+        if (resp.ok) {
+            localStorage.setItem('cg_postcode', pc);
+            var url = new URL(window.location);
+            url.searchParams.set('postcode', pc);
+            url.searchParams.delete('page');
+            window.location = url.toString();
+        } else {
+            alert('Invalid postcode');
+        }
+    } catch (e) {
+        alert('Failed to validate postcode');
+    }
+}
+
+async function useMyLocation() {
+    if (!navigator.geolocation) {
+        showGeoError('Geolocation not supported by this browser.');
+        return;
+    }
+    var btn = document.getElementById('geolocate-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat" style="display:inline-block;animation:spin 1s linear infinite;"></i>';
+    document.getElementById('geolocate-error').style.display = 'none';
+
+    navigator.geolocation.getCurrentPosition(
+        async function(pos) {
+            try {
+                var resp = await fetch('/api/geocode/reverse', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({lat: pos.coords.latitude, lng: pos.coords.longitude})
+                });
+                if (resp.ok) {
+                    var data = await resp.json();
+                    localStorage.setItem('cg_postcode', data.postcode);
+                    var url = new URL(window.location);
+                    url.searchParams.set('postcode', data.postcode);
+                    url.searchParams.delete('page');
+                    window.location = url.toString();
+                } else {
+                    var data = await resp.json().catch(function() { return {}; });
+                    showGeoError(data.detail || 'Could not find a UK postcode for your location.');
+                    resetGeoBtn();
+                }
+            } catch (e) {
+                showGeoError('Request failed. Please try again.');
+                resetGeoBtn();
+            }
+        },
+        function(err) {
+            var msgs = {1: 'Location access denied.', 2: 'Location unavailable.', 3: 'Location request timed out.'};
+            showGeoError(msgs[err.code] || 'Location error.');
+            resetGeoBtn();
+        },
+        {timeout: 10000, maximumAge: 60000}
+    );
+
+    function showGeoError(msg) {
+        var el = document.getElementById('geolocate-error');
+        el.textContent = msg; el.style.display = 'inline';
+    }
+    function resetGeoBtn() {
+        var btn = document.getElementById('geolocate-btn');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-crosshair"></i>';
+    }
+}
+
+/* ========================================
+   Mobile filter drawer
+   ======================================== */
+function openFilterDrawer() {
+    document.getElementById('filter-drawer-backdrop').classList.add('open');
+    document.getElementById('filter-drawer').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeFilterDrawer() {
+    document.getElementById('filter-drawer-backdrop').classList.remove('open');
+    document.getElementById('filter-drawer').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function applyMobileFilters() {
+    closeFilterDrawer();
+    var url = new URL(window.location.origin + '/shows');
+
+    var mFrom = document.getElementById('m-date-from').value;
+    var mTo = document.getElementById('m-date-to').value;
+    if (mFrom) url.searchParams.set('date_from', mFrom);
+    if (mTo) url.searchParams.set('date_to', mTo);
+
+    var dist = document.getElementById('max_distance_hidden').value;
+    if (dist) url.searchParams.set('max_distance', dist);
+
+    var pc = document.getElementById('postcode_hidden').value;
+    if (pc) url.searchParams.set('postcode', pc);
+
+    var sort = '{{ sort }}';
+    if (sort && sort !== 'date_asc') url.searchParams.set('sort', sort);
+
+    window.location = url.toString();
+}
+
+function clearAllFilters() {
+    closeFilterDrawer();
+    var pc = localStorage.getItem('cg_postcode');
+    window.location = pc ? '/shows?postcode=' + encodeURIComponent(pc) : '/shows';
+}
+
+/* Show mobile chips when on mobile */
+(function() {
+    if (window.innerWidth < 768) {
+        var mobileChips = document.getElementById('mobile-chips');
+        if (mobileChips) mobileChips.style.display = 'flex';
+    }
+})();
+
+/* ========================================
+   Clickable badges
+   ======================================== */
+/* Calendar download buttons */
+document.querySelectorAll('.badge-ical').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.location.href = this.dataset.ical;
+    });
+});
+</script>
+
+<style>
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}

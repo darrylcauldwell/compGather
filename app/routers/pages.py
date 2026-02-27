@@ -45,7 +45,7 @@ def _has_value(v) -> bool:
     return bool(v)
 
 
-def _build_query_string(params: dict, remove: str | None = None, remove_value: str | None = None) -> str:
+def _build_query_string(params: dict, remove: str | None = None, remove_value: str | None = None, base_path: str = "/") -> str:
     """Build a query string from filter params, optionally removing one key or a single value from a list key."""
     pairs: list[tuple[str, str]] = []
     for k, v in params.items():
@@ -62,10 +62,10 @@ def _build_query_string(params: dict, remove: str | None = None, remove_value: s
                 pairs.append((k, item))
         elif v:
             pairs.append((k, v))
-    return "?" + urlencode(pairs) if pairs else "/"
+    return base_path + "?" + urlencode(pairs) if pairs else base_path
 
 
-def _pagination_url(params: dict, page: int) -> str:
+def _pagination_url(params: dict, page: int, base_path: str = "/") -> str:
     """Build a pagination URL preserving all current filter params."""
     pairs: list[tuple[str, str]] = []
     for k, v in params.items():
@@ -76,7 +76,7 @@ def _pagination_url(params: dict, page: int) -> str:
             pairs.append((k, v))
     if page > 1:
         pairs.append(("page", str(page)))
-    return "?" + urlencode(pairs) if pairs else "/"
+    return base_path + "?" + urlencode(pairs) if pairs else base_path
 
 
 @router.get("/")
@@ -412,6 +412,186 @@ async def competitions_page(
             "today": today_iso,
             "event_type": event_type or "all",
             "include_online": include_online,
+        },
+    )
+
+
+@router.get("/shows")
+async def shows_page(
+    request: Request,
+    date_from: str | None = Query(None),
+    date_to: str | None = Query(None),
+    max_distance: str | None = Query(None),
+    q: str | None = Query(None),
+    sort: str | None = Query(None),
+    postcode: str | None = Query(None),
+    page: int = Query(1, ge=1),
+    session: AsyncSession = Depends(get_session),
+):
+    user_coords = await get_user_coords(postcode)
+
+    sort_columns = {
+        "date": Competition.date_start,
+        "name": Competition.name,
+        "venue": Venue.name,
+    }
+
+    sort_col_name = "date"
+    sort_dir = "asc"
+    is_newest = False
+
+    if sort == "newest":
+        is_newest = True
+    elif sort:
+        parts = sort.rsplit("_", 1)
+        valid_cols = set(sort_columns) | {"distance"}
+        if len(parts) == 2 and parts[0] in valid_cols and parts[1] in ("asc", "desc"):
+            sort_col_name = parts[0]
+            sort_dir = parts[1]
+
+    distance_in_python = sort_col_name == "distance" or (max_distance and max_distance.strip())
+
+    today_literal = literal(date.today().isoformat())
+    effective_date = case(
+        (Competition.date_start < today_literal, today_literal),
+        else_=Competition.date_start,
+    )
+
+    base_opts = (
+        select(Competition)
+        .outerjoin(Venue, Competition.venue_id == Venue.id)
+        .options(
+            selectinload(Competition.source),
+            contains_eager(Competition.venue),
+        )
+    )
+
+    if is_newest:
+        stmt = base_opts.order_by(desc(Competition.first_seen_at))
+    elif sort_col_name == "distance":
+        stmt = base_opts.order_by(asc(effective_date))
+    elif sort_col_name == "date":
+        order_fn = asc if sort_dir == "asc" else desc
+        stmt = base_opts.order_by(order_fn(effective_date))
+    else:
+        order_fn = asc if sort_dir == "asc" else desc
+        stmt = base_opts.order_by(order_fn(sort_columns[sort_col_name]))
+
+    # Hard-code event_type=show
+    stmt = stmt.where(Competition.event_type == "show")
+
+    max_dist_float = None
+    if max_distance and max_distance.strip():
+        try:
+            max_dist_float = float(max_distance)
+        except ValueError:
+            pass
+
+    if not date_from:
+        date_from = date.today().isoformat()
+    parsed_from = date.fromisoformat(date_from)
+    stmt = stmt.where(or_(
+        Competition.date_start >= parsed_from,
+        Competition.date_end >= parsed_from,
+    ))
+    if date_to:
+        stmt = stmt.where(Competition.date_start <= date.fromisoformat(date_to))
+
+    if max_dist_float is not None:
+        stmt = stmt.where(Venue.name != "Online")
+
+    if q and q.strip():
+        stmt = stmt.where(Competition.name.ilike(f"%{q.strip()}%"))
+
+    if distance_in_python and user_coords:
+        result = await session.execute(stmt)
+        all_comps = list(result.unique().scalars().all())
+        annotate_distances(all_comps, user_coords)
+        if max_dist_float is not None:
+            all_comps = [c for c in all_comps if c.distance_miles is not None and c.distance_miles <= max_dist_float]
+        if sort_col_name == "distance":
+            all_comps.sort(
+                key=lambda c: (c.distance_miles is None, c.distance_miles or 0),
+                reverse=(sort_dir == "desc"),
+            )
+        total = len(all_comps)
+        total_pages = max(1, math.ceil(total / PER_PAGE))
+        page = min(page, total_pages)
+        competitions = all_comps[(page - 1) * PER_PAGE : page * PER_PAGE]
+    else:
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = (await session.execute(count_stmt)).scalar() or 0
+        total_pages = max(1, math.ceil(total / PER_PAGE))
+        page = min(page, total_pages)
+        stmt = stmt.limit(PER_PAGE).offset((page - 1) * PER_PAGE)
+        result = await session.execute(stmt)
+        competitions = result.unique().scalars().all()
+        annotate_distances(competitions, user_coords)
+
+    date_groups: list[tuple[date, list]] = []
+    current_sort_value = sort or "date_asc"
+    show_date_groups = current_sort_value in ("date_asc", "date_desc")
+    today_date = date.today()
+    if show_date_groups and competitions:
+        current_date = None
+        current_group: list = []
+        for comp in competitions:
+            eff = comp.date_start if comp.date_start >= today_date else today_date
+            if eff != current_date:
+                if current_group:
+                    date_groups.append((current_date, current_group))
+                current_date = eff
+                current_group = [comp]
+            else:
+                current_group.append(comp)
+        if current_group:
+            date_groups.append((current_date, current_group))
+
+    base_path = "/shows"
+    filter_params = {
+        "date_from": date_from or "",
+        "date_to": date_to or "",
+        "max_distance": max_distance or "",
+        "q": q or "",
+        "sort": sort or "",
+        "postcode": postcode or "",
+    }
+
+    active_filters = []
+    today_iso = date.today().isoformat()
+    if date_from and date_from != today_iso:
+        active_filters.append(("From " + date_from, _build_query_string(filter_params, "date_from", base_path=base_path)))
+    if date_to:
+        active_filters.append(("Until " + date_to, _build_query_string(filter_params, "date_to", base_path=base_path)))
+    if max_distance:
+        active_filters.append(("Within " + max_distance + " mi", _build_query_string(filter_params, "max_distance", base_path=base_path)))
+    if q:
+        active_filters.append(('"' + q + '"', _build_query_string(filter_params, "q", base_path=base_path)))
+
+    prev_url = _pagination_url(filter_params, page - 1, base_path=base_path) if page > 1 else None
+    next_url = _pagination_url(filter_params, page + 1, base_path=base_path) if page < total_pages else None
+
+    return templates.TemplateResponse(
+        "shows.html",
+        {
+            "request": request,
+            "competitions": competitions,
+            "date_from": date_from or "",
+            "date_to": date_to or "",
+            "max_distance": max_distance or "",
+            "q": q or "",
+            "postcode": postcode or "",
+            "sort": sort or "date_asc",
+            "page": page,
+            "total_pages": total_pages,
+            "total": total,
+            "active_filters": active_filters,
+            "filter_count": len(active_filters),
+            "date_groups": date_groups,
+            "show_date_groups": show_date_groups,
+            "prev_url": prev_url,
+            "next_url": next_url,
+            "today": today_iso,
         },
     )
 
