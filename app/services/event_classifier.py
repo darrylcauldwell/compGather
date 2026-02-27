@@ -29,6 +29,7 @@ class EventClassifier:
         name: str,
         discipline_hint: Optional[str] = None,
         description: str = "",
+        event_type_hint: Optional[str] = None,
     ) -> tuple[Optional[str], str]:
         """Classify an event by name, discipline hint, and description.
 
@@ -36,6 +37,7 @@ class EventClassifier:
             name: Event name/title (required)
             discipline_hint: Parser-provided discipline text (optional)
             description: Event description/details (optional)
+            event_type_hint: Parser-provided event type (optional, e.g. "show")
 
         Returns:
             (canonical_discipline, event_type) tuple
@@ -43,8 +45,11 @@ class EventClassifier:
         combined = f"{name} {description}".lower()
         name_lower = name.lower()
 
-        # Step 1: Detect event_type from name keywords
-        event_type = _detect_event_type(name_lower)
+        # Step 1: Detect event_type from name keywords, or use parser hint
+        if event_type_hint:
+            event_type = event_type_hint
+        else:
+            event_type = _detect_event_type(name_lower)
 
         # Step 2: Normalise parser-provided discipline hint
         discipline = None

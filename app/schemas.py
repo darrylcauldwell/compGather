@@ -91,6 +91,7 @@ class ExtractedEvent(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
     discipline: str | None = None  # Raw discipline hint, not normalized
+    event_type: str | None = None  # Raw event type hint (e.g. "show")
     has_pony_classes: bool = False
     classes: list[str] = []
     url: str | None = None

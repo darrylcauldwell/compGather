@@ -87,6 +87,30 @@ _SOURCE_DEFS: list[dict[str, str | None]] = [
     {"name": "Northallerton EC", "parser_key": "northallerton", "url": "https://www.northallertonequestriancentre.co.uk/diary/default.asp"},
     {"name": "Ballavartyn", "parser_key": "ballavartyn", "url": "https://equestrian.ballavartyn.com/events/event/feed/"},
     {"name": "Horse Boarding UK", "parser_key": "horse_boarding_uk", "url": "https://www.horseboardinguk.org/championshipdates"},
+    # Major spectator shows
+    {"name": "HOYS", "parser_key": "hoys", "url": "https://www.hoys.co.uk"},
+    {"name": "London International", "parser_key": "london_international", "url": "https://www.londonhorseshow.com"},
+    {"name": "Royal Windsor", "parser_key": "royal_windsor", "url": "https://www.rwhs.co.uk"},
+    {"name": "Your Horse Live", "parser_key": "your_horse_live", "url": "https://www.yourhorse.co.uk/yourhorselive/"},
+    {"name": "Great Yorkshire Show", "parser_key": "great_yorkshire", "url": "https://www.greatyorkshireshow.co.uk"},
+    {"name": "Royal Highland Show", "parser_key": "royal_highland", "url": "https://www.royalhighlandshow.org"},
+    {"name": "Royal Welsh Show", "parser_key": "royal_welsh", "url": "https://www.rwas.wales/royal-welsh/"},
+    {"name": "Royal Cornwall Show", "parser_key": "royal_cornwall", "url": "https://www.royalcornwallshow.org"},
+    {"name": "LGCT", "parser_key": "lgct", "url": "https://www.gcglobalchampions.com"},
+    {"name": "Chatsworth Country Fair", "parser_key": "chatsworth", "url": "https://www.chatsworth.org/events/chatsworth-country-fair/"},
+    {"name": "National Equine Show", "parser_key": "national_equine_show", "url": "https://nationalequineshow.com"},
+    {"name": "Osberton Horse Trials", "parser_key": "osberton", "url": "https://osbertonhorse.co.uk"},
+    {"name": "Hope Show", "parser_key": "hope_show", "url": "https://www.hopeshow.co.uk"},
+    {"name": "Trailblazers Championships", "parser_key": "trailblazers", "url": "https://www.trailblazerschampionships.com"},
+    # International spectator events
+    {"name": "Sunshine Tour", "parser_key": "sunshine_tour", "url": "https://www.sunshinetour.net"},
+    {"name": "Les 5 Etoiles de Pau", "parser_key": "pau", "url": "https://www.event-pau.com"},
+    {"name": "Luhmuhlen Horse Trials", "parser_key": "luhmuhlen", "url": "https://tgl.luhmuehlen.de/en"},
+    {"name": "Maryland 5 Star", "parser_key": "maryland_5_star", "url": "https://www.maryland5star.us"},
+    {"name": "Ocala Winter Spectacular", "parser_key": "ocala", "url": "https://worldequestriancenter.com/ocala-fl/equestrian/shows/winter-spectacular/"},
+    {"name": "Arc de Triomphe", "parser_key": "arc_de_triomphe", "url": "https://billetterie.france-galop.com/en/event/qatar-prix-de-larc-de-triomphe/"},
+    {"name": "Spruce Meadows Masters", "parser_key": "spruce_meadows", "url": "https://www.sprucemeadows.com/masters/"},
+    {"name": "Aachen World Equestrian Festival", "parser_key": "aachen", "url": "https://www.chioaachen.de/en/"},
 ]
 
 
@@ -292,7 +316,8 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
         discipline, event_type = EventClassifier.classify(
             name=comp_data.name,
             discipline_hint=comp_data.discipline,
-            description=comp_data.description or ""
+            description=comp_data.description or "",
+            event_type_hint=comp_data.event_type,
         )
 
         # Track competition vs training counts for scan metrics

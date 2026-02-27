@@ -564,6 +564,15 @@
         "Chapelton Equestrian Centre (Highlands & Islands)"
       ]
     },
+    "Chatsworth House": {
+      "postcode": "DE45 1PP",
+      "lat": 53.2274,
+      "lng": -1.6115,
+      "aliases": [
+        "Chatsworth",
+        "Chatsworth Country Fair"
+      ]
+    },
     "Chard": {
       "postcode": "TA20 4BP",
       "lat": 50.8805912,
@@ -974,6 +983,15 @@
       "lat": 53.539618,
       "lng": -0.86907
     },
+    "ExCeL London": {
+      "postcode": "E16 1XL",
+      "lat": 51.5085,
+      "lng": 0.0299,
+      "aliases": [
+        "ExCeL Centre",
+        "Excel London"
+      ]
+    },
     "Fair Oak Cross Country": {
       "postcode": "GU31 5HR",
       "lat": 50.999665,
@@ -1149,6 +1167,15 @@
       "lng": -2.393002,
       "aliases": [
         "Great Harwood Agric. Show"
+      ]
+    },
+    "Great Yorkshire Showground": {
+      "postcode": "HG2 8NZ",
+      "lat": 53.9783,
+      "lng": -1.5218,
+      "aliases": [
+        "Yorkshire Showground",
+        "Yorkshire Event Centre"
       ]
     },
     "Green Lane": {
@@ -1388,6 +1415,15 @@
       "postcode": "DE5 3QN",
       "lat": 53.043968,
       "lng": -1.413281
+    },
+    "Hope Showground": {
+      "postcode": "S33 8RZ",
+      "lat": 53.3470,
+      "lng": -1.7290,
+      "aliases": [
+        "Hope Show",
+        "Hope Show Showground"
+      ]
     },
     "Hope Valley Riding Club": {
       "postcode": "S33 6RB",
@@ -1890,6 +1926,15 @@
         "New Forest & Hants County"
       ]
     },
+    "NEC Birmingham": {
+      "postcode": "B40 1NT",
+      "lat": 52.4539,
+      "lng": -1.7190,
+      "aliases": [
+        "NEC",
+        "National Exhibition Centre"
+      ]
+    },
     "Newark Showground": {
       "postcode": "NG24 2NY",
       "lat": 53.097736,
@@ -2261,6 +2306,23 @@
       "lng": -3.369392,
       "aliases": [
         "Royal Highland Show"
+      ]
+    },
+    "Royal Hospital Chelsea": {
+      "postcode": "SW3 4SR",
+      "lat": 51.4883,
+      "lng": -0.1579,
+      "aliases": [
+        "Royal Hospital Chelsea South Grounds"
+      ]
+    },
+    "Royal Welsh Showground": {
+      "postcode": "LD2 3SY",
+      "lat": 52.1445,
+      "lng": -3.4045,
+      "aliases": [
+        "Royal Welsh Show",
+        "Llanelwedd"
       ]
     },
     "Saddledane": {

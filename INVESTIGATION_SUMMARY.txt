@@ -1,0 +1,302 @@
+================================================================================
+REFACTORING INVESTIGATION SUMMARY
+================================================================================
+
+FINDING: The refactoring documented in REFACTORING_COMPLETE.md is 47% complete
+in the working tree but 0% committed to git. The documentation overstates
+completion and contains false claims.
+
+================================================================================
+KEY NUMBERS
+================================================================================
+
+Total Parsers:                    44
+Completely Refactored:           23  (52%)
+Partially Refactored:             9  (20%)
+Claimed Fixed But Untouched:      5  (11%)
+Completely Untouched:             5  (11%)
+Other:                            2  ( 5%)
+
+Commits Related to Refactoring:   0  (ZERO)
+Uncommitted File Changes:        31 parsers + 3 core files
+Untracked Files:                  3 (event_classifier.py, REFACTORING_COMPLETE.md)
+
+================================================================================
+PHASE COMPLETION (Claimed vs. Actual)
+================================================================================
+
+PHASE 1: EventClassifier Service
+  Claimed:  Created ✓
+  Actual:   Created ✓ (but untracked file, never committed)
+  Status:   DONE but NOT COMMITTED
+
+PHASE 2: Schema Rename (ExtractedCompetition → ExtractedEvent)
+  Claimed:  Renamed across all 43 parsers
+  Actual:   Renamed in 1 parser (abbey_farm.py) + core files
+  Status:   2.5% done (1 of 40 parsers)
+
+PHASE 3: Scanner Simplification
+  Claimed:  Simplified to EventClassifier.classify()
+  Actual:   Correctly updated (but unstaged changes, not committed)
+  Status:   DONE but NOT COMMITTED
+
+PHASE 4A: Remove is_future_event() from 22 parsers
+  Claimed:  All 22 removed ✓
+  Actual:   23 removed (but 5 of claimed 22 were never touched, false claims)
+            16 still have it (the 5 false claims + 9 partial + 2 others)
+            9 still partially have it (Phase 4B done, Phase 4A skipped)
+  Status:   74% done in working tree, 0% committed
+
+PHASE 4B: Remove classify_event() from 16 parsers
+  Claimed:  All 16 removed ✓
+  Actual:   11 of 12 that had it were removed (1 remains: horse_events.py)
+            1 parser (horse_events) never touched but needed both phases
+  Status:   92% done in working tree, 0% committed
+
+================================================================================
+PARSER PATTERN BREAKDOWN
+================================================================================
+
+PATTERN 1: Completely Refactored (23 parsers)
+  ✓ Both is_future_event() and classify_event() removed
+  ✓ Ready to commit
+  Examples: british_eventing, abbey_farm, british_dressage
+  Status: READY FOR COMMIT
+
+PATTERN 2: Partially Refactored (9 parsers)
+  ✓ classify_event() removed (Phase 4B)
+  ✗ is_future_event() still present (Phase 4A skipped)
+  ✗ Still filters past events
+  Examples: addington, ashwood, my_riding_life
+  Status: NEEDS PHASE 4A (5 minute fix each)
+
+PATTERN 3: Claimed But Untouched (5 parsers)
+  ✗ Both is_future_event() and classify_event() still present
+  ✗ git diff shows ZERO changes
+  ✗ Explicitly listed in Phase 4A as fixed (FALSE CLAIMS)
+  Examples: hartpury, brook_farm, dean_valley
+  Status: NEEDS BOTH PHASES (never started)
+
+PATTERN 4: Completely Untouched (5-6 parsers)
+  ✗ Both is_future_event() and classify_event() still present
+  ✗ Not included in refactoring plan
+  Examples: horse_events (most complex), solihull, sykehouse
+  Status: NEEDS BOTH PHASES (not in scope)
+
+================================================================================
+CRITICAL ISSUES
+================================================================================
+
+1. FALSE CLAIMS (5 parsers explicitly listed as fixed but untouched)
+   - brook_farm.py   — Claimed Phase 4A: git diff empty
+   - dean_valley.py  — Claimed Phase 4A: git diff empty
+   - hartpury.py     — Claimed Phase 4A: git diff empty
+   - northallerton.py — Claimed Phase 4A: git diff empty
+   - port_royal.py   — Claimed Phase 4A: git diff empty
+
+   Root cause: Documentation listed all parsers with is_future_event()
+   but didn't verify the refactoring was actually applied to each.
+
+2. MIXED COMPLETION (9 parsers with only Phase 4B applied)
+   - Phase 4B (remove classify_event): ✓ Done
+   - Phase 4A (remove is_future_event): ✗ Not done
+   - Result: Parsers still filter past events (data loss continues)
+
+   Examples: addington, arena_uk, ashwood, horsevents, my_riding_life,
+   pony_club, showground, british_showjumping, equipe_online
+
+3. SCHEMA MIGRATION INCOMPLETE (39 of 40 parsers still use old name)
+   - Only abbey_farm.py uses ExtractedEvent
+   - 39 parsers still import ExtractedCompetition
+   - Backward-compat alias hides the incomplete migration
+
+   Impact: Future refactorings targeting ExtractedEvent will miss 39 parsers
+
+4. NO GIT HISTORY (0 commits, all work local-only)
+   - 31 parser files modified (uncommitted)
+   - 3 core files modified (unstaged)
+   - 3 new files untracked (event_classifier.py, REFACTORING_COMPLETE.md)
+
+   Impact: No record of what changed, when, or why. Easy to lose work.
+
+5. HORSE_EVENTS SPECIAL CASE (only parser still using classify_event)
+   - Has THREE layers of date filtering
+   - URL-based filtering: _is_future_url()
+   - Listing page filtering: if start_date < today
+   - Detail page filtering: if start_dt < today
+   - Never included in refactoring scope
+
+   Impact: Most complex parser was completely missed by refactoring
+
+================================================================================
+IMPACT: WHAT'S ACTUALLY BROKEN
+================================================================================
+
+1. Historical Events Lost
+   - 16 parsers still filter out events before today
+   - Past competitions from 2023/2024 never extracted
+   - No historical record for venues/users
+
+2. Data Inconsistency
+   - 23 parsers extract all events (with new architecture)
+   - 21 parsers filter past events (with old architecture)
+   - Mixed behavior across sources
+
+3. Classification Duplication
+   - horse_events.py still uses classify_event()
+   - All other parsers (eventually) will use EventClassifier
+   - Two parallel systems risk divergence
+
+4. Schema Name Confusion
+   - 39 parsers use ExtractedCompetition
+   - 1 parser uses ExtractedEvent
+   - Backward-compat alias hides migration incompleteness
+   - Future code changes may target wrong name
+
+================================================================================
+ROOT CAUSES
+================================================================================
+
+1. INCOMPLETE SCOPE DEFINITION
+   Phase 4A claims 22 parsers but some never had the issue applied
+   Phase 4B claims 16 parsers but only 12 actually had the code
+   5 parsers not in plan but need it (british_showjumping, equipe_online, etc.)
+
+2. NO SYSTEMATIC VERIFICATION
+   Claimed work done without checking git diff for each parser
+   False claims: 5 parsers explicitly listed as fixed (git diff empty)
+
+3. ASPIRATIONAL DOCUMENTATION
+   Written as if complete ("✓ COMPLETE", "✅ PASSED")
+   But work still in progress (uncommitted changes)
+   No verification that claims were true
+
+4. MIXED COMPLETION STRATEGY
+   Some parsers: Phase 4B applied, Phase 4A skipped
+   Some parsers: Both phases applied
+   Some parsers: Neither phase applied (but claimed)
+
+   Suggests work done ad-hoc without systematic tracking
+
+5. NO VERSION CONTROL INTEGRATION
+   31 files changed but never committed
+   3 new files created but untracked
+   No record in git log of refactoring activity
+
+   Makes it impossible to verify progress or revert if needed
+
+================================================================================
+RECOMMENDATIONS
+================================================================================
+
+IMMEDIATE (1 hour):
+  [ ] Do NOT commit current uncommitted changes without review
+  [ ] Delete REFACTORING_COMPLETE.md (misleading, inaccurate)
+  [ ] Triage which working-tree changes are safe to commit
+
+SHORT-TERM (1-2 days):
+  [ ] Apply Phase 4A to 9 partially-refactored parsers
+  [ ] Apply both phases to 5 "claimed but untouched" parsers
+  [ ] Apply both phases to 5 "untouched, not in plan" parsers
+  [ ] Fix horse_events.py (most complex, most filtering)
+  [ ] Commit changes with clear messages
+
+MEDIUM-TERM (1 week):
+  [ ] Remove is_future_event() calls from 16 remaining parsers
+  [ ] Remove classify_event() calls from horse_events.py
+  [ ] Propagate schema rename to all 40 parsers (or keep alias)
+  [ ] Test each refactored parser: verify historical events extracted
+  [ ] Rescan all sources and verify data increase
+
+LONG-TERM:
+  [ ] Update CONTRIBUTING.md with parser responsibilities
+  [ ] Establish "Definition of Done" for future refactorings
+  [ ] Require git commits + PR reviews before marking complete
+  [ ] Create automated tests to verify refactoring success
+
+================================================================================
+FILES INVOLVED
+================================================================================
+
+Core Refactoring Files (New/Modified):
+  app/services/event_classifier.py (UNTRACKED, needs commit)
+  app/services/scanner.py (MODIFIED, unstaged)
+  app/schemas.py (MODIFIED, unstaged)
+  app/parsers/base.py (MODIFIED, unstaged)
+
+Parsers Completely Refactored (23):
+  abbey_farm, asao, ballavartyn, british_dressage, british_eventing,
+  british_horseball, bsha, bsps, derby_college, endurance_gb, entry_master,
+  epworth, equilive, equo_events, hickstead, horse_monkey, hpa_polo,
+  its_plain_sailing, kelsall_hill, morris, nsea, nvec, outdoor_shows
+
+Parsers Partially Refactored (9):
+  addington, arena_uk, ashwood, horsevents, my_riding_life, pony_club,
+  showground, british_showjumping, equipe_online
+
+Parsers Claimed But Untouched (5):
+  brook_farm, dean_valley, hartpury, northallerton, port_royal
+
+Parsers Completely Untouched (6):
+  solihull, sykehouse, horse_events, [and 3 others not specifically identified]
+
+Documentation Files:
+  REFACTORING_COMPLETE.md (UNTRACKED, aspirational, inaccurate)
+  REFACTORING_ANALYSIS.md (NEW, comprehensive analysis)
+  REFACTORING_PATTERNS.md (NEW, visual patterns)
+
+================================================================================
+CONCLUSION
+================================================================================
+
+The refactoring is a case study in incomplete local work without version control
+integration:
+
+  ✓ Good: Infrastructure created (EventClassifier, scanner updates)
+  ✓ Good: 52% of parsers completely refactored
+  ✓ Good: Working code exists and runs
+
+  ✗ Bad: 47% incomplete or false claims
+  ✗ Bad: 0% committed to git (no history, easy to lose)
+  ✗ Bad: Aspirational documentation (claims success before completion)
+  ✗ Bad: No verification that claims are accurate
+  ✗ Bad: Schema migration incomplete (39/40 parsers untouched)
+
+RECOMMENDATION: Either commit the good changes selectively and fix the
+incomplete ones, or revert to clean state and redo systematically with proper
+git workflow.
+
+================================================================================
+INVESTIGATION DETAILS
+================================================================================
+
+For detailed analysis, see:
+  - REFACTORING_ANALYSIS.md (comprehensive 600+ line analysis)
+  - REFACTORING_PATTERNS.md (visual patterns and examples)
+
+Sample parser code analysis:
+
+  Pattern 1 Example: british_eventing.py
+    Status: COMPLETELY REFACTORED
+    Changes: ✓ Removed is_future_event, ✓ removed classify_event
+    Ready: YES, can commit immediately
+
+  Pattern 2 Example: addington.py
+    Status: PARTIALLY REFACTORED (Phase 4B only)
+    Changes: ✓ Removed classify_event, ✗ but kept is_future_event
+    Needed: Remove 3 lines (import + check + API param)
+    Ready: NO, needs Phase 4A completion
+
+  Pattern 3 Example: hartpury.py
+    Status: CLAIMED BUT UNTOUCHED
+    Changes: None (git diff is empty)
+    Issue: Explicitly listed in Phase 4A as fixed (FALSE CLAIM)
+    Ready: NO, needs both phases applied
+
+  Pattern 4 Example: horse_events.py
+    Status: COMPLETELY UNTOUCHED, most complex
+    Changes: None
+    Issue: Not in refactoring plan, has 3 filtering layers
+    Ready: NO, needs major work (multiple classify_event + is_future_event)
+
+================================================================================
