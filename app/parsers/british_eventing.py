@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 
 from app.parsers.bases import HttpParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -160,7 +159,6 @@ class BritishEventingParser(HttpParser):
                 event_url = href if href.startswith("http") else f"{BASE_URL}{href}"
 
             classes = [c.strip() for c in classes_text.split(",") if c.strip()] if classes_text else []
-            has_pony = detect_pony_classes(name) or detect_pony_classes(classes_text)
             venue_name, venue_postcode = self._extract_venue(name, location)
 
             competitions.append(self._build_event(
@@ -170,7 +168,6 @@ class BritishEventingParser(HttpParser):
                 venue_name=venue_name,
                 venue_postcode=venue_postcode,
                 discipline="Eventing",
-                has_pony_classes=has_pony,
                 classes=classes,
                 url=event_url or url,
             ))

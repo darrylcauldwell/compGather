@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 
 from app.parsers.bases import SingleVenueParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes, infer_discipline
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -28,13 +27,13 @@ CATEGORY_PAGES = {
     "/competitions/eventing/whats-on.html": "Eventing",
     "/competitions/one-day-event/whats-on.html": "Eventing",
     "/competitions/hunter-trial/whats-on.html": "Hunter Trial",
-    "/competitions/arena-eventing/whats-on.html": "Cross Country",
+    "/competitions/arena-eventing/whats-on.html": "Arena Eventing",
     "/competitions/combined-training/whats-on.html": "Combined Training",
     "/competitions/show-cross/whats-on.html": "Cross Country",
-    "/competitions/nsea/whats-on.html": "NSEA",
-    "/competitions/trailblazers/whats-on.html": "Show Jumping",
-    "/clinics/whats-on.html": "Clinic",
-    "/camps/whats-on.html": "Camp",
+    "/competitions/nsea/whats-on.html": None,
+    "/competitions/trailblazers/whats-on.html": None,
+    "/clinics/whats-on.html": None,
+    "/camps/whats-on.html": None,
 }
 
 
@@ -97,13 +96,12 @@ class EpworthParser(SingleVenueParser):
 
             elif element.name == "h5" and current_date:
                 title = element.get_text(strip=True)
-                discipline = page_discipline or infer_discipline(title)
+                discipline = page_discipline or None
 
                 results.append(self._build_event(
                     name=title,
                     date_start=current_date,
                     discipline=discipline,
-                    has_pony_classes=detect_pony_classes(title),
                     url=page_url,
                 ))
 

@@ -7,7 +7,6 @@ from datetime import date
 
 from app.parsers.bases import HttpParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes, infer_discipline
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -144,9 +143,7 @@ class HorseMonkeyParser(HttpParser):
         disciplines = (row.get("disciplines") or "").strip()
         public_url = row.get("publicUrl", "")
 
-        text = f"{name} {disciplines}"
-        discipline = infer_discipline(text) or disciplines or None
-        has_pony = detect_pony_classes(text)
+        discipline = disciplines or None
 
         return self._build_event(
             name=name,
@@ -154,7 +151,6 @@ class HorseMonkeyParser(HttpParser):
             date_end=date_end if date_end != date_start else None,
             venue_name=venue_name,
             discipline=discipline,
-            has_pony_classes=has_pony,
             classes=[],
             url=public_url or f"https://horsemonkey.com/uk/equestrian_event/{row.get('id')}",
         )

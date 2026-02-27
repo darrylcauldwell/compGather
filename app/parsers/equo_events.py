@@ -9,7 +9,7 @@ import httpx
 
 from app.parsers.bases import TwoPhaseParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes, extract_postcode
+from app.parsers.utils import extract_postcode
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -157,7 +157,6 @@ class EquoEventsParser(TwoPhaseParser):
             venue_name=event.get("venue_name", "TBC"),
             venue_postcode=venue_cache.get(venue_id) if venue_id else None,
             discipline=disc_text or None,
-            has_pony_classes=detect_pony_classes(f"{name} {disc_text}"),
             url=event.get("url") or SEARCH_URL,
         )
 

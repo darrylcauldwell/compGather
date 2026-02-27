@@ -220,7 +220,6 @@ class ItsPlainSailingParser(PlaywrightParser):
             date_start=date_start,
             venue_name=venue_name,
             venue_postcode=venue_postcode,
-            has_pony_classes=True,
             url=f"https://itsplainsailing.com/org/{club_slug}",
             description=card_text[:200] if card_text else None,
         )

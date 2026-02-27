@@ -7,7 +7,6 @@ from datetime import date, datetime
 
 from app.parsers.bases import BROWSER_UA, SingleVenueParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -66,10 +65,6 @@ class ShowgroundParser(SingleVenueParser):
                 continue
             title = html.unescape(titles[-1].strip())
 
-            after = page_html[date_match.end():date_match.end() + 500]
-            descs = re.findall(r'class="wixui-rich-text__text">([^<]{10,})<', after)
-            description = html.unescape(descs[0].strip()) if descs else ""
-
             year = self._infer_year(month_name)
             try:
                 ds = datetime.strptime(f"{start_day} {month_name} {year}", "%d %B %Y").date()
@@ -82,14 +77,12 @@ class ShowgroundParser(SingleVenueParser):
                 continue
             seen.add(key)
 
-            text = f"{title} {description}"
             competitions.append(self._build_event(
                 name=title,
                 date_start=ds.isoformat(),
                 date_end=de.isoformat() if de != ds else None,
                 latitude=self.VENUE_LAT,
                 longitude=self.VENUE_LNG,
-                has_pony_classes=detect_pony_classes(text),
                 url=self._build_detail_url(title, page_path),
             ))
 

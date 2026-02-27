@@ -10,7 +10,6 @@ from bs4 import BeautifulSoup
 
 from app.parsers.bases import SingleVenueParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -109,14 +108,12 @@ class KelsallHillParser(SingleVenueParser):
             return None
 
         description = data.get("description", "")
-        has_pony = detect_pony_classes(f"{name} {description}")
         classes = self._extract_classes(description)
 
         return self._build_event(
             name=name,
             date_start=date_start,
             date_end=date_end if date_end and date_end != date_start else None,
-            has_pony_classes=has_pony,
             classes=classes,
             url=event_url or f"{BASE_URL}/events/",
         )

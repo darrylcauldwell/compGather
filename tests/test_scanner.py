@@ -42,7 +42,6 @@ async def test_scan_creates_competitions(db_session):
             date_start="2026-07-15",
             venue_name="Test Arena",
             venue_postcode="SW1A 1AA",
-            has_pony_classes=True,
             classes=["Pony 1.00m", "Open 1.10m"],
         )
     ]
@@ -74,7 +73,6 @@ async def test_scan_creates_competitions(db_session):
     comps = result.scalars().all()
     assert len(comps) == 1
     assert comps[0].name == "Summer Show"
-    assert comps[0].has_pony_classes is True
     assert comps[0].venue_id is not None
     assert comps[0].venue_match_type == "new"
     assert comps[0].distance_miles == 5.0

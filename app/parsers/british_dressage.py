@@ -17,10 +17,6 @@ SEED_FILE = Path(__file__).parent / "british_dressage_seed.json"
 
 CANCELLED_STATUS = 5
 
-PONY_KEYWORDS_BD = [
-    "pony", "yr", "jr", "junior", "young horse", "young pony", "yh", "yp",
-]
-
 
 @register_parser("british_dressage")
 class BritishDressageParser(HttpParser):
@@ -84,9 +80,6 @@ class BritishDressageParser(HttpParser):
         class_range = row.get("class_range", "") or ""
         classes = [c.strip() for c in class_range.split("+") if c.strip()] if class_range else []
 
-        check_text = f"{name} {class_range}".lower()
-        has_pony = any(kw in check_text for kw in PONY_KEYWORDS_BD)
-
         event_id = row.get("id")
         detail_url = DETAIL_URL.format(id=event_id) if event_id else None
 
@@ -96,7 +89,6 @@ class BritishDressageParser(HttpParser):
             date_end=date_end if date_end != date_start else None,
             venue_name=venue_name or "TBC",
             discipline="Dressage",
-            has_pony_classes=has_pony,
             classes=classes,
             url=detail_url or "https://britishdressage.online/",
         )
@@ -120,7 +112,6 @@ class BritishDressageParser(HttpParser):
                 latitude=row.get("latitude"),
                 longitude=row.get("longitude"),
                 discipline=row.get("discipline", "Dressage"),
-                has_pony_classes=row.get("has_pony_classes", False),
                 classes=[],
                 url=row.get("url"),
             ))

@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 
 from app.parsers.bases import HttpParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes, infer_discipline
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -72,8 +71,7 @@ class EquiLiveParser(HttpParser):
                 if link:
                     event_url = link["href"]
 
-            discipline = infer_discipline(name) or "Show Jumping"
-            has_pony = detect_pony_classes(name)
+            discipline = None
 
             competitions.append(self._build_event(
                 name=name,
@@ -81,7 +79,6 @@ class EquiLiveParser(HttpParser):
                 date_end=date_end if date_end and date_end != date_start else None,
                 venue_name=venue,
                 discipline=discipline,
-                has_pony_classes=has_pony,
                 url=event_url or url,
             ))
 

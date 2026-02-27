@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 from app.parsers.bases import TwoPhaseParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes, extract_postcode, infer_discipline
+from app.parsers.utils import extract_postcode
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -167,8 +167,7 @@ class BSHAParser(TwoPhaseParser):
         return self._build_event(
             name=stub["name"], date_start=stub["date_start"], date_end=stub["date_end"],
             venue_name=stub["venue_name"], venue_postcode=stub["venue_postcode"],
-            discipline=infer_discipline(stub["name"]) or "Showing",
-            has_pony_classes=detect_pony_classes(stub["name"]),
+            discipline="Showing",
             url=stub["event_url"] or CALENDAR_URL,
         )
 

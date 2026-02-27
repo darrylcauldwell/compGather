@@ -9,7 +9,6 @@ from bs4 import BeautifulSoup
 
 from app.parsers.bases import BROWSER_UA, SingleVenueParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes, infer_discipline
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -54,8 +53,7 @@ class NorthallertonParser(SingleVenueParser):
                     competitions.append(self._build_event(
                         name=title,
                         date_start=date_start,
-                        discipline=infer_discipline(title),
-                        has_pony_classes=detect_pony_classes(title),
+                        discipline=None,
                         url=event_url,
                     ))
 

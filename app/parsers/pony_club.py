@@ -7,7 +7,7 @@ from datetime import datetime
 
 from app.parsers.bases import HttpParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import extract_postcode, infer_discipline
+from app.parsers.utils import extract_postcode
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -146,7 +146,7 @@ class PonyClubParser(HttpParser):
         if enriched_name and enriched_name.lower() != name.lower():
             name = enriched_name
 
-        discipline = infer_discipline(name) or event_type or None
+        discipline = event_type or None
 
         return self._build_event(
             name=name,
@@ -154,7 +154,6 @@ class PonyClubParser(HttpParser):
             venue_name=venue_name,
             venue_postcode=venue_postcode,
             discipline=discipline,
-            has_pony_classes=True,
             classes=[event_type] if event_type else [],
             url=booking_url or base_url,
         )

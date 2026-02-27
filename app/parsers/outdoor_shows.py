@@ -180,7 +180,6 @@ class OutdoorShowsParser(TwoPhaseParser):
             venue_name=venue_name,
             venue_postcode=venue_postcode,
             discipline="Agricultural Show",
-            has_pony_classes=False,
             url=url,
         )
 

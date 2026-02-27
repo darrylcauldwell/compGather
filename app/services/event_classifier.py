@@ -1,9 +1,9 @@
-"""Event classification service - single source of truth for is_competition determination."""
+"""Event classification service - single source of truth for discipline + event_type."""
 
 from typing import Optional
 
 from app.parsers.utils import (
-    _get_non_competition_patterns,
+    _detect_event_type,
     get_discipline_patterns,
     normalise_discipline,
 )
@@ -12,19 +12,16 @@ from app.parsers.utils import (
 class EventClassifier:
     """Single source of truth for event classification.
 
-    Centralized classification logic replacing scattered classify_event() and
-    normalise_discipline() calls throughout the codebase. Provides deterministic,
-    testable classification with a clear strategy.
+    Determines discipline and event_type INDEPENDENTLY:
+    - Discipline is detected from parser hint or name+description keywords
+    - Event type is detected from name keywords (training, venue hire, etc.)
 
-    Classification Strategy:
-    1. Check event name for non-competition keywords (Training, Venue Hire) — highest priority
-    2. Normalise parser-provided discipline hint if given
-    3. Check name + description for competition discipline keywords
-    4. Default to (None, True) if no matches — assume it's a competition
+    This allows correct tagging like "Dressage Training" →
+    discipline="Dressage", event_type="training".
 
-    Returns (canonical_discipline, is_competition) where:
-    - Non-competition: ("Training", False) or ("Venue Hire", False)
-    - Competition: ("Show Jumping", True) or (None, True) for unknown disciplines
+    Returns (discipline, event_type) where:
+    - discipline: canonical name ("Show Jumping", "Dressage", etc.) or None
+    - event_type: "competition" | "training" | "venue_hire" | "show"
     """
 
     @staticmethod
@@ -32,38 +29,33 @@ class EventClassifier:
         name: str,
         discipline_hint: Optional[str] = None,
         description: str = "",
-    ) -> tuple[Optional[str], bool]:
+    ) -> tuple[Optional[str], str]:
         """Classify an event by name, discipline hint, and description.
 
         Args:
             name: Event name/title (required)
-            discipline_hint: Parser-provided discipline text (optional, e.g., "Show Jumping")
+            discipline_hint: Parser-provided discipline text (optional)
             description: Event description/details (optional)
 
         Returns:
-            (canonical_discipline, is_competition) tuple
+            (canonical_discipline, event_type) tuple
         """
         combined = f"{name} {description}".lower()
         name_lower = name.lower()
 
-        # Step 1: Non-competition keywords in name take priority
-        # These indicate training events, venue hire, etc.
-        for keyword, non_comp_discipline in _get_non_competition_patterns():
-            if keyword in name_lower:
-                return (non_comp_discipline, False)
+        # Step 1: Detect event_type from name keywords
+        event_type = _detect_event_type(name_lower)
 
         # Step 2: Normalise parser-provided discipline hint
-        # If parser gave us a discipline, use that classification
+        discipline = None
         if discipline_hint:
-            canonical, is_comp = normalise_discipline(discipline_hint)
-            if canonical:
-                return (canonical, is_comp)
+            discipline = normalise_discipline(discipline_hint)
 
-        # Step 3: Try to infer competition discipline from name + description
-        # Look for patterns like "Show Jumping", "Eventing", "Dressage", etc.
-        for discipline, pattern in get_discipline_patterns():
-            if pattern.search(combined):
-                return (discipline, True)
+        # Step 3: If no discipline from hint, try to infer from name + description
+        if not discipline:
+            for disc, pattern in get_discipline_patterns():
+                if pattern.search(combined):
+                    discipline = disc
+                    break
 
-        # Step 4: No match — unknown discipline, assume it's a competition
-        return (None, True)
+        return (discipline, event_type)

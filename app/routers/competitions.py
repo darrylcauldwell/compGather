@@ -24,7 +24,6 @@ async def list_competitions(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
     max_distance: float | None = Query(None),
-    pony_only: bool = Query(False),
     discipline: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
@@ -47,8 +46,6 @@ async def list_competitions(
         ))
     if date_to:
         stmt = stmt.where(Competition.date_start <= date_to)
-    if pony_only:
-        stmt = stmt.where(Competition.has_pony_classes == True)
     if max_distance is not None:
         stmt = stmt.where(
             Venue.distance_miles != None,
@@ -67,7 +64,6 @@ async def export_ical(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
     max_distance: float | None = Query(None),
-    pony_only: bool = Query(False),
     discipline: str | None = Query(None),
     venue: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
@@ -94,8 +90,6 @@ async def export_ical(
     ))
     if date_to:
         stmt = stmt.where(Competition.date_start <= date_to)
-    if pony_only:
-        stmt = stmt.where(Competition.has_pony_classes == True)
     if max_distance is not None:
         stmt = stmt.where(
             Venue.distance_miles != None,

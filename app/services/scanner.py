@@ -43,44 +43,36 @@ logger = logging.getLogger(__name__)
 _DISAMBIGUATED_RE = re.compile(r"\([A-Z]{1,2}\d[A-Z\d]?\)$")
 
 
-def _derive_event_type(is_competition: bool, discipline: str | None) -> str:
-    """Convert legacy (is_competition, discipline) pair to event_type string."""
-    if is_competition:
-        return "competition"
-    if discipline == "Venue Hire":
-        return "venue_hire"
-    return "training"
-
-
 # Canonical source definitions — seeded into the sources table at startup.
 # parser_key must match @register_parser("key") in app/parsers/*.py
+# affiliation: optional governing body tag for all events from this source
 _SOURCE_DEFS: list[dict[str, str | None]] = [
     {"name": "Abbey Farm", "parser_key": "abbey_farm", "url": "https://abbeyfarmequestrian.co.uk/events/list/"},
     {"name": "Addington", "parser_key": "addington", "url": "https://addington.co.uk/wp-json/tribe/events/v1/events"},
     {"name": "Arena UK", "parser_key": "arena_uk", "url": "https://www.arenauk.com/events/all-upcoming"},
     {"name": "ASAO", "parser_key": "asao", "url": "https://www.asao.co.uk/"},
     {"name": "Ashwood Equestrian", "parser_key": "ashwood", "url": "https://ashwoodequestrian.com/events/"},
-    {"name": "British Dressage", "parser_key": "british_dressage", "url": "https://britishdressage.online/api/events/getByPublicFilter"},
-    {"name": "British Eventing", "parser_key": "british_eventing", "url": "https://www.britisheventing.com/search-events"},
-    {"name": "British Horseball", "parser_key": "british_horseball", "url": "https://www.britishhorseball.co.uk/bha-events"},
-    {"name": "British Show Horse Association", "parser_key": "bsha", "url": "https://bsha.online/index.php"},
-    {"name": "British Show Pony Society", "parser_key": "bsps", "url": "https://bsps.equine.events/index.php"},
-    {"name": "British Showjumping", "parser_key": "british_showjumping", "url": "https://www.britishshowjumping.co.uk/show-calendar.cfm"},
+    {"name": "British Dressage", "parser_key": "british_dressage", "url": "https://britishdressage.online/api/events/getByPublicFilter", "affiliation": "british-dressage"},
+    {"name": "British Eventing", "parser_key": "british_eventing", "url": "https://www.britisheventing.com/search-events", "affiliation": "british-eventing"},
+    {"name": "British Horseball", "parser_key": "british_horseball", "url": "https://www.britishhorseball.co.uk/bha-events", "affiliation": "british-horseball"},
+    {"name": "British Show Horse Association", "parser_key": "bsha", "url": "https://bsha.online/index.php", "affiliation": "bsha"},
+    {"name": "British Show Pony Society", "parser_key": "bsps", "url": "https://bsps.equine.events/index.php", "affiliation": "bsps"},
+    {"name": "British Showjumping", "parser_key": "british_showjumping", "url": "https://www.britishshowjumping.co.uk/show-calendar.cfm", "affiliation": "british-showjumping"},
     {"name": "Derby College", "parser_key": "derby_college", "url": "https://www.derby-college.ac.uk/open-to-the-public/equestrian-centre/"},
     {"name": "Epworth", "parser_key": "epworth", "url": "https://www.epworthequestrianltd.com"},
     {"name": "EquiLive", "parser_key": "equilive", "url": "https://equilive.uk/events/"},
     {"name": "Equipe Online", "parser_key": "equipe_online", "url": "https://online.equipe.com/api/v1/meetings"},
     {"name": "EquoEvents", "parser_key": "equo_events", "url": "https://www.equoevents.co.uk/SearchEvents"},
-    {"name": "Endurance GB", "parser_key": "endurance_gb", "url": "https://www.endurancegb.co.uk/Events/Calendar"},
+    {"name": "Endurance GB", "parser_key": "endurance_gb", "url": "https://www.endurancegb.co.uk/Events/Calendar", "affiliation": "endurance-gb"},
     {"name": "Hickstead", "parser_key": "hickstead", "url": "https://www.hickstead.co.uk"},
     {"name": "Hope Valley Riding Club", "parser_key": "hope_valley", "url": "https://hopevalleyridingclub.co.uk/events/"},
     {"name": "Horse Events", "parser_key": "horse_events", "url": "https://www.horse-events.co.uk"},
     {"name": "Horse Monkey", "parser_key": "horse_monkey", "url": "https://horsemonkey.com/uk/search"},
-    {"name": "HPA Polo", "parser_key": "hpa_polo", "url": "https://hpa-polo.co.uk/clubs/fixtures/find-a-fixture-search/"},
+    {"name": "HPA Polo", "parser_key": "hpa_polo", "url": "https://hpa-polo.co.uk/clubs/fixtures/find-a-fixture-search/", "affiliation": "hpa-polo"},
     {"name": "HorsEvents", "parser_key": "horsevents", "url": "https://horsevents.co.uk/diary/"},
     {"name": "Kelsall Hill", "parser_key": "kelsall_hill", "url": "https://kelsallhill.co.uk/wp-admin/admin-ajax.php"},
     {"name": "My Riding Life", "parser_key": "my_riding_life", "url": "https://www.myridinglife.com/myridinglife/onlineentries.aspx"},
-    {"name": "NSEA", "parser_key": "nsea", "url": "https://www.nsea.org.uk/competitions/"},
+    {"name": "NSEA", "parser_key": "nsea", "url": "https://www.nsea.org.uk/competitions/", "affiliation": "nsea"},
     {"name": "NVEC", "parser_key": "nvec", "url": "https://nvec.equusorganiser.com/"},
     {"name": "Outdoor Shows", "parser_key": "outdoor_shows", "url": "https://outdoorshows.co.uk"},
     {"name": "ItsPlainSailing", "parser_key": "its_plain_sailing", "url": "https://itsplainsailing.com"},
@@ -95,6 +87,7 @@ _SOURCE_DEFS: list[dict[str, str | None]] = [
     {"name": "Brook Farm TC", "parser_key": "brook_farm", "url": "https://www.brookfarmtc.co.uk/what-s-on-2.php"},
     {"name": "Northallerton EC", "parser_key": "northallerton", "url": "https://www.northallertonequestriancentre.co.uk/diary/default.asp"},
     {"name": "Ballavartyn", "parser_key": "ballavartyn", "url": "https://equestrian.ballavartyn.com/events/event/feed/"},
+    {"name": "Horse Boarding UK", "parser_key": "horse_boarding_uk", "url": "https://www.horseboardinguk.org/championshipdates"},
 ]
 
 
@@ -225,6 +218,13 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
     parser = get_parser(source.parser_key)
     extracted = await parser.fetch_and_parse(source.url)
 
+    # Look up source-level affiliation from _SOURCE_DEFS
+    source_affiliation = None
+    for defn in _SOURCE_DEFS:
+        if defn["parser_key"] == source.parser_key:
+            source_affiliation = defn.get("affiliation")
+            break
+
     # Build venue index once per source scan
     venue_index = VenueIndex()
     await venue_index.build(session)
@@ -289,24 +289,18 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
             )
 
         # EventClassifier is the single source of truth for classification.
-        # It determines both the canonical discipline and is_competition flag
-        # based on event name, parser-provided discipline hint, and description.
-        discipline, is_competition = EventClassifier.classify(
+        # It determines canonical discipline and event_type independently.
+        discipline, event_type = EventClassifier.classify(
             name=comp_data.name,
             discipline_hint=comp_data.discipline,
             description=comp_data.description or ""
         )
 
         # Track competition vs training counts for scan metrics
-        if is_competition:
+        if event_type == "competition":
             scan_comp_count += 1
         else:
             scan_training_count += 1
-
-        # Pony Club and NSEA events always have pony classes
-        has_pony = comp_data.has_pony_classes
-        if discipline in ("Pony Club",):
-            has_pony = True
 
         # Upsert: first check same source, then check ANY source (cross-source dedup).
         # Use .scalars().first() because duplicates can exist from earlier scans.
@@ -338,8 +332,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
         if existing:
             existing.last_seen_at = datetime.utcnow()
             existing.discipline = discipline
-            existing.event_type = _derive_event_type(is_competition, discipline)
-            existing.has_pony_classes = has_pony
+            existing.event_type = event_type
             if existing.venue_id != venue_match.venue_id:
                 existing.venue_match_type = venue_match.match_type
             existing.venue_id = venue_match.venue_id
@@ -353,7 +346,8 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 name=comp_data.name,
                 description=comp_data.description or "",
                 discipline=discipline,
-                is_competition=is_competition,
+                event_type=event_type,
+                source_affiliation=source_affiliation,
             )
             existing.tags = serialize_tags(tags) if tags else None
         else:
@@ -362,7 +356,8 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 name=comp_data.name,
                 description=comp_data.description or "",
                 discipline=discipline,
-                is_competition=is_competition,
+                event_type=event_type,
+                source_affiliation=source_affiliation,
             )
             tags_json = serialize_tags(tags) if tags else None
 
@@ -374,8 +369,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 venue_id=venue_match.venue_id,
                 venue_match_type=venue_match.match_type,
                 discipline=discipline,
-                event_type=_derive_event_type(is_competition, discipline),
-                has_pony_classes=has_pony,
+                event_type=event_type,
                 tags=tags_json,
                 url=safe_url,
                 raw_extract=json.dumps(comp_data.model_dump()),
@@ -478,10 +472,17 @@ async def audit_disciplines(session: AsyncSession) -> None:
         )
     ).all()
 
+    known_disciplines = {
+        "Show Jumping", "Dressage", "Eventing", "Cross Country",
+        "Combined Training", "Arena Eventing", "Showing", "Hunter Trial",
+        "Endurance", "Gymkhana", "Polocrosse", "Polo",
+        "Driving", "Drag Hunt", "Hobby Horse", "Horse Boarding",
+    }
+
     fixed = 0
     for raw_disc, count in rows:
-        canonical, is_comp = normalise_discipline(raw_disc)
-        if canonical != raw_disc:
+        canonical = normalise_discipline(raw_disc)
+        if canonical and canonical != raw_disc:
             logger.info(
                 "Discipline audit: '%s' (%d records) → '%s'",
                 raw_disc, count, canonical,
@@ -493,14 +494,8 @@ async def audit_disciplines(session: AsyncSession) -> None:
             ).scalars().all()
             for comp in comps:
                 comp.discipline = canonical
-                comp.event_type = _derive_event_type(is_comp, canonical)
                 fixed += 1
-        elif canonical and canonical not in {
-            "Show Jumping", "Dressage", "Eventing", "Cross Country",
-            "Combined Training", "Showing", "Hunter Trial", "Pony Club",
-            "Agricultural Show", "Endurance", "Gymkhana", "Other",
-            "Venue Hire", "Training",
-        }:
+        elif canonical and canonical not in known_disciplines:
             logger.warning(
                 "Unmapped discipline found: '%s' (%d records)", raw_disc, count
             )

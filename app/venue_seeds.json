@@ -5041,26 +5041,29 @@
         "showjumping",
         "show jumping",
         "british showjumping",
+        "affiliated showjumping",
+        "affiliated show jumping",
         "unaffiliated showjumping",
         "unaffiliated show jumping",
         "sj"
       ],
-      "is_competition": true,
       "description": "Jumping over fences and obstacles"
     },
     "Dressage": {
       "aliases": [
         "dressage",
         "british dressage",
+        "affiliated dressage",
         "unaffiliated dressage",
         "bd"
       ],
-      "is_competition": true,
       "description": "Precision flatwork and training"
     },
     "Eventing": {
       "aliases": [
         "eventing",
+        "affiliated eventing",
+        "unaffiliated eventing",
         "one day event",
         "eventer trial",
         "express eventing",
@@ -5068,7 +5071,6 @@
         "horse trial",
         "horse trials"
       ],
-      "is_competition": true,
       "description": "Multi-phase competition (dressage, cross country, show jumping)"
     },
     "Cross Country": {
@@ -5078,7 +5080,6 @@
         "show cross",
         "showcross"
       ],
-      "is_competition": true,
       "description": "Outdoor cross country jumping"
     },
     "Combined Training": {
@@ -5086,7 +5087,6 @@
         "combined training",
         "ct"
       ],
-      "is_competition": true,
       "description": "Dressage and show jumping combined"
     },
     "Hunter Trial": {
@@ -5094,69 +5094,64 @@
         "hunter trial",
         "hunter trials"
       ],
-      "is_competition": true,
       "description": "Cross country hunter trials"
+    },
+    "Arena Eventing": {
+      "aliases": [
+        "arena eventing"
+      ],
+      "description": "Eventing competitions held in arenas"
+    },
+    "Working Hunter": {
+      "aliases": [
+        "working hunter",
+        "whp"
+      ],
+      "description": "Working hunter and working hunter pony classes"
     },
     "Showing": {
       "aliases": [
         "showing",
-        "bsps",
-        "working hunter"
+        "bsps"
       ],
-      "is_competition": true,
-      "description": "Show classes and working hunter"
+      "description": "Show classes"
+    },
+    "Tetrathlon": {
+      "aliases": [
+        "tetrathlon",
+        "triathlon",
+        "tet "
+      ],
+      "description": "Tetrathlon and winter triathlon (riding, running, shooting, +swimming)"
     },
     "Endurance": {
       "aliases": [
         "endurance"
       ],
-      "is_competition": true,
       "description": "Long-distance endurance riding"
-    },
-    "Pony Club": {
-      "aliases": [
-        "pony club",
-        "area competition",
-        "area competition - teams",
-        "test"
-      ],
-      "is_competition": true,
-      "description": "Pony Club events and competitions"
-    },
-    "NSEA": {
-      "aliases": [
-        "nsea"
-      ],
-      "is_competition": true,
-      "description": "National Schools Equestrian Association"
-    },
-    "Agricultural Show": {
-      "aliases": [
-        "agricultural show"
-      ],
-      "is_competition": true,
-      "description": "Agricultural and county shows"
     },
     "Gymkhana": {
       "aliases": [
-        "gymkhana",
+        "gymkhana"
+      ],
+      "description": "Gymkhana games and trotting races"
+    },
+    "Mounted Games": {
+      "aliases": [
         "mounted games"
       ],
-      "is_competition": true,
-      "description": "Games on horseback (mounted games, trotting races)"
+      "description": "Mounted games competitions and training"
     },
     "Polocrosse": {
       "aliases": [
         "polocrosse"
       ],
-      "is_competition": true,
       "description": "Polocrosse sport"
     },
     "Polo": {
       "aliases": [
         "polo"
       ],
-      "is_competition": true,
       "description": "Polo sport"
     },
     "Driving": {
@@ -5165,7 +5160,6 @@
         "driving trial",
         "carriage driv"
       ],
-      "is_competition": true,
       "description": "Carriage driving and driving trials"
     },
     "Drag Hunt": {
@@ -5176,80 +5170,19 @@
         "draghounds",
         "drag hunting"
       ],
-      "is_competition": true,
       "description": "Drag hunting events"
     },
     "Hobby Horse": {
       "aliases": [
         "hobby horse"
       ],
-      "is_competition": true,
       "description": "Hobby horse events"
     },
-    "Other": {
+    "Horse Boarding": {
       "aliases": [
-        "other",
-        "demonstrations",
-        "demonstration",
-        "social",
-        "vip event",
-        "mixed events",
-        "sundry",
-        "hunt ball",
-        "nsea numbers",
-        "hook up",
-        "quiz"
+        "horse boarding"
       ],
-      "is_competition": true,
-      "description": "Other equestrian disciplines"
-    },
-    "Training": {
-      "aliases": [
-        "lesson",
-        "training",
-        "tuition",
-        "schooling",
-        "clinic",
-        "camp",
-        "rally",
-        "polework",
-        "pole work",
-        "gridwork",
-        "grid work",
-        "flatwork",
-        "flat work",
-        "workshop",
-        "seminar",
-        "lecture",
-        "stable management",
-        "masterclass",
-        "demonstration",
-        "course walk",
-        "cpd",
-        "committee meeting",
-        "clear round",
-        "pony care",
-        "practise",
-        "coaching"
-      ],
-      "is_competition": false,
-      "description": "Training clinics, workshops, and lessons"
-    },
-    "Arena Eventing": {
-      "aliases": [
-        "arena eventing"
-      ],
-      "is_competition": true,
-      "description": "Eventing competitions held in arenas"
-    },
-    "Venue Hire": {
-      "aliases": [
-        " hire",
-        "arena booking",
-        "box office"
-      ],
-      "is_competition": false,
-      "description": "Venue hire and arena bookings"
+      "description": "Horse boarding competitions (ground-based obstacle handling)"
     }
   },
   "tag_keywords": {
@@ -5266,6 +5199,17 @@
       "lecture",
       "masterclass",
       "demonstration",
+      "conference",
+      "recording",
+      "nomination form",
+      "nomination",
+      "awards",
+      "refund",
+      "cancellation",
+      "safeguarding",
+      "assessment",
+      "exam",
+      "webinar",
       "lesson",
       "tuition",
       "rally",
@@ -5276,14 +5220,49 @@
       "schooling",
       "polework",
       "pole work",
-      "course walk"
+      "course walk",
+      "camp",
+      "stable management",
+      "cpd",
+      "committee meeting",
+      "clear round",
+      "pony care",
+      "practise",
+      "coaching",
+      "instructional"
     ],
     "type:venue-hire": [
       "hire",
       "arena hire",
       "course hire",
       "school hire",
-      "arena booking"
+      "arena booking",
+      "box office",
+      "stabling",
+      "hook up"
+    ],
+    "type:show": [
+      "agricultural show",
+      "county show",
+      "agricultural",
+      "horse show",
+      "national show"
+    ],
+    "type:social": [
+      "social",
+      "hunt ball",
+      "quiz",
+      "vip event",
+      "demonstration",
+      "demonstrations"
+    ],
+    "type:other": [
+      "nsea numbers",
+      "sundry",
+      "mixed events",
+      "nomination form",
+      "nomination",
+      "membership"
     ]
   },
   "itsplainsailing_clubs": [

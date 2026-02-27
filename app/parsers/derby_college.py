@@ -9,7 +9,6 @@ from docx import Document
 
 from app.parsers.bases import SingleVenueParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import infer_discipline
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -270,7 +269,6 @@ class DerbyCollegeParser(SingleVenueParser):
                 name=name,
                 date_start=date_start,
                 discipline=discipline,
-                has_pony_classes=True,
                 classes=classes,
                 url=source_url,
             ))
@@ -319,7 +317,7 @@ class DerbyCollegeParser(SingleVenueParser):
             if not date_start:
                 continue
 
-            discipline = infer_discipline(event_text)
+            discipline = None
 
             # Standardise name to match schedule format for upsert dedup
             name = re.sub(r"(?i)\bshowjumping\b", "Show Jumping", event_text)
@@ -330,7 +328,6 @@ class DerbyCollegeParser(SingleVenueParser):
                 date_start=date_start,
                 date_end=date_end,
                 discipline=discipline,
-                has_pony_classes=True,
                 classes=[],
                 url=source_url,
             ))

@@ -60,7 +60,6 @@ class Competition(Base):
         Integer, ForeignKey("venues.id"), nullable=True
     )
     discipline: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    has_pony_classes: Mapped[bool] = mapped_column(Boolean, default=False)
     event_type: Mapped[str] = mapped_column(Text, default="competition")  # "competition", "training", "venue_hire"
     tags: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array of tag strings
     url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

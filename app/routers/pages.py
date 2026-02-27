@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import re
 from datetime import date
 from urllib.parse import urlencode
 
@@ -83,11 +84,11 @@ async def competitions_page(
     date_from: str | None = Query(None),
     date_to: str | None = Query(None),
     max_distance: str | None = Query(None),
-    pony: str | None = Query(None),
     discipline: list[str] = Query([]),
     venue: list[str] = Query([]),
     tag: list[str] = Query([]),
     source: list[str] = Query([]),
+    affiliation: list[str] = Query([]),
     q: str | None = Query(None),
     sort: str | None = Query(None),
     event_type: str | None = Query(None),
@@ -169,10 +170,6 @@ async def competitions_page(
     ))
     if date_to:
         stmt = stmt.where(Competition.date_start <= date.fromisoformat(date_to))
-    if pony == "yes":
-        stmt = stmt.where(Competition.has_pony_classes == True)
-    elif pony == "no":
-        stmt = stmt.where(Competition.has_pony_classes == False)
     # Filter by discipline(s)
     cleaned_disciplines = [d.strip() for d in discipline if d.strip()]
     if len(cleaned_disciplines) == 1:
@@ -216,7 +213,21 @@ async def competitions_page(
         stmt = stmt.where(Competition.event_type == "training")
     elif event_type == "venue_hire":
         stmt = stmt.where(Competition.event_type == "venue_hire")
+    elif event_type == "show":
+        stmt = stmt.where(Competition.event_type == "show")
+    elif event_type == "social":
+        stmt = stmt.where(Competition.event_type == "social")
+    elif event_type == "other":
+        stmt = stmt.where(Competition.event_type == "other")
     # "all" or missing: no filter (show everything)
+
+    # Filter by affiliation(s)
+    cleaned_affiliations = [a.strip() for a in affiliation if a.strip()]
+    if cleaned_affiliations:
+        aff_conditions = []
+        for aff in cleaned_affiliations:
+            aff_conditions.append(Competition.tags.like(f'%"affiliation:{aff}"%'))
+        stmt = stmt.where(or_(*aff_conditions))
 
     # Count total results for pagination
     count_stmt = select(func.count()).select_from(stmt.subquery())
@@ -268,10 +279,22 @@ async def competitions_page(
     )
     venue_names = [v for (v,) in venue_names_result.all()]
 
+    # Distinct affiliations from future competitions for dropdown
+    affiliations_result = await session.execute(
+        select(distinct(Competition.tags))
+        .where(Competition.date_start >= date.today(), Competition.tags.like('%"affiliation:%'))
+    )
+    affiliation_set: set[str] = set()
+    for (tags_json,) in affiliations_result.all():
+        for match in re.findall(r'"affiliation:([\w-]+)"', tags_json or ""):
+            affiliation_set.add(match)
+    affiliations_available = sorted(affiliation_set)
+
     disciplines_result = await session.execute(
         select(distinct(Competition.discipline))
         .where(
             Competition.date_start >= date.today(),
+            Competition.event_type == "competition",
             Competition.discipline != None,
         )
         .order_by(Competition.discipline)
@@ -283,11 +306,11 @@ async def competitions_page(
         "date_from": date_from or "",
         "date_to": date_to or "",
         "max_distance": max_distance or "",
-        "pony": pony or "",
         "discipline": cleaned_disciplines,
         "venue": cleaned_venues,
         "tag": cleaned_tags,
         "source": cleaned_sources,
+        "affiliation": cleaned_affiliations,
         "q": q or "",
         "sort": sort or "",
         "event_type": event_type or "",
@@ -312,16 +335,15 @@ async def competitions_page(
         active_filters.append((selected_source, _build_query_string(filter_params, "source", remove_value=selected_source)))
     if max_distance:
         active_filters.append(("Within " + max_distance + " mi", _build_query_string(filter_params, "max_distance")))
-    if pony == "yes":
-        active_filters.append(("Pony: Yes", _build_query_string(filter_params, "pony")))
-    elif pony == "no":
-        active_filters.append(("Pony: No", _build_query_string(filter_params, "pony")))
     for v in cleaned_venues:
         active_filters.append((v, _build_query_string(filter_params, "venue", remove_value=v)))
+    for aff in cleaned_affiliations:
+        aff_display = get_tag_display_name(f"affiliation:{aff}")
+        active_filters.append((aff_display, _build_query_string(filter_params, "affiliation", remove_value=aff)))
     if q:
         active_filters.append(('"' + q + '"', _build_query_string(filter_params, "q")))
     if event_type and event_type != "all":
-        type_labels = {"competitions": "Competitions only", "training": "Training only", "venue_hire": "Venue Hire only"}
+        type_labels = {"competitions": "Competitions only", "training": "Training only", "venue_hire": "Venue Hire only", "show": "Shows only", "social": "Social only", "other": "Other only"}
         active_filters.append((type_labels.get(event_type, event_type), _build_query_string(filter_params, "event_type")))
 
     # Pagination URLs
@@ -336,7 +358,6 @@ async def competitions_page(
             "date_from": date_from or "",
             "date_to": date_to or "",
             "max_distance": max_distance or "",
-            "pony": pony or "",
             "discipline": cleaned_disciplines,
             "venue": cleaned_venues,
             "tag": cleaned_tags,
@@ -344,6 +365,8 @@ async def competitions_page(
             "q": q or "",
             "venue_names": venue_names,
             "disciplines": disciplines,
+            "affiliations_available": affiliations_available,
+            "affiliation": cleaned_affiliations,
             "home_postcode": settings.home_postcode,
             "sort": sort or "date_asc",
             "page": page,

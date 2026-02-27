@@ -5,7 +5,6 @@ import re
 
 from app.parsers.bases import HttpParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import infer_discipline
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -62,17 +61,8 @@ class EquipeOnlineParser(HttpParser):
         if not name or not start_date:
             return None
 
-        horse_ponies = meeting.get("horse_ponies", [])
-        has_pony = "pony" in horse_ponies
-
-        discipline_raw = meeting.get("discipline", "")
-        discipline = {
-            "show_jumping": "Show Jumping",
-            "dressage": "Dressage",
-            "eventing": "Eventing",
-            "driving": "Driving",
-            "endurance": "Endurance",
-        }.get(discipline_raw) or infer_discipline(name)
+        # Pass raw API discipline as hint — classifier normalises later
+        discipline = meeting.get("discipline", "") or None
 
         classes = []
         venue_name = self._extract_venue_name(name)
@@ -85,9 +75,6 @@ class EquipeOnlineParser(HttpParser):
                     class_name = mc.get("name", "")
                     if class_name:
                         classes.append(class_name)
-                if not has_pony:
-                    class_text = " ".join(classes).lower()
-                    has_pony = any(kw in class_text for kw in ["pony", "junior"])
                 organiser_url = schedule.get("organizer_url") or None
         except Exception as e:
             logger.debug("Equipe: schedule fetch failed for %d: %s", meeting_id, e)
@@ -105,7 +92,6 @@ class EquipeOnlineParser(HttpParser):
             venue_name=venue_name,
             venue_postcode=postcode,
             discipline=discipline,
-            has_pony_classes=has_pony,
             classes=classes,
             url=show_url,
         )

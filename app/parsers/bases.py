@@ -24,7 +24,6 @@ import httpx
 from bs4 import BeautifulSoup
 
 from app.parsers.base import BaseParser
-from app.parsers.utils import detect_pony_classes, infer_discipline
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -265,8 +264,7 @@ class TribeEventsParser(SingleVenueParser):
             name=name,
             date_start=date_start,
             date_end=date_end,
-            discipline=infer_discipline(name),
-            has_pony_classes=detect_pony_classes(name),
+            discipline=None,
             url=event.get("url", f"{self.BASE_URL}/events/"),
         )
 

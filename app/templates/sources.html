@@ -23,6 +23,7 @@
         <table class="table">
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Source</th>
                     <th>Last Scan</th>
                     <th>Last Success</th>
@@ -39,6 +40,7 @@
                 {% for source in sources %}
                 {% set scan = latest_scans.get(source.id) %}
                 <tr>
+                    <td style="color: var(--cg-text-muted); font-size: 0.8rem;">{{ source.id }}</td>
                     <td>
                         <div style="font-weight: 500;">{{ source.name }}</div>
                         <a href="{{ source.url }}" target="_blank" style="color: var(--cg-text-muted); text-decoration: none; font-size: 0.75rem; display: block; max-width: 18rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">

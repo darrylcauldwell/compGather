@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.britishshowjumping.co.uk"
 CALENDAR_URL = f"{BASE_URL}/show-calendar.cfm"
-PONY_CATEGORIES = {"J", "P"}
 LATLNG_RE = re.compile(r"maps/@([\d.-]+),([\d.-]+)")
 
 
@@ -108,13 +107,12 @@ class BritishShowjumpingParser(TwoPhaseParser):
                 continue
 
             categories = self._extract_categories(show_type)
-            has_pony = bool(categories & PONY_CATEGORIES)
             detail_url = detail_href if detail_href.startswith("http") else f"{BASE_URL}/{detail_href.lstrip('/')}"
 
             shows.append({
                 "name": show_name, "date_text": parsed_date, "show_type": show_type,
                 "area": area, "show_id": show_id, "detail_url": detail_url,
-                "has_pony": has_pony, "categories": categories,
+                "categories": categories,
             })
 
         return shows
@@ -134,7 +132,6 @@ class BritishShowjumpingParser(TwoPhaseParser):
                 if show["date_text"] > existing.get("date_end_override", existing["date_text"]):
                     existing["date_end_override"] = show["date_text"]
                 existing["categories"] |= show["categories"]
-                existing["has_pony"] = existing["has_pony"] or show["has_pony"]
             else:
                 by_id[sid] = show.copy()
 
@@ -157,11 +154,6 @@ class BritishShowjumpingParser(TwoPhaseParser):
                 date_start, date_end = date_range
 
         classes = self._extract_classes(soup)
-        has_pony = show["has_pony"]
-        if not has_pony and classes:
-            class_text = " ".join(classes).lower()
-            if any(kw in class_text for kw in ["pony", "junior", "u18", "u16", "u14"]):
-                has_pony = True
 
         name = self._build_event_name(show)
 
@@ -172,7 +164,6 @@ class BritishShowjumpingParser(TwoPhaseParser):
             venue_name=show["name"],
             venue_postcode=postcode,
             discipline="Show Jumping",
-            has_pony_classes=has_pony,
             classes=classes,
             url=show["detail_url"],
         )
@@ -187,7 +178,6 @@ class BritishShowjumpingParser(TwoPhaseParser):
             date_end=show.get("date_end_override"),
             venue_name=show["name"],
             discipline="Show Jumping",
-            has_pony_classes=show["has_pony"],
             url=show["detail_url"],
         )
 

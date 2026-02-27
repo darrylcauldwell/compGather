@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 from app.parsers.bases import TwoPhaseParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import extract_postcode, extract_venue_from_name, infer_discipline
+from app.parsers.utils import extract_postcode, extract_venue_from_name
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -186,12 +186,8 @@ class HorseEventsParser(TwoPhaseParser):
             if from_name:
                 venue_name = from_name
 
-        is_pony = (
-            "/pony-club-rallies/" in event_url
-            or any(kw in name.lower() for kw in ["pony", "junior", "u18", "u16", "u14"])
-        )
-        discipline = infer_discipline(name)
-        if not discipline and "/pony-club-rallies/" in event_url:
+        discipline = None
+        if "/pony-club-rallies/" in event_url:
             discipline = "Pony Club"
 
         return self._build_event(
@@ -200,7 +196,6 @@ class HorseEventsParser(TwoPhaseParser):
             date_end=end_date.isoformat() if end_date else None,
             venue_name=venue_name,
             discipline=discipline,
-            has_pony_classes=is_pony,
             url=event_url,
         )
 
@@ -261,12 +256,8 @@ class HorseEventsParser(TwoPhaseParser):
 
         postcode = self._extract_postcode(html, soup)
 
-        is_pony = (
-            "/pony-club-rallies/" in url
-            or any(kw in name.lower() for kw in ["pony", "junior", "u18", "u16", "u14"])
-        )
-        discipline = infer_discipline(name)
-        if not discipline and "/pony-club-rallies/" in url:
+        discipline = None
+        if "/pony-club-rallies/" in url:
             discipline = "Pony Club"
 
         end_date = end_date_str if end_date_str and end_date_str != start_date_str else None
@@ -278,7 +269,6 @@ class HorseEventsParser(TwoPhaseParser):
             venue_name=venue_name or "TBC",
             venue_postcode=postcode,
             discipline=discipline,
-            has_pony_classes=is_pony,
             url=url,
         )
 

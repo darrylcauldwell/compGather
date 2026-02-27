@@ -6,7 +6,7 @@ from datetime import date, datetime
 
 from app.parsers.bases import BROWSER_UA, HttpParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes, extract_postcode, infer_discipline
+from app.parsers.utils import extract_postcode
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -94,8 +94,7 @@ class BSPSParser(HttpParser):
                     event_url = href.replace("\\", "/")
                     break
 
-        has_pony = detect_pony_classes(name)
-        discipline = infer_discipline(name) or "Showing"
+        discipline = "Showing"
 
         return self._build_event(
             name=name,
@@ -104,7 +103,6 @@ class BSPSParser(HttpParser):
             venue_name=venue_name,
             venue_postcode=venue_postcode,
             discipline=discipline,
-            has_pony_classes=has_pony,
             url=event_url or CALENDAR_URL,
         )
 

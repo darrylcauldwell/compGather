@@ -44,8 +44,6 @@ class CompetitionOut(BaseModel):
     latitude: float | None
     longitude: float | None
     distance_miles: float | None
-    has_pony_classes: bool
-    is_competition: bool
     event_type: str = "competition"
     url: str | None
     first_seen_at: datetime

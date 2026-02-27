@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 
 from app.parsers.bases import BROWSER_UA, SingleVenueParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -150,7 +149,6 @@ class ArenaUKParser(SingleVenueParser):
         date_end = dates[-1] if len(dates) > 1 and dates[-1] != dates[0] else None
 
         discipline = _CATEGORY_DISCIPLINE.get(category)
-        has_pony = detect_pony_classes(name) or category == "pony-club"
         event_url = f"{self.BASE_URL}{href}" if href.startswith("/") else href
 
         return self._build_event(
@@ -158,6 +156,5 @@ class ArenaUKParser(SingleVenueParser):
             date_start=date_start,
             date_end=date_end,
             discipline=discipline,
-            has_pony_classes=has_pony,
             url=event_url,
         )

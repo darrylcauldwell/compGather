@@ -6,75 +6,90 @@
 
 {% block content %}
 
-<!-- Filter Panel -->
-<form method="get" action="/" class="filter-form">
-        <!-- Row 1: Dates + presets -->
-        <div class="filter-row filter-row-dates">
-            <div class="filter-field">
-                <label class="form-label" for="date_from">From</label>
-                <input type="date" id="date_from" name="date_from" value="{{ date_from }}" class="form-control" onchange="this.form.submit()">
-            </div>
-            <div class="filter-field">
-                <label class="form-label" for="date_to">To</label>
-                <input type="date" id="date_to" name="date_to" value="{{ date_to }}" class="form-control" onchange="this.form.submit()">
-            </div>
-            <div class="date-presets">
-                <button type="button" class="preset-pill" data-preset="weekend">This weekend</button>
-                <button type="button" class="preset-pill" data-preset="7days">Next 7 days</button>
-                <button type="button" class="preset-pill" data-preset="30days">Next 30 days</button>
-            </div>
-            <input type="hidden" name="pony" id="pony_hidden" value="{{ pony or '' }}">
-        </div>
+{% set sort_options = [
+    ('date_asc', 'Date (soonest)'),
+    ('date_desc', 'Date (latest)'),
+    ('distance_asc', 'Nearest first'),
+    ('name_asc', 'Name (A-Z)'),
+    ('venue_asc', 'Venue (A-Z)'),
+    ('newest', 'Recently added')
+] %}
 
-        <!-- Row 2: Discipline, Distance, Venue, Online -->
-        <div class="filter-row filter-row-selects">
-            <div class="filter-field disc-field">
-                <label class="form-label">Discipline</label>
-                <button type="button" class="disc-toggle form-control" id="disc-toggle" onclick="toggleDiscDropdown()">
-                    {% if discipline|length == 0 %}All disciplines{% elif discipline|length == 1 %}{{ discipline[0] }}{% else %}{{ discipline|length }} selected{% endif %} <i class="bi bi-chevron-down" style="font-size: 0.65rem; margin-left: auto; opacity: 0.5;"></i>
+<!-- Single form wrapping all filters — hidden fields preserve state across submissions -->
+<form method="get" action="/" class="filter-form" id="filter-form">
+    <input type="hidden" name="max_distance" id="max_distance_hidden" value="{{ max_distance or '' }}">
+    <input type="hidden" name="include_online" id="include_online_hidden" value="{{ include_online or '' }}">
+    {% if sort and sort != 'date_asc' %}
+    <input type="hidden" name="sort" id="sort_hidden" value="{{ sort }}">
+    {% endif %}
+    {% if event_type and event_type != 'all' %}
+    <input type="hidden" name="event_type" id="event_type_hidden" value="{{ event_type }}">
+    {% endif %}
+
+    <!-- ===== DESKTOP FILTER BAR ===== -->
+    <div class="filter-bar-desktop">
+        <!-- All filters in one row — flex-wrap handles line-breaking -->
+        <div class="filter-row">
+            <input type="date" id="date_from" name="date_from" value="{{ date_from }}" class="filter-date-input" onchange="this.form.submit()">
+            <span style="color:var(--cg-text-muted);font-size:0.75rem;">to</span>
+            <input type="date" id="date_to" name="date_to" value="{{ date_to }}" class="filter-date-input" onchange="this.form.submit()">
+            <button type="button" class="filter-pill" data-preset="weekend">This weekend</button>
+            <button type="button" class="filter-pill" data-preset="7days">Next 7 days</button>
+            <button type="button" class="filter-pill" data-preset="30days">Next 30 days</button>
+            <!-- Event Type dropdown -->
+            <div class="pill-container" id="event-type-container">
+                <button type="button" class="filter-pill" onclick="toggleDropdown('event-type-dropdown')">
+                    {% if event_type == 'competitions' %}Competitions{% elif event_type == 'training' %}Training{% elif event_type == 'show' %}Shows{% elif event_type == 'venue_hire' %}Venue Hire{% elif event_type == 'social' %}Social{% elif event_type == 'other' %}Other{% else %}Type{% endif %}
+                    <i class="bi bi-chevron-down pill-chevron"></i>
                 </button>
-                <div class="disc-dropdown" id="disc-dropdown">
-                    {% for d in disciplines %}
-                    <label class="disc-option">
-                        <input type="checkbox" name="discipline" value="{{ d }}"{% if d in discipline %} checked{% endif %}>
-                        <span>{{ d }}</span>
-                    </label>
-                    {% endfor %}
+                <div class="pill-dropdown" id="event-type-dropdown">
+                    <div class="pill-dropdown-options">
+                        {% for val, label in [('all', 'All types'), ('competitions', 'Competitions'), ('training', 'Training'), ('show', 'Shows'), ('venue_hire', 'Venue Hire'), ('social', 'Social'), ('other', 'Other')] %}
+                        <label class="pill-dropdown-option" onclick="applyEventType(event, '{{ val }}')">
+                            <span>{{ label }}</span>
+                            {% if event_type == val or (val == 'all' and event_type == 'all') %}<i class="bi bi-check" style="margin-left:auto;color:var(--cg-sky);"></i>{% endif %}
+                        </label>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
-            <div class="filter-field distance-field">
-                <label class="form-label">Distance from <span class="loc-postcode" id="loc-postcode-display">{{ home_postcode }}</span> <button type="button" class="loc-change" onclick="toggleLocEdit(event)">change</button> <button type="button" class="loc-change" id="geolocate-btn" onclick="useMyLocation()" title="Use my location"><i class="bi bi-crosshair"></i></button><span id="geolocate-error" style="color:var(--cg-red);font-size:0.75em;display:none;margin-left:0.25rem;"></span></label>
-                <select id="max_distance_select" class="form-control" onchange="onDistanceChange()">
-                    <option value="">Any distance</option>
-                    <option value="10">Within 10 miles</option>
-                    <option value="20">Within 20 miles</option>
-                    <option value="30">Within 30 miles</option>
-                    <option value="40">Within 40 miles</option>
-                    <option value="50">Within 50 miles</option>
-                    <option value="custom">Custom...</option>
-                </select>
-                <input type="hidden" name="max_distance" id="max_distance_hidden" value="{{ max_distance or '' }}">
-                <input type="hidden" name="include_online" id="include_online_hidden" value="{{ include_online or '' }}">
-                <div id="custom-distance-input" style="display:none; margin-top:4px; gap:4px; align-items:center;">
-                    <input type="number" id="custom_distance_num" class="form-control" min="1" max="500" placeholder="miles" style="width:80px;" onkeydown="if(event.key==='Enter'){event.preventDefault();applyCustomDistance();}">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="applyCustomDistance()">Go</button>
-                </div>
-                <div class="loc-edit" id="loc-edit-form">
-                    <input type="text" id="loc-postcode-input" class="form-control" placeholder="e.g. SW1A 1AA" value="{{ home_postcode }}">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="updatePostcode()">Update</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleLocEdit(event)">Cancel</button>
+
+            <!-- Discipline dropdown -->
+            <div class="pill-container" id="discipline-container">
+                <button type="button" class="filter-pill" onclick="toggleDropdown('discipline-dropdown')">
+                    {% if discipline|length == 0 %}Discipline{% elif discipline|length == 1 %}{{ discipline[0] }}{% else %}Discipline <span class="pill-count">{{ discipline|length }}</span>{% endif %}
+                    <i class="bi bi-chevron-down pill-chevron"></i>
+                </button>
+                <div class="pill-dropdown" id="discipline-dropdown">
+                    <div class="pill-dropdown-options">
+                        {% for d in disciplines %}
+                        <label class="pill-dropdown-option">
+                            <input type="checkbox" name="discipline" value="{{ d }}"{% if d in discipline %} checked{% endif %}>
+                            <span>{{ d }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
-            <div class="filter-field venue-field">
-                <label class="form-label">Venue</label>
-                <button type="button" class="venue-toggle form-control" id="venue-toggle" onclick="toggleVenueDropdown()">
-                    {% if venue|length == 0 %}All venues{% elif venue|length == 1 %}{{ venue[0] }}{% else %}{{ venue|length }} selected{% endif %} <i class="bi bi-chevron-down" style="font-size: 0.65rem; margin-left: auto; opacity: 0.5;"></i>
+
+            <!-- Venue dropdown -->
+            <div class="pill-container" id="venue-container">
+                <button type="button" class="filter-pill" onclick="toggleDropdown('venue-dropdown')">
+                    {% if venue|length == 0 %}Venue{% elif venue|length == 1 %}{{ venue[0] }}{% else %}Venue <span class="pill-count">{{ venue|length }}</span>{% endif %}
+                    <i class="bi bi-chevron-down pill-chevron"></i>
                 </button>
-                <div class="venue-dropdown" id="venue-dropdown">
-                    <input type="text" class="venue-search" id="venue-search" placeholder="Type to filter..." oninput="filterVenueList()">
-                    <div class="venue-options" id="venue-options">
-                        {% for v in venue_names %}
-                        <label class="venue-option">
+                <div class="pill-dropdown" id="venue-dropdown">
+                    <input type="text" class="pill-dropdown-search" id="venue-search" placeholder="Type to filter..." oninput="filterDropdownList('venue-dropdown')">
+                    <div class="pill-dropdown-options" id="venue-options">
+                        {% if 'Online' in venue_names %}
+                        <label class="pill-dropdown-option" data-pinned="true">
+                            <input type="checkbox" name="venue" value="Online"{% if 'Online' in venue %} checked{% endif %}>
+                            <span>Online</span>
+                        </label>
+                        <hr style="margin:0.25rem 0;border-color:var(--cg-border);opacity:0.3;">
+                        {% endif %}
+                        {% for v in venue_names if v != 'Online' %}
+                        <label class="pill-dropdown-option">
                             <input type="checkbox" name="venue" value="{{ v }}"{% if v in venue %} checked{% endif %}>
                             <span>{{ v }}</span>
                         </label>
@@ -82,64 +97,260 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Affiliation dropdown -->
+            {% if affiliations_available %}
+            <div class="pill-container" id="affiliation-container">
+                <button type="button" class="filter-pill" onclick="toggleDropdown('affiliation-dropdown')">
+                    {% if affiliation|length == 0 %}Affiliation{% elif affiliation|length == 1 %}{{ affiliation[0]|replace('-', ' ')|title }}{% else %}Affiliation <span class="pill-count">{{ affiliation|length }}</span>{% endif %}
+                    <i class="bi bi-chevron-down pill-chevron"></i>
+                </button>
+                <div class="pill-dropdown" id="affiliation-dropdown">
+                    <div class="pill-dropdown-options">
+                        {% for a in affiliations_available %}
+                        <label class="pill-dropdown-option">
+                            <input type="checkbox" name="affiliation" value="{{ a }}"{% if a in affiliation %} checked{% endif %}>
+                            <span>{{ a|replace('-', ' ')|title }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Distance dropdown -->
+            <div class="pill-container" id="distance-container">
+                <button type="button" class="filter-pill" onclick="toggleDropdown('distance-dropdown')">
+                    {% if max_distance %}Within {{ max_distance }} mi{% else %}Distance{% endif %}
+                    <i class="bi bi-chevron-down pill-chevron"></i>
+                </button>
+                <div class="pill-dropdown" id="distance-dropdown" style="min-width:14rem;">
+                    <div class="pill-dropdown-options">
+                        <label class="pill-dropdown-option" onclick="setDistance('')">
+                            <span>Any distance</span>
+                            {% if not max_distance %}<i class="bi bi-check" style="margin-left:auto;color:var(--cg-sky);"></i>{% endif %}
+                        </label>
+                        {% for d in [10, 20, 30, 40, 50] %}
+                        <label class="pill-dropdown-option" onclick="setDistance('{{ d }}')">
+                            <span>Within {{ d }} miles</span>
+                            {% if max_distance == d|string %}<i class="bi bi-check" style="margin-left:auto;color:var(--cg-sky);"></i>{% endif %}
+                        </label>
+                        {% endfor %}
+                        <div style="padding:0.35rem 0.5rem;">
+                            <div style="display:flex;gap:0.25rem;align-items:center;">
+                                <input type="number" id="custom_distance_num" class="filter-date-input" min="1" max="500" placeholder="Custom mi" style="width:6rem;border-radius:0.375rem;" value="{{ max_distance if max_distance and max_distance not in ['10','20','30','40','50'] else '' }}" onkeydown="if(event.key==='Enter'){event.preventDefault();applyCustomDistance();}">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="applyCustomDistance()">Go</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="border-top:1px solid var(--cg-border);padding:0.5rem;">
+                        <div class="distance-loc-bar">
+                            <span>from</span>
+                            <span class="loc-postcode" id="loc-postcode-display">{{ home_postcode }}</span>
+                            <button type="button" class="loc-change" onclick="toggleLocEdit(event)">change</button>
+                            <button type="button" class="loc-change" id="geolocate-btn" onclick="useMyLocation()" title="Use my location"><i class="bi bi-crosshair"></i></button>
+                            <span id="geolocate-error" style="color:var(--cg-red);font-size:0.75em;display:none;margin-left:0.25rem;"></span>
+                        </div>
+                        <div class="loc-edit" id="loc-edit-form">
+                            <input type="text" id="loc-postcode-input" placeholder="e.g. SW1A 1AA" value="{{ home_postcode }}">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="updatePostcode()">Update</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleLocEdit(event)">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sort pill -->
+            <div class="pill-container" id="sort-container">
+                <button type="button" class="filter-pill" onclick="toggleDropdown('sort-dropdown')">
+                    {% if sort == 'date_desc' %}Latest{% elif sort == 'distance_asc' %}Nearest{% elif sort == 'name_asc' %}A-Z{% elif sort == 'venue_asc' %}Venue{% elif sort == 'newest' %}New{% else %}Soonest{% endif %}
+                    <i class="bi bi-arrow-down-up pill-chevron"></i>
+                </button>
+                <div class="pill-dropdown" id="sort-dropdown" style="right:0;left:auto;">
+                    <div class="pill-dropdown-options">
+                        {% for val, label in sort_options %}
+                        <label class="pill-dropdown-option" onclick="applySort('{{ val }}')">
+                            <span>{{ label }}</span>
+                            {% if sort == val %}<i class="bi bi-check" style="margin-left:auto;color:var(--cg-sky);"></i>{% endif %}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event count -->
+            <span class="results-count" style="margin-left:auto;">
+                <strong>{{ total }}</strong> event{{ 's' if total != 1 }}
+            </span>
         </div>
 
-        <!-- Preserve sort in form submission -->
-        {% if sort and sort != 'date_asc' %}
-        <input type="hidden" name="sort" value="{{ sort }}">
+        <!-- Active filter chips -->
+        {% if active_filters %}
+        <div class="filter-row">
+            <div class="filter-chips" style="display:flex;flex-wrap:wrap;gap:0.375rem;margin:0;">
+                {% for label, remove_url in active_filters %}
+                <a href="{{ remove_url }}" class="filter-chip">{{ label }} <i class="bi bi-x"></i></a>
+                {% endfor %}
+                <a href="/" class="filter-chip">Clear all <i class="bi bi-x"></i></a>
+            </div>
+        </div>
         {% endif %}
-        <!-- Preserve event_type in form submission -->
-        {% if event_type and event_type != 'all' %}
-        <input type="hidden" name="event_type" value="{{ event_type }}">
-        {% endif %}
+    </div>
 
-    </form>
+    <!-- ===== MOBILE TRIGGER BAR ===== -->
+    <div class="mobile-filter-trigger">
+        <button type="button" class="filter-pill" onclick="openFilterDrawer()" style="flex:1;">
+            <i class="bi bi-funnel"></i> Filters{% if filter_count %} <span class="pill-count">{{ filter_count }}</span>{% endif %}
+        </button>
+        <div class="pill-container" id="mobile-sort-container">
+            <button type="button" class="filter-pill" onclick="toggleDropdown('mobile-sort-dropdown')">
+                <i class="bi bi-arrow-down-up"></i> Sort
+            </button>
+            <div class="pill-dropdown" id="mobile-sort-dropdown" style="right:0;left:auto;">
+                <div class="pill-dropdown-options">
+                    {% for val, label in sort_options %}
+                    <label class="pill-dropdown-option" onclick="applySort('{{ val }}')">
+                        <span>{{ label }}</span>
+                        {% if sort == val %}<i class="bi bi-check" style="margin-left:auto;color:var(--cg-sky);"></i>{% endif %}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 
-<!-- Event type toggle pills + independent toggle filters + active filter chips -->
-<div class="type-pills" style="align-items: center;">
-    <a href="#" class="type-pill{% if event_type == 'all' %} active{% endif %}" onclick="applyEventType(event, 'all')">All</a>
-    <a href="#" class="type-pill{% if event_type == 'competitions' %} active{% endif %}" onclick="applyEventType(event, 'competitions')">Competitions</a>
-    <a href="#" class="type-pill{% if event_type == 'training' %} active{% endif %}" onclick="applyEventType(event, 'training')">Training</a>
-    <a href="#" class="type-pill{% if event_type == 'venue_hire' %} active{% endif %}" onclick="applyEventType(event, 'venue_hire')">Venue Hire</a>
-
-    <!-- Active filter chips in the middle -->
+    <!-- Mobile active chips (always visible) -->
     {% if active_filters %}
-    <div class="filter-chips" style="display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0 0.5rem;">
+    <div class="filter-chips" style="display:none;flex-wrap:wrap;gap:0.375rem;margin-bottom:0.5rem;" id="mobile-chips">
         {% for label, remove_url in active_filters %}
-        <a href="{{ remove_url }}" class="filter-chip">
-            {{ label }} <i class="bi bi-x"></i>
-        </a>
+        <a href="{{ remove_url }}" class="filter-chip">{{ label }} <i class="bi bi-x"></i></a>
         {% endfor %}
         <a href="/" class="filter-chip">Clear all <i class="bi bi-x"></i></a>
     </div>
     {% endif %}
+</form>
 
-    <!-- Independent toggles on the right -->
-    <span style="margin-left: auto; display: flex; gap: 0.375rem;">
-        <a href="#" class="type-pill" onclick="togglePonyPill(event)" style="background: {% if pony == 'yes' %}var(--cg-sky-light){% else %}transparent{% endif %}; color: {% if pony == 'yes' %}var(--cg-sky){% else %}var(--cg-text){% endif %}; border: 1px solid {% if pony == 'yes' %}rgba(0,122,255,0.25){% else %}rgba(0,122,255,0.2){% endif %};">Pony</a>
-        <a href="#" class="type-pill" id="online-pill-link" onclick="toggleOnlinePill(event)" style="background: {% if include_online == 'yes' %}var(--cg-sky-light){% else %}transparent{% endif %}; color: {% if include_online == 'yes' %}var(--cg-sky){% else %}var(--cg-text){% endif %}; border: 1px solid {% if include_online == 'yes' %}rgba(0,122,255,0.25){% else %}rgba(0,122,255,0.2){% endif %};">Online</a>
-    </span>
-</div>
+<!-- ===== MOBILE FILTER DRAWER ===== -->
+<div class="filter-drawer-backdrop" id="filter-drawer-backdrop" onclick="closeFilterDrawer()"></div>
+<div class="filter-drawer" id="filter-drawer">
+    <div class="filter-drawer-handle"></div>
 
-<!-- Results header -->
-<div class="results-header">
-    <span class="results-count">
-        <strong>{{ total }}</strong> event{{ 's' if total != 1 }}
-    </span>
-    <div class="sort-control">
-        <label for="sort-select" class="sr-only">Sort by</label>
-        <select id="sort-select" class="form-control" onchange="applySort(this.value)">
-            <option value="date_asc"{% if sort == 'date_asc' %} selected{% endif %}>Date (soonest)</option>
-            <option value="date_desc"{% if sort == 'date_desc' %} selected{% endif %}>Date (latest)</option>
-            <option value="distance_asc"{% if sort == 'distance_asc' %} selected{% endif %}>Nearest first</option>
-            <option value="name_asc"{% if sort == 'name_asc' %} selected{% endif %}>Name (A-Z)</option>
-            <option value="venue_asc"{% if sort == 'venue_asc' %} selected{% endif %}>Venue (A-Z)</option>
-            <option value="newest"{% if sort == 'newest' %} selected{% endif %}>Recently added</option>
-        </select>
+    <div class="filter-drawer-section">Date Range</div>
+    <div class="filter-row">
+        <input type="date" class="filter-date-input" id="m-date-from" value="{{ date_from }}" style="flex:1;">
+        <span style="color:var(--cg-text-muted);font-size:0.75rem;">to</span>
+        <input type="date" class="filter-date-input" id="m-date-to" value="{{ date_to }}" style="flex:1;">
+    </div>
+    <div class="filter-row" style="margin-top:0.375rem;">
+        <button type="button" class="filter-pill" data-preset="weekend">This weekend</button>
+        <button type="button" class="filter-pill" data-preset="7days">Next 7 days</button>
+        <button type="button" class="filter-pill" data-preset="30days">Next 30 days</button>
+    </div>
+
+    <div class="filter-drawer-section">Event Type</div>
+    <div class="pill-dropdown-options" style="max-height:12rem;overflow-y:auto;padding:0;">
+        {% for val, label in [('all', 'All types'), ('competitions', 'Competitions'), ('training', 'Training'), ('show', 'Shows'), ('venue_hire', 'Venue Hire'), ('social', 'Social'), ('other', 'Other')] %}
+        <label class="pill-dropdown-option" onclick="applyEventType(event, '{{ val }}')">
+            <span>{{ label }}</span>
+            {% if event_type == val or (val == 'all' and event_type == 'all') %}<i class="bi bi-check" style="margin-left:auto;color:var(--cg-sky);"></i>{% endif %}
+        </label>
+        {% endfor %}
+    </div>
+
+    <div class="filter-drawer-section">Discipline</div>
+    <div class="pill-dropdown-options" id="m-discipline-options" style="max-height:12rem;overflow-y:auto;padding:0;">
+        {% for d in disciplines %}
+        <label class="pill-dropdown-option">
+            <input type="checkbox" class="m-discipline-cb" value="{{ d }}"{% if d in discipline %} checked{% endif %}>
+            <span>{{ d }}</span>
+        </label>
+        {% endfor %}
+    </div>
+
+    <div class="filter-drawer-section">Venue</div>
+    <input type="text" class="pill-dropdown-search" id="m-venue-search" placeholder="Type to filter..." oninput="filterDropdownList('m-venue-options')" style="margin-bottom:0.25rem;">
+    <div class="pill-dropdown-options" id="m-venue-options" style="max-height:12rem;overflow-y:auto;padding:0;">
+        {% if 'Online' in venue_names %}
+        <label class="pill-dropdown-option" data-pinned="true">
+            <input type="checkbox" class="m-venue-cb" value="Online"{% if 'Online' in venue %} checked{% endif %}>
+            <span>Online</span>
+        </label>
+        <hr style="margin:0.25rem 0;border-color:var(--cg-border);opacity:0.3;">
+        {% endif %}
+        {% for v in venue_names if v != 'Online' %}
+        <label class="pill-dropdown-option">
+            <input type="checkbox" class="m-venue-cb" value="{{ v }}"{% if v in venue %} checked{% endif %}>
+            <span>{{ v }}</span>
+        </label>
+        {% endfor %}
+    </div>
+
+    {% if affiliations_available %}
+    <div class="filter-drawer-section">Affiliation</div>
+    <div class="pill-dropdown-options" id="m-affiliation-options" style="max-height:10rem;overflow-y:auto;padding:0;">
+        {% for a in affiliations_available %}
+        <label class="pill-dropdown-option">
+            <input type="checkbox" class="m-affiliation-cb" value="{{ a }}"{% if a in affiliation %} checked{% endif %}>
+            <span>{{ a|replace('-', ' ')|title }}</span>
+        </label>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="filter-drawer-section">Distance</div>
+    <div class="filter-row type-pills-row">
+        <button type="button" class="filter-pill{% if not max_distance %} active{% endif %}" onclick="setDistance('')">Any</button>
+        {% for d in [10, 20, 30, 50] %}
+        <button type="button" class="filter-pill{% if max_distance == d|string %} active{% endif %}" onclick="setDistance('{{ d }}')">{{ d }} mi</button>
+        {% endfor %}
+    </div>
+    <div class="distance-loc-bar" style="margin-top:0.25rem;">
+        <span>from</span>
+        <span class="loc-postcode">{{ home_postcode }}</span>
+    </div>
+
+    <div class="filter-drawer-actions">
+        <button type="button" class="btn btn-outline-secondary" onclick="clearAllFilters()">Clear all</button>
+        <button type="button" class="btn btn-primary" onclick="applyMobileFilters()">Apply</button>
     </div>
 </div>
 
 <!-- Competition list -->
+{% macro render_comp(comp) %}
+<a href="{{ comp.url or '#' }}" {% if comp.url %}target="_blank" rel="noopener noreferrer"{% endif %} class="comp-item{% if comp.event_type == 'training' %} event-training{% elif comp.event_type == 'venue_hire' %} event-venue-hire{% elif comp.event_type == 'show' %} event-show{% elif comp.event_type == 'social' %} event-social{% elif comp.event_type == 'other' %} event-other{% endif %}">
+    <div class="ci-date">
+        <span class="ci-day">{{ comp.date_start.strftime('%-d') }}</span>
+        <span class="ci-mon">{{ comp.date_start.strftime('%b').upper() }}</span>
+        {% if comp.date_end and comp.date_end != comp.date_start %}
+        <span class="ci-range">- {{ comp.date_end.strftime('%-d %b') }}</span>
+        {% endif %}
+    </div>
+    <div class="ci-body">
+        <div class="ci-name">{{ comp.name }}</div>
+        <div class="ci-meta">
+            <span class="badge-venue" data-venue="{{ comp.venue_name }}" title="Filter by venue">{{ comp.venue_name }}</span>
+            {% if comp.distance_miles is not none %}
+            <span class="ci-distance"><i class="bi bi-geo-alt"></i> {{ "%.0f"|format(comp.distance_miles) }} mi</span>
+            {% endif %}
+            {% set tags = comp.tags|format_tags %}
+            {% for tag_info in tags %}
+            {% if tag_info.tag.startswith('discipline:') %}
+            <span class="badge-disc" data-disc="{{ tag_info.tag.replace('discipline:', '') }}">{{ tag_info.display }}</span>
+            {% elif tag_info.tag.startswith('type:') %}
+            <span class="badge-tag badge-tag-type clickable-tag" data-type="{{ tag_info.tag.replace('type:', '') }}" data-tag="{{ tag_info.tag }}">{{ tag_info.display }}</span>
+            {% elif tag_info.tag.startswith('affiliation:') %}
+            <span class="badge-tag badge-tag-affiliation clickable-tag" data-tag="{{ tag_info.tag }}">{{ tag_info.display }}</span>
+            {% endif %}
+            {% endfor %}
+            {% if comp.source %}
+            <span class="badge-source" title="Source: {{ comp.source.name }}">{{ comp.source.name }}</span>
+            {% endif %}
+            <span class="badge-ical" title="Add to calendar" data-ical="/api/competitions/{{ comp.id }}/ical"><i class="bi bi-calendar-plus"></i></span>
+        </div>
+    </div>
+</a>
+{% endmacro %}
+
 {% if competitions %}
 <div class="comp-list">
     {% if show_date_groups %}
@@ -148,78 +359,12 @@
             {{ group_date.strftime('%A %-d %B') }}{% if group_date.year != today[:4]|int %} {{ group_date.year }}{% endif %}
         </div>
         {% for comp in group_comps %}
-        <a href="{{ comp.url or '#' }}" {% if comp.url %}target="_blank" rel="noopener noreferrer"{% endif %} class="comp-item{% if comp.event_type == 'training' %} event-training{% elif comp.event_type == 'venue_hire' %} event-venue-hire{% endif %}">
-            <div class="ci-date">
-                <span class="ci-day">{{ comp.date_start.strftime('%-d') }}</span>
-                <span class="ci-mon">{{ comp.date_start.strftime('%b').upper() }}</span>
-                {% if comp.date_end and comp.date_end != comp.date_start %}
-                <span class="ci-range">- {{ comp.date_end.strftime('%-d %b') }}</span>
-                {% endif %}
-            </div>
-            <div class="ci-body">
-                <div class="ci-name">{{ comp.name }}</div>
-                <div class="ci-meta">
-                    <span class="badge-venue" data-venue="{{ comp.venue_name }}" title="Filter by venue" style="display: inline; font-size: 0.75rem; color: var(--cg-text-muted); white-space: nowrap; background: transparent; padding: 0; border: none; font-weight: normal;">{{ comp.venue_name }}</span>
-                    {% if comp.distance_miles is not none %}
-                    <span class="ci-distance"><i class="bi bi-geo-alt"></i> {{ "%.0f"|format(comp.distance_miles) }} mi</span>
-                    {% endif %}
-                    {% if comp.discipline and comp.event_type == 'competition' %}
-                    <span class="badge-disc" data-disc="{{ comp.discipline|lower|replace(' ','-') }}">{{ comp.discipline }}</span>
-                    {% endif %}
-                    {% if comp.has_pony_classes %}
-                    <span class="badge-pony">Pony</span>
-                    {% endif %}
-                    {% set tags = comp.tags|format_tags %}
-                    {% for tag_info in tags %}
-                    {% if tag_info.tag.startswith('type:') %}
-                    <span class="badge-tag badge-tag-type clickable-tag" data-type="{{ tag_info.tag.replace('type:', '') }}" data-tag="{{ tag_info.tag }}">{{ tag_info.display }}</span>
-                    {% endif %}
-                    {% endfor %}
-                    {% if comp.source %}
-                    <span class="badge-source" title="Source: {{ comp.source.name }}">{{ comp.source.name }}</span>
-                    {% endif %}
-                    <span class="badge-ical" title="Add to calendar" data-ical="/api/competitions/{{ comp.id }}/ical"><i class="bi bi-calendar-plus"></i></span>
-                </div>
-            </div>
-        </a>
+        {{ render_comp(comp) }}
         {% endfor %}
         {% endfor %}
     {% else %}
         {% for comp in competitions %}
-        <a href="{{ comp.url or '#' }}" {% if comp.url %}target="_blank" rel="noopener noreferrer"{% endif %} class="comp-item{% if comp.event_type == 'training' %} event-training{% elif comp.event_type == 'venue_hire' %} event-venue-hire{% endif %}">
-            <div class="ci-date">
-                <span class="ci-day">{{ comp.date_start.strftime('%-d') }}</span>
-                <span class="ci-mon">{{ comp.date_start.strftime('%b').upper() }}</span>
-                {% if comp.date_end and comp.date_end != comp.date_start %}
-                <span class="ci-range">- {{ comp.date_end.strftime('%-d %b') }}</span>
-                {% endif %}
-            </div>
-            <div class="ci-body">
-                <div class="ci-name">{{ comp.name }}</div>
-                <div class="ci-meta">
-                    <span class="badge-venue" data-venue="{{ comp.venue_name }}" title="Filter by venue" style="display: inline; font-size: 0.75rem; color: var(--cg-text-muted); white-space: nowrap; background: transparent; padding: 0; border: none; font-weight: normal;">{{ comp.venue_name }}</span>
-                    {% if comp.distance_miles is not none %}
-                    <span class="ci-distance"><i class="bi bi-geo-alt"></i> {{ "%.0f"|format(comp.distance_miles) }} mi</span>
-                    {% endif %}
-                    {% if comp.discipline and comp.event_type == 'competition' %}
-                    <span class="badge-disc" data-disc="{{ comp.discipline|lower|replace(' ','-') }}">{{ comp.discipline }}</span>
-                    {% endif %}
-                    {% if comp.has_pony_classes %}
-                    <span class="badge-pony">Pony</span>
-                    {% endif %}
-                    {% set tags = comp.tags|format_tags %}
-                    {% for tag_info in tags %}
-                    {% if tag_info.tag.startswith('type:') %}
-                    <span class="badge-tag badge-tag-type clickable-tag" data-type="{{ tag_info.tag.replace('type:', '') }}" data-tag="{{ tag_info.tag }}">{{ tag_info.display }}</span>
-                    {% endif %}
-                    {% endfor %}
-                    {% if comp.source %}
-                    <span class="badge-source" title="Source: {{ comp.source.name }}">{{ comp.source.name }}</span>
-                    {% endif %}
-                    <span class="badge-ical" title="Add to calendar" data-ical="/api/competitions/{{ comp.id }}/ical"><i class="bi bi-calendar-plus"></i></span>
-                </div>
-            </div>
-        </a>
+        {{ render_comp(comp) }}
         {% endfor %}
     {% endif %}
 </div>
@@ -268,78 +413,161 @@
 {% endif %}
 
 <script>
-/* Distance filter with custom option */
-(function initDistanceSelect() {
-    var val = document.getElementById('max_distance_hidden').value;
-    var sel = document.getElementById('max_distance_select');
-    var presets = ['', '10', '20', '30', '40', '50'];
-    if (val && !presets.includes(val)) {
-        sel.value = 'custom';
-        var customDiv = document.getElementById('custom-distance-input');
-        customDiv.style.display = 'flex';
-        document.getElementById('custom_distance_num').value = val;
-    } else {
-        sel.value = val;
+/* ========================================
+   Unified dropdown system
+   ======================================== */
+function toggleDropdown(id) {
+    var allDropdowns = document.querySelectorAll('.pill-dropdown');
+    allDropdowns.forEach(function(dd) {
+        if (dd.id !== id) dd.classList.remove('open');
+    });
+    var target = document.getElementById(id);
+    target.classList.toggle('open');
+    /* Focus search input if present */
+    if (target.classList.contains('open')) {
+        var search = target.querySelector('.pill-dropdown-search');
+        if (search) search.focus();
     }
-})();
+}
 
-function onDistanceChange() {
-    var sel = document.getElementById('max_distance_select');
-    var customDiv = document.getElementById('custom-distance-input');
-    if (sel.value === 'custom') {
-        customDiv.style.display = 'flex';
-        document.getElementById('custom_distance_num').focus();
-    } else {
-        customDiv.style.display = 'none';
-        document.getElementById('max_distance_hidden').value = sel.value;
-        // When distance is set, auto-disable online events (since distance implies local travel)
-        // User can still toggle it back on if desired
-        if (sel.value) {
-            document.getElementById('include_online_hidden').value = '';
-        }
-        sel.closest('form').submit();
+/* Click-outside handler — closes all open dropdowns */
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.pill-container')) {
+        document.querySelectorAll('.pill-dropdown').forEach(function(dd) {
+            dd.classList.remove('open');
+        });
     }
+});
+
+/* Auto-submit on checkbox change in any pill dropdown */
+document.querySelectorAll('.filter-bar-desktop .pill-dropdown input[type="checkbox"]').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+        document.getElementById('filter-form').submit();
+    });
+});
+
+/* Filter dropdown list (search) */
+function filterDropdownList(dropdownId) {
+    var container = document.getElementById(dropdownId);
+    var searchInput = container.querySelector('.pill-dropdown-search') || document.getElementById('m-venue-search');
+    if (!searchInput) return;
+    var query = searchInput.value.toLowerCase();
+    container.querySelectorAll('.pill-dropdown-option').forEach(function(label) {
+        var text = label.querySelector('span').textContent.toLowerCase();
+        label.style.display = text.indexOf(query) !== -1 ? '' : 'none';
+    });
+}
+
+/* ========================================
+   Distance filter
+   ======================================== */
+function setDistance(val) {
+    document.getElementById('max_distance_hidden').value = val;
+    if (val) {
+        document.getElementById('include_online_hidden').value = '';
+    }
+    document.getElementById('filter-form').submit();
 }
 
 function applyCustomDistance() {
     var val = document.getElementById('custom_distance_num').value;
     var num = parseInt(val, 10);
     if (!val || isNaN(num) || num < 1) return;
-    document.getElementById('max_distance_hidden').value = num;
-    // Auto-disable online events when custom distance is applied
-    document.getElementById('include_online_hidden').value = '';
-    document.getElementById('max_distance_select').closest('form').submit();
+    setDistance(num);
 }
 
-function toggleOnlineFilter() {
-    var checkbox = document.getElementById('include_online_checkbox');
-    var maxDist = document.getElementById('max_distance_hidden').value;
+/* ========================================
+   Toggle pills (Pony, Online)
+   ======================================== */
+function toggleOnlinePill(e) {
+    e.preventDefault();
+    var h = document.getElementById('include_online_hidden');
+    h.value = h.value === 'yes' ? '' : 'yes';
+    document.getElementById('filter-form').submit();
+}
+
+/* ========================================
+   Event type pills
+   ======================================== */
+function applyEventType(e, value) {
+    e.preventDefault();
     var url = new URL(window.location);
-    if (checkbox.checked) {
-        url.searchParams.set('include_online', 'yes');
+    if (value && value !== 'all') {
+        url.searchParams.set('event_type', value);
     } else {
-        url.searchParams.delete('include_online');
+        url.searchParams.delete('event_type');
     }
+    url.searchParams.delete('page');
     window.location = url.toString();
 }
 
-function togglePonyPill(e) {
-    e.preventDefault();
-    var ponyVal = document.getElementById('pony_hidden').value;
-    document.getElementById('pony_hidden').value = ponyVal === 'yes' ? '' : 'yes';
-    document.querySelector('form').submit();
+/* ========================================
+   Sort
+   ======================================== */
+function applySort(value) {
+    var url = new URL(window.location);
+    if (value && value !== 'date_asc') {
+        url.searchParams.set('sort', value);
+    } else {
+        url.searchParams.delete('sort');
+    }
+    url.searchParams.delete('page');
+    window.location = url.toString();
 }
 
-function toggleOnlinePill(e) {
-    e.preventDefault();
-    var onlineVal = document.getElementById('include_online_hidden').value;
-    document.getElementById('include_online_hidden').value = onlineVal === 'yes' ? '' : 'yes';
-    document.querySelector('form').submit();
-}
+/* ========================================
+   Date presets
+   ======================================== */
+document.querySelectorAll('[data-preset]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var preset = this.dataset.preset;
+        var today = new Date();
+        var fromInput = document.getElementById('date_from') || document.getElementById('m-date-from');
+        var toInput = document.getElementById('date_to') || document.getElementById('m-date-to');
 
-/* Online pill is now always visible, user can toggle it at any time */
+        function fmt(d) {
+            return d.getFullYear() + '-' +
+                String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                String(d.getDate()).padStart(2, '0');
+        }
 
-/* Location postcode edit */
+        if (preset === 'weekend') {
+            var sat = new Date(today);
+            var dayOfWeek = sat.getDay();
+            var daysUntilSat = (6 - dayOfWeek + 7) % 7;
+            if (daysUntilSat === 0 && today.getDay() === 6) daysUntilSat = 0;
+            else if (daysUntilSat === 0) daysUntilSat = 7;
+            if (dayOfWeek === 0) {
+                sat.setDate(sat.getDate() - 1);
+            } else if (dayOfWeek !== 6) {
+                sat.setDate(sat.getDate() + daysUntilSat);
+            }
+            var sun = new Date(sat);
+            sun.setDate(sun.getDate() + 1);
+            fromInput.value = fmt(sat);
+            toInput.value = fmt(sun);
+        } else if (preset === '7days') {
+            fromInput.value = fmt(today);
+            var end7 = new Date(today);
+            end7.setDate(end7.getDate() + 7);
+            toInput.value = fmt(end7);
+        } else if (preset === '30days') {
+            fromInput.value = fmt(today);
+            var end30 = new Date(today);
+            end30.setDate(end30.getDate() + 30);
+            toInput.value = fmt(end30);
+        }
+
+        /* If on desktop, submit form. On mobile, just update inputs. */
+        if (window.innerWidth >= 768) {
+            document.getElementById('filter-form').submit();
+        }
+    });
+});
+
+/* ========================================
+   Location postcode edit
+   ======================================== */
 function toggleLocEdit(e) {
     if (e) e.preventDefault();
     var form = document.getElementById('loc-edit-form');
@@ -348,6 +576,7 @@ function toggleLocEdit(e) {
         document.getElementById('loc-postcode-input').focus();
     }
 }
+
 async function updatePostcode() {
     var postcode = document.getElementById('loc-postcode-input').value.trim();
     if (!postcode) return;
@@ -417,294 +646,111 @@ async function useMyLocation() {
     }
 }
 
-function applySort(value) {
-    var url = new URL(window.location);
-    if (value && value !== 'date_asc') {
-        url.searchParams.set('sort', value);
-    } else {
-        url.searchParams.delete('sort');
-    }
-    url.searchParams.delete('page');
+/* ========================================
+   Mobile filter drawer
+   ======================================== */
+function openFilterDrawer() {
+    document.getElementById('filter-drawer-backdrop').classList.add('open');
+    document.getElementById('filter-drawer').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeFilterDrawer() {
+    document.getElementById('filter-drawer-backdrop').classList.remove('open');
+    document.getElementById('filter-drawer').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function applyMobileFilters() {
+    closeFilterDrawer();
+    /* Sync mobile inputs to the main form and submit */
+    var url = new URL(window.location.origin + '/');
+
+    /* Dates */
+    var mFrom = document.getElementById('m-date-from').value;
+    var mTo = document.getElementById('m-date-to').value;
+    if (mFrom) url.searchParams.set('date_from', mFrom);
+    if (mTo) url.searchParams.set('date_to', mTo);
+
+    /* Disciplines */
+    document.querySelectorAll('.m-discipline-cb:checked').forEach(function(cb) {
+        url.searchParams.append('discipline', cb.value);
+    });
+
+    /* Venues */
+    document.querySelectorAll('.m-venue-cb:checked').forEach(function(cb) {
+        url.searchParams.append('venue', cb.value);
+    });
+
+    /* Affiliations */
+    document.querySelectorAll('.m-affiliation-cb:checked').forEach(function(cb) {
+        url.searchParams.append('affiliation', cb.value);
+    });
+
+    /* Distance */
+    var dist = document.getElementById('max_distance_hidden').value;
+    if (dist) url.searchParams.set('max_distance', dist);
+
+    /* Pony */
+    var pony = document.getElementById('pony_hidden').value;
+    if (pony) url.searchParams.set('pony', pony);
+
+    /* Online */
+    var online = document.getElementById('include_online_hidden').value;
+    if (online) url.searchParams.set('include_online', online);
+
+    /* Event type */
+    var et = '{{ event_type }}';
+    if (et && et !== 'all') url.searchParams.set('event_type', et);
+
+    /* Sort */
+    var sort = '{{ sort }}';
+    if (sort && sort !== 'date_asc') url.searchParams.set('sort', sort);
+
     window.location = url.toString();
 }
 
-function applyEventType(e, value) {
-    e.preventDefault();
-    var url = new URL(window.location);
-    if (value && value !== 'all') {
-        url.searchParams.set('event_type', value);
-    } else {
-        url.searchParams.delete('event_type');
-    }
-    url.searchParams.delete('page');
-    window.location = url.toString();
+function clearAllFilters() {
+    closeFilterDrawer();
+    window.location = '/';
 }
 
-/* Quick date presets */
-document.querySelectorAll('.preset-pill').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        var preset = this.dataset.preset;
-        var today = new Date();
-        var fromInput = document.getElementById('date_from');
-        var toInput = document.getElementById('date_to');
-
-        function fmt(d) {
-            return d.getFullYear() + '-' +
-                String(d.getMonth() + 1).padStart(2, '0') + '-' +
-                String(d.getDate()).padStart(2, '0');
-        }
-
-        if (preset === 'weekend') {
-            /* Find next Saturday */
-            var sat = new Date(today);
-            var dayOfWeek = sat.getDay();
-            var daysUntilSat = (6 - dayOfWeek + 7) % 7;
-            if (daysUntilSat === 0 && today.getDay() === 6) daysUntilSat = 0;
-            else if (daysUntilSat === 0) daysUntilSat = 7;
-            /* If today is Saturday or Sunday, use this weekend */
-            if (dayOfWeek === 0) { /* Sunday */
-                sat.setDate(sat.getDate() - 1);
-            } else if (dayOfWeek !== 6) {
-                sat.setDate(sat.getDate() + daysUntilSat);
-            }
-            var sun = new Date(sat);
-            sun.setDate(sun.getDate() + 1);
-            fromInput.value = fmt(sat);
-            toInput.value = fmt(sun);
-        } else if (preset === '7days') {
-            fromInput.value = fmt(today);
-            var end = new Date(today);
-            end.setDate(end.getDate() + 7);
-            toInput.value = fmt(end);
-        } else if (preset === '30days') {
-            fromInput.value = fmt(today);
-            var end30 = new Date(today);
-            end30.setDate(end30.getDate() + 30);
-            toInput.value = fmt(end30);
-        }
-
-        /* Mark active preset and submit */
-        document.querySelectorAll('.preset-pill').forEach(function(p) { p.classList.remove('active'); });
-        this.classList.add('active');
-        document.querySelector('.filter-form').submit();
-    });
-});
-
-/* Discipline multi-select dropdown */
-function toggleDiscDropdown() {
-    var dd = document.getElementById('disc-dropdown');
-    dd.classList.toggle('open');
-}
-
-function updateDiscLabel() {
-    var checked = document.querySelectorAll('#disc-dropdown input[type="checkbox"]:checked');
-    var btn = document.getElementById('disc-toggle');
-    var icon = btn.querySelector('i');
-    var text;
-    if (checked.length === 0) {
-        text = 'All disciplines';
-    } else if (checked.length === 1) {
-        text = checked[0].value;
-    } else {
-        text = checked.length + ' selected';
-    }
-    btn.textContent = text + ' ';
-    btn.appendChild(icon);
-}
-
-document.querySelectorAll('#disc-dropdown input[type="checkbox"]').forEach(function(cb) {
-    cb.addEventListener('change', function() {
-        updateDiscLabel();
-        document.querySelector('.filter-form').submit();
-    });
-});
-
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.disc-field')) {
-        document.getElementById('disc-dropdown').classList.remove('open');
-    }
-    if (!e.target.closest('.venue-field')) {
-        document.getElementById('venue-dropdown').classList.remove('open');
-    }
-});
-
-/* Venue multi-select dropdown with search */
-function toggleVenueDropdown() {
-    var dd = document.getElementById('venue-dropdown');
-    dd.classList.toggle('open');
-    if (dd.classList.contains('open')) {
-        document.getElementById('venue-search').focus();
-    }
-}
-
-function filterVenueList() {
-    var query = document.getElementById('venue-search').value.toLowerCase();
-    document.querySelectorAll('#venue-options .venue-option').forEach(function(label) {
-        var text = label.querySelector('span').textContent.toLowerCase();
-        label.style.display = text.indexOf(query) !== -1 ? '' : 'none';
-    });
-}
-
-function updateVenueLabel() {
-    var checked = document.querySelectorAll('#venue-options input[type="checkbox"]:checked');
-    var btn = document.getElementById('venue-toggle');
-    var icon = btn.querySelector('i');
-    var text;
-    if (checked.length === 0) {
-        text = 'All venues';
-    } else if (checked.length === 1) {
-        text = checked[0].value;
-    } else {
-        text = checked.length + ' selected';
-    }
-    btn.textContent = text + ' ';
-    btn.appendChild(icon);
-}
-
-document.querySelectorAll('#venue-options input[type="checkbox"]').forEach(function(cb) {
-    cb.addEventListener('change', function() {
-        updateVenueLabel();
-        document.querySelector('.filter-form').submit();
-    });
-});
-
-/* Collapse filter panel after first use on mobile */
+/* Show mobile chips when on mobile */
 (function() {
-    if (window.innerWidth >= 768) return;
-    var panel = document.querySelector('.filter-panel');
-    if (!panel) return;
-    var hasInteracted = localStorage.getItem('cg-filters-used');
-    if (hasInteracted) {
-        panel.removeAttribute('open');
+    if (window.innerWidth < 768) {
+        var mobileChips = document.getElementById('mobile-chips');
+        if (mobileChips) mobileChips.style.display = 'flex';
     }
-    panel.querySelector('form').addEventListener('submit', function() {
-        localStorage.setItem('cg-filters-used', '1');
-    });
 })();
 
-/* Clickable tags for filtering */
-document.querySelectorAll('.clickable-tag').forEach(function(tag) {
-    tag.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var url = new URL(window.location);
-        var tagValue = this.dataset.tag;
-        var currentTags = url.searchParams.getAll('tag');
+/* ========================================
+   Clickable badges for filtering
+   ======================================== */
+function setupClickableBadges(selector, paramName, valueExtractor) {
+    document.querySelectorAll(selector).forEach(function(badge) {
+        badge.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var url = new URL(window.location);
+            var value = valueExtractor(this);
+            var current = url.searchParams.getAll(paramName);
+            if (!current.includes(value)) {
+                url.searchParams.append(paramName, value);
+            }
+            url.searchParams.delete('page');
+            window.location = url.toString();
+        });
+        badge.style.cursor = 'pointer';
+        badge.style.opacity = '0.8';
+        badge.addEventListener('mouseenter', function() { this.style.opacity = '1'; });
+        badge.addEventListener('mouseleave', function() { this.style.opacity = '0.8'; });
+    });
+}
 
-        /* Check if tag is already selected */
-        if (!currentTags.includes(tagValue)) {
-            url.searchParams.append('tag', tagValue);
-        }
-        url.searchParams.delete('page');
-        window.location = url.toString();
-    });
-    tag.style.cursor = 'pointer';
-    tag.style.opacity = '0.8';
-    tag.addEventListener('mouseenter', function() {
-        this.style.opacity = '1';
-    });
-    tag.addEventListener('mouseleave', function() {
-        this.style.opacity = '0.8';
-    });
-});
-
-/* Clickable discipline badges for filtering */
-document.querySelectorAll('.badge-disc').forEach(function(badge) {
-    badge.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var url = new URL(window.location);
-        var discipline = this.textContent.trim();
-        var currentDisciplines = url.searchParams.getAll('discipline');
-
-        /* Check if discipline is already selected */
-        if (!currentDisciplines.includes(discipline)) {
-            url.searchParams.append('discipline', discipline);
-        }
-        url.searchParams.delete('page');
-        window.location = url.toString();
-    });
-    badge.style.cursor = 'pointer';
-    badge.style.opacity = '0.8';
-    badge.addEventListener('mouseenter', function() {
-        this.style.opacity = '1';
-    });
-    badge.addEventListener('mouseleave', function() {
-        this.style.opacity = '0.8';
-    });
-});
-
-/* Clickable Pony badge for filtering */
-document.querySelectorAll('.badge-pony').forEach(function(badge) {
-    badge.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var url = new URL(window.location);
-        url.searchParams.set('pony', 'yes');
-        url.searchParams.delete('page');
-        window.location = url.toString();
-    });
-    badge.style.cursor = 'pointer';
-    badge.style.opacity = '0.8';
-    badge.addEventListener('mouseenter', function() {
-        this.style.opacity = '1';
-    });
-    badge.addEventListener('mouseleave', function() {
-        this.style.opacity = '0.8';
-    });
-});
-
-/* Clickable source parser badge for filtering */
-document.querySelectorAll('.badge-source').forEach(function(badge) {
-    badge.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var url = new URL(window.location);
-        var source = this.textContent.trim();
-        var currentSources = url.searchParams.getAll('source');
-
-        /* Check if source is already selected */
-        if (!currentSources.includes(source)) {
-            url.searchParams.append('source', source);
-        }
-        url.searchParams.delete('page');
-        window.location = url.toString();
-    });
-    badge.style.cursor = 'pointer';
-    badge.style.opacity = '0.8';
-    badge.addEventListener('mouseenter', function() {
-        this.style.opacity = '1';
-    });
-    badge.addEventListener('mouseleave', function() {
-        this.style.opacity = '0.8';
-    });
-});
-
-/* Clickable venue badge for filtering */
-document.querySelectorAll('.badge-venue').forEach(function(badge) {
-    badge.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var url = new URL(window.location);
-        var venue = this.dataset.venue;
-        var currentVenues = url.searchParams.getAll('venue');
-
-        /* Check if venue is already selected */
-        if (!currentVenues.includes(venue)) {
-            url.searchParams.append('venue', venue);
-        }
-        url.searchParams.delete('page');
-        window.location = url.toString();
-    });
-    badge.style.cursor = 'pointer';
-    badge.style.opacity = '0.8';
-    badge.addEventListener('mouseenter', function() {
-        this.style.opacity = '1';
-    });
-    badge.addEventListener('mouseleave', function() {
-        this.style.opacity = '0.8';
-    });
-});
+setupClickableBadges('.clickable-tag', 'tag', function(el) { return el.dataset.tag; });
+setupClickableBadges('.badge-disc', 'discipline', function(el) { return el.textContent.trim(); });
+setupClickableBadges('.badge-source', 'source', function(el) { return el.textContent.trim(); });
+setupClickableBadges('.badge-venue', 'venue', function(el) { return el.dataset.venue; });
 
 /* Calendar download buttons */
 document.querySelectorAll('.badge-ical').forEach(function(btn) {

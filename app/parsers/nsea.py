@@ -6,7 +6,7 @@ from datetime import datetime
 
 from app.parsers.bases import TwoPhaseParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import extract_postcode, infer_discipline, normalise_venue_name
+from app.parsers.utils import extract_postcode, normalise_venue_name
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ class NSEAParser(TwoPhaseParser):
             stubs.append({
                 "name": name, "date_start": date_start, "date_end": date_end,
                 "venue_name": venue, "detail_url": detail_url,
-                "discipline": infer_discipline(name),
+                "discipline": None,
             })
 
         return stubs
@@ -120,7 +120,6 @@ class NSEAParser(TwoPhaseParser):
             name=stub["name"], date_start=stub["date_start"], date_end=stub["date_end"],
             venue_name=venue_name, venue_postcode=venue_postcode,
             discipline=stub["discipline"],
-            has_pony_classes=True,
             classes=classes,
             url=url,
         )
@@ -132,7 +131,6 @@ class NSEAParser(TwoPhaseParser):
             name=stub["name"], date_start=stub["date_start"], date_end=stub.get("date_end"),
             venue_name=stub.get("venue_name", "TBC"),
             discipline=stub.get("discipline"),
-            has_pony_classes=True,
             url=stub.get("detail_url") or COMPETITIONS_URL,
         )
 

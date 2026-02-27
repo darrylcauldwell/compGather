@@ -173,6 +173,29 @@ async def init_db():
         except Exception:
             pass  # column already exists
 
+    # Rename agricultural_show → show
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(text(
+                "UPDATE competitions SET event_type = 'show' "
+                "WHERE event_type = 'agricultural_show'"
+            ))
+            await conn.execute(text(
+                "UPDATE competitions SET tags = REPLACE(tags, '\"type:agricultural-show\"', '\"type:show\"') "
+                "WHERE tags LIKE '%type:agricultural-show%'"
+            ))
+            logger.info("Migration: renamed agricultural_show → show")
+        except Exception:
+            pass
+
+    # Drop legacy has_pony_classes column (no longer in model)
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(text("ALTER TABLE competitions DROP COLUMN has_pony_classes"))
+            logger.info("Migration: dropped legacy has_pony_classes column")
+        except Exception:
+            pass  # column already removed or doesn't exist
+
     # Performance indexes
     async with engine.begin() as conn:
         await conn.execute(text("DROP INDEX IF EXISTS idx_comp_date_active"))

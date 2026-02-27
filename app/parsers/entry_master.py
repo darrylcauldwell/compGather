@@ -178,7 +178,6 @@ class EntryMasterParser(HttpParser):
             date_end=date_end if date_end and date_end != date_start else None,
             venue_name=venue_name,
             venue_postcode=venue_postcode,
-            has_pony_classes=True,
             url=booking_url,
         )
 

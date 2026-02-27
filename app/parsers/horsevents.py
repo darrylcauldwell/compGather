@@ -131,15 +131,13 @@ class HorsEventsParser(TwoPhaseParser):
         if not postcode:
             postcode = extract_postcode(soup.get_text())
 
-        has_pony = any(kw in name.lower() for kw in ["pony", "junior", "u18", "u16", "u14"])
-
         return self._build_event(
             name=name, date_start=date_start,
             date_end=date_end if date_end and date_end != date_start else None,
             venue_name=venue_name or stub.get("venue_name", "TBC"),
             venue_postcode=postcode or None,
             discipline=stub.get("discipline"),
-            has_pony_classes=has_pony, url=url,
+            url=url,
         )
 
     def _build_from_stub(self, stub):
@@ -149,7 +147,6 @@ class HorsEventsParser(TwoPhaseParser):
             name=stub["name"], date_start=stub["date_start"],
             venue_name=stub.get("venue_name", "TBC"),
             discipline=stub.get("discipline"),
-            has_pony_classes=any(kw in stub["name"].lower() for kw in ["pony", "junior"]),
             url=stub.get("url"),
         )
 

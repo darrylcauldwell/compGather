@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 
 from app.parsers.bases import PlaywrightParser
 from app.parsers.registry import register_parser
-from app.parsers.utils import detect_pony_classes, infer_discipline
 from app.schemas import ExtractedEvent
 
 logger = logging.getLogger(__name__)
@@ -104,7 +103,7 @@ class NVECParser(PlaywrightParser):
 
             type_el = box.find(class_="eventType")
             type_text = type_el.get_text(strip=True) if type_el else ""
-            discipline = infer_discipline(title) or infer_discipline(type_text)
+            discipline = type_text or None
 
             competitions.append(self._build_event(
                 name=title,
@@ -112,7 +111,6 @@ class NVECParser(PlaywrightParser):
                 venue_name=VENUE_NAME,
                 venue_postcode=VENUE_POSTCODE,
                 discipline=discipline,
-                has_pony_classes=detect_pony_classes(title),
                 url=EQUUS_HUB_URL,
             ))
 

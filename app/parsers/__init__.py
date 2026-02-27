@@ -26,6 +26,7 @@ from app.parsers import hartpury  # noqa: F401
 from app.parsers import hickstead  # noqa: F401
 from app.parsers import hope_valley  # noqa: F401
 from app.parsers import hpa_polo  # noqa: F401
+from app.parsers import horse_boarding_uk  # noqa: F401
 from app.parsers import horse_events  # noqa: F401
 from app.parsers import horse_monkey  # noqa: F401
 from app.parsers import horsevents  # noqa: F401

@@ -85,7 +85,6 @@ async def _seed(count: int = 3) -> list[int]:
                 date_start=date(2026, 3, 15 + i),
                 venue_id=venues[i].id,
                 discipline="Show Jumping" if i % 2 == 0 else "Dressage",
-                has_pony_classes=i == 0,
                 event_type="competition",
                 url=f"https://example.com/comp/{i + 1}",
                 first_seen_at=datetime.utcnow(),
@@ -157,20 +156,6 @@ class TestListCompetitions:
         data = resp.json()
         assert len(data) == 1
         assert data[0]["date_start"] == "2026-03-15"
-
-    @pytest.mark.asyncio
-    async def test_filter_pony_only(self):
-        app = _get_app()
-        await _seed(3)
-
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
-            resp = await client.get("/api/competitions?pony_only=true")
-
-        data = resp.json()
-        assert len(data) == 1
-        assert data[0]["has_pony_classes"] is True
 
     @pytest.mark.asyncio
     async def test_empty_list(self):

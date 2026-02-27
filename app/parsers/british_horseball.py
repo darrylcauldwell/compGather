@@ -243,6 +243,5 @@ class BritishHorseballParser(HttpParser):
             date_end=date_end if date_end and date_end != date_start else None,
             venue_name=venue if venue else "BHA Venue",
             discipline="Horseball",
-            has_pony_classes=True,
             url=BHA_EVENTS_URL,
         )

@@ -41,125 +41,134 @@ def _mock_response(fixture_or_content: str | Path, status_code: int = 200) -> Ma
 # ---------------------------------------------------------------------------
 class TestClassifyEvent:
     """Tests for the classify_event() function — single source of truth for
-    determining (discipline, is_competition) from event name/description."""
+    determining (discipline, event_type) from event name/description."""
 
     def test_clinic_is_training(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Maddy Moffet Polework Training Clinic")
-        assert discipline == "Training"
-        assert is_comp is False
+        discipline, event_type = classify_event("Maddy Moffet Polework Training Clinic")
+        assert event_type == "training"
 
     def test_workshop_is_training(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Dressage Workshop with Jane Smith")
-        assert discipline == "Training"
-        assert is_comp is False
+        discipline, event_type = classify_event("Dressage Workshop with Jane Smith")
+        assert discipline == "Dressage"
+        assert event_type == "training"
 
     def test_rally_is_training(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Saturday Rally")
-        assert discipline == "Training"
-        assert is_comp is False
+        discipline, event_type = classify_event("Saturday Rally")
+        assert event_type == "training"
 
     def test_gridwork_is_training(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("February Grid Work")
-        assert discipline == "Training"
-        assert is_comp is False
+        discipline, event_type = classify_event("February Grid Work")
+        assert event_type == "training"
 
     def test_flatwork_is_training(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Flatwork Training Session")
-        assert discipline == "Training"
-        assert is_comp is False
+        discipline, event_type = classify_event("Flatwork Training Session")
+        assert event_type == "training"
 
     def test_polework_is_training(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Polework with Shona Wallace")
-        assert discipline == "Training"
-        assert is_comp is False
+        discipline, event_type = classify_event("Polework with Shona Wallace")
+        assert event_type == "training"
 
     def test_schooling_is_training(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("XC Schooling Day")
-        assert discipline == "Training"
-        assert is_comp is False
+        discipline, event_type = classify_event("XC Schooling Day")
+        assert event_type == "training"
 
     def test_arena_hire_is_venue_hire(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Indoor Arena Hire")
-        assert discipline == "Venue Hire"
-        assert is_comp is False
+        discipline, event_type = classify_event("Indoor Arena Hire")
+        assert event_type == "venue_hire"
 
     def test_course_hire_is_venue_hire(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Show Jumping Course Hire")
-        assert discipline == "Venue Hire"
-        assert is_comp is False
+        discipline, event_type = classify_event("Show Jumping Course Hire")
+        assert discipline == "Show Jumping"
+        assert event_type == "venue_hire"
 
     def test_show_jumping_competition(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Spring Show Jumping Championship")
+        discipline, event_type = classify_event("Spring Show Jumping Championship")
         assert discipline == "Show Jumping"
-        assert is_comp is True
+        assert event_type == "competition"
 
     def test_dressage_competition(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Spring Dressage Show")
+        discipline, event_type = classify_event("Spring Dressage Show")
         assert discipline == "Dressage"
-        assert is_comp is True
+        assert event_type == "competition"
 
     def test_eventing_competition(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Belton Park One Day Event")
+        discipline, event_type = classify_event("Belton Park One Day Event")
         assert discipline == "Eventing"
-        assert is_comp is True
+        assert event_type == "competition"
 
     def test_cross_country_competition(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Cross Country Fun Ride")
+        discipline, event_type = classify_event("Cross Country Fun Ride")
         assert discipline == "Cross Country"
-        assert is_comp is True
+        assert event_type == "competition"
 
     def test_hunter_trial_competition(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Spring Hunter Trial")
+        discipline, event_type = classify_event("Spring Hunter Trial")
         assert discipline == "Hunter Trial"
-        assert is_comp is True
+        assert event_type == "competition"
 
     def test_unknown_discipline_is_competition(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Summer Fun Day")
+        discipline, event_type = classify_event("Summer Fun Day")
         assert discipline is None
-        assert is_comp is True
+        assert event_type == "competition"
 
     def test_description_helps_classification(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event(
+        discipline, event_type = classify_event(
             "Spring Event", "Show jumping classes from 60cm to 1.10m"
         )
         assert discipline == "Show Jumping"
-        assert is_comp is True
+        assert event_type == "competition"
 
     def test_lesson_is_training(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("Private Lesson with David O'Brien")
-        assert discipline == "Training"
-        assert is_comp is False
+        discipline, event_type = classify_event("Private Lesson with David O'Brien")
+        assert event_type == "training"
 
     def test_course_walk_is_training(self):
         from app.parsers.utils import classify_event
-        discipline, is_comp = classify_event("XC Course Walk")
-        assert discipline == "Training"
-        assert is_comp is False
+        discipline, event_type = classify_event("XC Course Walk")
+        assert event_type == "training"
+
+    def test_camp_is_training(self):
+        from app.parsers.utils import classify_event
+        discipline, event_type = classify_event("Somerford Pre season camp")
+        assert event_type == "training"
+
+    def test_stabling_is_venue_hire(self):
+        from app.parsers.utils import classify_event
+        discipline, event_type = classify_event("Stabling & Hook Ups")
+        assert event_type == "venue_hire"
+
+    def test_dressage_training_independent(self):
+        """Discipline and event_type are determined independently."""
+        from app.parsers.utils import classify_event
+        discipline, event_type = classify_event("Dressage Training Session")
+        assert discipline == "Dressage"
+        assert event_type == "training"
 
 
 class TestClassifyEventBackwardCompat:
     """Tests for backward-compatible wrappers that delegate to classify_event."""
 
-    def test_infer_discipline_returns_training(self):
+    def test_infer_discipline_returns_discipline(self):
         from app.parsers.utils import infer_discipline
-        assert infer_discipline("Polework Clinic") == "Training"
+        # Polework Clinic → discipline=None (no competition discipline), event_type=training
+        assert infer_discipline("Polework Clinic") is None
 
     def test_infer_discipline_returns_competition(self):
         from app.parsers.utils import infer_discipline
@@ -173,24 +182,37 @@ class TestClassifyEventBackwardCompat:
         from app.parsers.utils import should_skip_event
         assert should_skip_event(None, "Polework with Shona Wallace") is True
         assert should_skip_event(None, "Spring Dressage Show") is False
-        assert should_skip_event("rally", "Spring Rally") is True
 
     def test_is_competition_event_still_works(self):
         from app.parsers.utils import is_competition_event
         assert is_competition_event("Spring Dressage Show") is True
         assert is_competition_event("Indoor Arena Hire") is False
 
-    def test_normalise_rally_to_training(self):
+    def test_normalise_discipline_returns_canonical(self):
         from app.parsers.utils import normalise_discipline
-        canonical, is_comp = normalise_discipline("rally")
-        assert canonical == "Training"
-        assert is_comp is False
+        assert normalise_discipline("showjumping") == "Show Jumping"
+        assert normalise_discipline("dressage") == "Dressage"
 
-    def test_normalise_polework_to_training(self):
+    def test_normalise_discipline_handles_composite(self):
         from app.parsers.utils import normalise_discipline
-        canonical, is_comp = normalise_discipline("polework")
-        assert canonical == "Training"
-        assert is_comp is False
+        assert normalise_discipline("Showing, Other") == "Showing"
+        assert normalise_discipline("Showjumping, Hunter Trial/Cross Country") == "Show Jumping"
+
+    def test_normalise_discipline_returns_none_for_empty(self):
+        from app.parsers.utils import normalise_discipline
+        assert normalise_discipline(None) is None
+        assert normalise_discipline("") is None
+
+    def test_normalise_arena_eventing(self):
+        from app.parsers.utils import normalise_discipline
+        assert normalise_discipline("arena eventing") == "Arena Eventing"
+
+    def test_normalise_underscore_api_codes(self):
+        """Underscore-separated API codes (e.g. Equipe) normalise correctly."""
+        from app.parsers.utils import normalise_discipline
+        assert normalise_discipline("show_jumping") == "Show Jumping"
+        assert normalise_discipline("eventing") == "Eventing"
+        assert normalise_discipline("driving") == "Driving"
 
 
 # ---------------------------------------------------------------------------
@@ -227,7 +249,6 @@ class TestBritishEventingParser:
         assert tweseldown.name == "Tweseldown"
         assert tweseldown.date_start == "2026-03-28"
         assert tweseldown.date_end == "2026-03-29"
-        assert tweseldown.has_pony_classes is True  # "Junior" in classes
 
     @pytest.mark.asyncio
     async def test_skips_cancelled_events(self):
@@ -335,10 +356,17 @@ class TestEquipeOnlineParser:
             parser = EquipeOnlineParser()
             result = await parser.fetch_and_parse("https://online.equipe.com")
 
-        # Check disciplines are mapped correctly for events that have extractable venues
+        # Equipe API provides a top-level "discipline" field on some events;
+        # the parser passes raw API codes as hints — classifier normalises later.
+        # Events where "discipline" is nested inside "metadata" get discipline=None.
         disciplines = {r.name: r.discipline for r in result}
-        for name, disc in disciplines.items():
-            assert disc is not None, f"Missing discipline for {name}"
+        # Top-level discipline field → raw API value passed as hint
+        assert disciplines["Onley Grounds - Senior British Showjumping"] == "show_jumping"
+        assert disciplines["Bicton : Unaffiliated Arena Eventing"] == "eventing"
+        assert disciplines["Unknown Pattern Event"] == "show_jumping"
+        # Events 50001/50002 have discipline in metadata only → parser returns None
+        assert disciplines["Dressage Championships - Hartpury"] is None
+        assert disciplines["British Showjumping - Eland Lodge"] is None
 
 
 # ---------------------------------------------------------------------------
@@ -633,14 +661,15 @@ class TestPonyClubParser:
         assert sj.name == "East Midlands Area: Area Show Jumping"
         assert sj.date_start == "2026-03-15"
         assert sj.venue_name == "Keysoe"
-        assert sj.has_pony_classes is True  # always True for PC
+        # Parser passes raw data-event-type as discipline hint — classifier normalises later
+        assert sj.discipline == "Show Jumping"
 
         dressage = result[1]
         assert dressage.venue_name == "Bicton Arena"
-        assert dressage.has_pony_classes is True
+        assert dressage.discipline == "Dressage"
 
     @pytest.mark.asyncio
-    async def test_rally_captured_as_training(self):
+    async def test_rally_captured(self):
         """Pony Club rallies (training events) are now captured."""
         from app.parsers.pony_club import PonyClubParser
 
@@ -668,8 +697,8 @@ class TestPonyClubParser:
 
         rally = next(r for r in result if "Rally" in r.name)
         assert rally.name == "North Herefordshire: Spring Rally"
-        assert rally.discipline == "Training"
-        assert rally.has_pony_classes is True
+        # Parser passes raw data-event-type as discipline hint — not a canonical discipline
+        assert rally.discipline == "rally"
 
 
 # ---------------------------------------------------------------------------
@@ -750,16 +779,17 @@ class TestAbbeyFarmParser:
         assert sj.date_start == "2026-03-15"
         assert sj.venue_name == "Abbey Farm Equestrian"
         assert sj.venue_postcode == "DE4 2GL"
-        assert sj.discipline == "Show Jumping"
+        # Parser doesn't set discipline — classification happens in scanner
+        assert sj.discipline is None
 
         dressage = result[2]
         assert dressage.name == "Spring Dressage Show"
         assert dressage.date_start == "2026-04-05"
-        assert dressage.discipline == "Dressage"
+        assert dressage.discipline is None
 
     @pytest.mark.asyncio
-    async def test_clinic_captured_as_training(self):
-        """The Maddy Moffet clinic is now captured with discipline='Training'."""
+    async def test_clinic_captured(self):
+        """The Maddy Moffet clinic is captured (classification happens in scanner)."""
         from app.parsers.abbey_farm import AbbeyFarmParser
 
         fixture = FIXTURES / "abbey_farm_events.json"
@@ -778,13 +808,12 @@ class TestAbbeyFarmParser:
         assert "Maddy Moffet Polework Training Clinic" in names
 
         clinic = next(r for r in result if "Maddy Moffet" in r.name)
-        assert clinic.discipline == "Training"
         assert clinic.venue_name == "Abbey Farm Equestrian"
         assert clinic.date_start == "2026-03-20"
 
     @pytest.mark.asyncio
-    async def test_arena_hire_captured_as_venue_hire(self):
-        """Arena hire is captured with discipline='Venue Hire'."""
+    async def test_arena_hire_captured(self):
+        """Arena hire is captured (classification happens in scanner)."""
         from app.parsers.abbey_farm import AbbeyFarmParser
 
         fixture = FIXTURES / "abbey_farm_events.json"
@@ -801,9 +830,6 @@ class TestAbbeyFarmParser:
 
         names = [r.name for r in result]
         assert "Indoor Arena Hire" in names
-
-        hire = next(r for r in result if "Arena Hire" in r.name)
-        assert hire.discipline == "Venue Hire"
 
 
 # ---------------------------------------------------------------------------
@@ -923,3 +949,30 @@ class TestMyRidingLifePostcode:
         comp = self._parse("UK Location")
         assert comp is not None
         assert comp.venue_name == "Test Event"  # falls back to event name
+
+    def test_discipline_passed_as_raw_hint(self):
+        """Parser passes raw discipline column text as hint — classifier normalises later."""
+        comp = self._parse("Swallowfield Equestrian (B94 6JD)")
+        assert comp is not None
+        # _parse helper hardcodes "Dressage" in column 5
+        assert comp.discipline == "Dressage"
+
+    def test_empty_discipline_becomes_none(self):
+        """Empty discipline column should result in discipline=None."""
+        from app.parsers.my_riding_life import MyRidingLifeParser
+
+        html = """<table><tr>
+            <td>Actions</td>
+            <td>Fun Ride</td>
+            <td>01/06/2026</td>
+            <td>01/06/2026</td>
+            <td></td>
+            <td>Some Venue (B94 6JD)</td>
+            <td>County</td>
+            <td>10</td>
+        </tr></table>"""
+        parser = MyRidingLifeParser.__new__(MyRidingLifeParser)
+        parser.source_key = "my_riding_life"
+        results = parser._parse_page(html)
+        assert len(results) == 1
+        assert results[0].discipline is None
