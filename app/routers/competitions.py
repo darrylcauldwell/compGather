@@ -10,11 +10,11 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager, selectinload
 
-from app.config import settings
 from app.database import get_session
-from app.models import AppSetting, Competition, Venue
+from app.models import Competition, Venue
 from app.schemas import CompetitionOut
-from app.services.geocoder import calculate_distance, reverse_geocode, set_home_postcode
+from app.services.geocoder import geocode_postcode, reverse_geocode
+from app.services.user_location import annotate_distances, get_user_coords
 
 router = APIRouter(prefix="/api/competitions", tags=["competitions"])
 
@@ -25,8 +25,11 @@ async def list_competitions(
     date_to: date | None = Query(None),
     max_distance: float | None = Query(None),
     discipline: str | None = Query(None),
+    postcode: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
+    user_coords = await get_user_coords(postcode)
+
     stmt = (
         select(Competition)
         .outerjoin(Venue, Competition.venue_id == Venue.id)
@@ -46,14 +49,18 @@ async def list_competitions(
         ))
     if date_to:
         stmt = stmt.where(Competition.date_start <= date_to)
-    if max_distance is not None:
-        stmt = stmt.where(
-            Venue.distance_miles != None,
-            Venue.distance_miles <= max_distance,
-        )
 
     result = await session.execute(stmt)
-    return result.unique().scalars().all()
+    comps = list(result.unique().scalars().all())
+
+    # Annotate distances per-request
+    annotate_distances(comps, user_coords)
+
+    # Apply distance filter in Python
+    if max_distance is not None and user_coords:
+        comps = [c for c in comps if c.distance_miles is not None and c.distance_miles <= max_distance]
+
+    return comps
 
 
 MAX_EXPORT = 200
@@ -66,9 +73,12 @@ async def export_ical(
     max_distance: float | None = Query(None),
     discipline: str | None = Query(None),
     venue: str | None = Query(None),
+    postcode: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
     """Download multiple competitions as a single .ics calendar file."""
+    user_coords = await get_user_coords(postcode)
+
     stmt = (
         select(Competition)
         .outerjoin(Venue, Competition.venue_id == Venue.id)
@@ -90,17 +100,18 @@ async def export_ical(
     ))
     if date_to:
         stmt = stmt.where(Competition.date_start <= date_to)
-    if max_distance is not None:
-        stmt = stmt.where(
-            Venue.distance_miles != None,
-            Venue.distance_miles <= max_distance,
-        )
     if venue and venue.strip():
         stmt = stmt.where(Venue.name.ilike(f"%{venue.strip()}%"))
 
-    stmt = stmt.limit(MAX_EXPORT)
     result = await session.execute(stmt)
-    comps = result.unique().scalars().all()
+    all_comps = list(result.unique().scalars().all())
+
+    # Annotate distances and apply distance filter in Python
+    annotate_distances(all_comps, user_coords)
+    if max_distance is not None and user_coords:
+        all_comps = [c for c in all_comps if c.distance_miles is not None and c.distance_miles <= max_distance]
+
+    comps = all_comps[:MAX_EXPORT]
 
     if not comps:
         raise HTTPException(404, "No competitions match the current filters")
@@ -228,81 +239,28 @@ async def competition_ical(
     )
 
 
-class PostcodeUpdate(BaseModel):
-    postcode: str
-
-
 class GeolocateBody(BaseModel):
     lat: float
     lng: float
 
 
-@router.post("/update-postcode")
-async def update_home_postcode(
-    body: PostcodeUpdate,
-    session: AsyncSession = Depends(get_session),
-):
-    """Update home postcode and recalculate all competition distances."""
-    postcode = body.postcode.strip().upper()
-    ok = await set_home_postcode(postcode)
-    if not ok:
-        raise HTTPException(400, "Invalid postcode")
-    settings.home_postcode = postcode
-
-    # Persist to database so it survives restarts
-    existing = await session.get(AppSetting, "home_postcode")
-    if existing:
-        existing.value = postcode
-    else:
-        session.add(AppSetting(key="home_postcode", value=postcode))
-
-    # Recalculate distances for all venues with coordinates
-    result = await session.execute(
-        select(Venue).where(Venue.latitude != None)
-    )
-    venues = result.scalars().all()
-    updated = 0
-    for v in venues:
-        dist = calculate_distance(v.latitude, v.longitude)
-        if dist is not None:
-            v.distance_miles = dist
-            updated += 1
-    await session.commit()
-
-    return {"postcode": postcode, "venues_updated": updated}
+# --- Stateless geocode endpoints (no router prefix) ---
+geocode_router = APIRouter(prefix="/api", tags=["geocode"])
 
 
-@router.post("/geolocate")
-async def geolocate_home(
-    body: GeolocateBody,
-    session: AsyncSession = Depends(get_session),
-):
-    """Reverse geocode lat/lng to nearest UK postcode, then update home location."""
+@geocode_router.get("/geocode")
+async def geocode_endpoint(postcode: str = Query(...)):
+    """Validate and geocode a UK postcode. Returns {postcode, lat, lng} or 400."""
+    coords = await geocode_postcode(postcode.strip())
+    if not coords:
+        raise HTTPException(400, "Invalid or unrecognised postcode")
+    return {"postcode": postcode.strip().upper(), "lat": coords[0], "lng": coords[1]}
+
+
+@geocode_router.post("/geocode/reverse")
+async def reverse_geocode_endpoint(body: GeolocateBody):
+    """Reverse geocode lat/lng to nearest UK postcode."""
     postcode = await reverse_geocode(body.lat, body.lng)
     if not postcode:
         raise HTTPException(400, "Could not determine a UK postcode for your location")
-    postcode = postcode.strip().upper()
-    ok = await set_home_postcode(postcode)
-    if not ok:
-        raise HTTPException(400, "Postcode lookup failed")
-    settings.home_postcode = postcode
-
-    existing = await session.get(AppSetting, "home_postcode")
-    if existing:
-        existing.value = postcode
-    else:
-        session.add(AppSetting(key="home_postcode", value=postcode))
-
-    result = await session.execute(
-        select(Venue).where(Venue.latitude != None)
-    )
-    venues = result.scalars().all()
-    updated = 0
-    for v in venues:
-        dist = calculate_distance(v.latitude, v.longitude)
-        if dist is not None:
-            v.distance_miles = dist
-            updated += 1
-    await session.commit()
-
-    return {"postcode": postcode, "venues_updated": updated}
+    return {"postcode": postcode.strip().upper()}

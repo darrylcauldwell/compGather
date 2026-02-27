@@ -53,7 +53,6 @@ async def test_scan_creates_competitions(db_session):
     with (
         patch("app.services.scanner.get_parser", return_value=mock_parser),
         patch("app.services.scanner.geocode_postcode", new_callable=AsyncMock, return_value=(51.5, -0.1)),
-        patch("app.services.scanner.calculate_distance", return_value=5.0),
     ):
         from app.services.scanner import _scan_source
 
@@ -75,7 +74,6 @@ async def test_scan_creates_competitions(db_session):
     assert comps[0].name == "Summer Show"
     assert comps[0].venue_id is not None
     assert comps[0].venue_match_type == "new"
-    assert comps[0].distance_miles == 5.0
     assert comps[0].date_start == date(2026, 7, 15)
 
     # Verify venue was created correctly
@@ -84,5 +82,6 @@ async def test_scan_creates_competitions(db_session):
     )
     venue = venue_result.scalar_one_or_none()
     assert venue is not None
-    assert venue.distance_miles == 5.0
+    assert venue.latitude == 51.5
+    assert venue.longitude == -0.1
     assert venue.postcode == "SW1A 1AA"

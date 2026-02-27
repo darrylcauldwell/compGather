@@ -1,4 +1,4 @@
-"""Tests for the /api/competitions endpoints.
+"""Tests for the /api/competitions and /api/geocode endpoints.
 
 Uses an in-memory SQLite database and FastAPI TestClient.
 """
@@ -6,6 +6,7 @@ Uses an in-memory SQLite database and FastAPI TestClient.
 from __future__ import annotations
 
 from datetime import date, datetime
+from unittest.mock import AsyncMock, patch
 
 import pytest
 import pytest_asyncio
@@ -42,13 +43,14 @@ async def _override_get_session():
 
 
 def _get_app():
-    """Build a minimal FastAPI app with just the competitions router."""
+    """Build a minimal FastAPI app with the competitions and geocode routers."""
     from fastapi import FastAPI
 
-    from app.routers.competitions import router
+    from app.routers.competitions import geocode_router, router
 
     app = FastAPI()
     app.include_router(router)
+    app.include_router(geocode_router)
     app.dependency_overrides[get_session] = _override_get_session
     return app
 
@@ -264,3 +266,84 @@ class TestICalExport:
             resp = await client.get("/api/competitions/9999/ical")
 
         assert resp.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Geocode endpoint
+# ---------------------------------------------------------------------------
+class TestGeocodeEndpoint:
+    @pytest.mark.asyncio
+    async def test_geocode_valid_postcode(self):
+        app = _get_app()
+
+        with patch(
+            "app.routers.competitions.geocode_postcode",
+            new_callable=AsyncMock,
+            return_value=(51.5074, -0.1278),
+        ):
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                resp = await client.get("/api/geocode?postcode=SW1A+1AA")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["postcode"] == "SW1A 1AA"
+        assert data["lat"] == 51.5074
+        assert data["lng"] == -0.1278
+
+    @pytest.mark.asyncio
+    async def test_geocode_invalid_postcode(self):
+        app = _get_app()
+
+        with patch(
+            "app.routers.competitions.geocode_postcode",
+            new_callable=AsyncMock,
+            return_value=None,
+        ):
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                resp = await client.get("/api/geocode?postcode=INVALID")
+
+        assert resp.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_reverse_geocode(self):
+        app = _get_app()
+
+        with patch(
+            "app.routers.competitions.reverse_geocode",
+            new_callable=AsyncMock,
+            return_value="SW1A 1AA",
+        ):
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                resp = await client.post(
+                    "/api/geocode/reverse",
+                    json={"lat": 51.5074, "lng": -0.1278},
+                )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["postcode"] == "SW1A 1AA"
+
+    @pytest.mark.asyncio
+    async def test_reverse_geocode_failure(self):
+        app = _get_app()
+
+        with patch(
+            "app.routers.competitions.reverse_geocode",
+            new_callable=AsyncMock,
+            return_value=None,
+        ):
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                resp = await client.post(
+                    "/api/geocode/reverse",
+                    json={"lat": 0.0, "lng": 0.0},
+                )
+
+        assert resp.status_code == 400

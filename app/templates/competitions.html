@@ -19,6 +19,7 @@
 <form method="get" action="/" class="filter-form" id="filter-form">
     <input type="hidden" name="max_distance" id="max_distance_hidden" value="{{ max_distance or '' }}">
     <input type="hidden" name="include_online" id="include_online_hidden" value="{{ include_online or '' }}">
+    <input type="hidden" name="postcode" id="postcode_hidden" value="{{ postcode or '' }}">
     {% if sort and sort != 'date_asc' %}
     <input type="hidden" name="sort" id="sort_hidden" value="{{ sort }}">
     {% endif %}
@@ -146,13 +147,13 @@
                     <div style="border-top:1px solid var(--cg-border);padding:0.5rem;">
                         <div class="distance-loc-bar">
                             <span>from</span>
-                            <span class="loc-postcode" id="loc-postcode-display">{{ home_postcode }}</span>
-                            <button type="button" class="loc-change" onclick="toggleLocEdit(event)">change</button>
+                            <span class="loc-postcode" id="loc-postcode-display">{{ postcode if postcode else 'Set postcode' }}</span>
+                            <button type="button" class="loc-change" onclick="toggleLocEdit(event)">{% if postcode %}change{% else %}set{% endif %}</button>
                             <button type="button" class="loc-change" id="geolocate-btn" onclick="useMyLocation()" title="Use my location"><i class="bi bi-crosshair"></i></button>
                             <span id="geolocate-error" style="color:var(--cg-red);font-size:0.75em;display:none;margin-left:0.25rem;"></span>
                         </div>
-                        <div class="loc-edit" id="loc-edit-form">
-                            <input type="text" id="loc-postcode-input" placeholder="e.g. SW1A 1AA" value="{{ home_postcode }}">
+                        <div class="loc-edit{% if not postcode %} visible{% endif %}" id="loc-edit-form">
+                            <input type="text" id="loc-postcode-input" placeholder="e.g. SW1A 1AA" value="{{ postcode or '' }}">
                             <button type="button" class="btn btn-primary btn-sm" onclick="updatePostcode()">Update</button>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleLocEdit(event)">Cancel</button>
                         </div>
@@ -306,7 +307,7 @@
     </div>
     <div class="distance-loc-bar" style="margin-top:0.25rem;">
         <span>from</span>
-        <span class="loc-postcode">{{ home_postcode }}</span>
+        <span class="loc-postcode">{{ postcode if postcode else 'Set postcode' }}</span>
     </div>
 
     <div class="filter-drawer-actions">
@@ -413,6 +414,23 @@
 {% endif %}
 
 <script>
+/* ========================================
+   localStorage postcode restore
+   ======================================== */
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    if (!params.get('postcode')) {
+        var saved = localStorage.getItem('cg_postcode');
+        if (saved) {
+            params.set('postcode', saved);
+            window.location.search = params.toString();
+        }
+    } else {
+        // Sync URL postcode to localStorage
+        localStorage.setItem('cg_postcode', params.get('postcode'));
+    }
+})();
+
 /* ========================================
    Unified dropdown system
    ======================================== */
@@ -578,22 +596,21 @@ function toggleLocEdit(e) {
 }
 
 async function updatePostcode() {
-    var postcode = document.getElementById('loc-postcode-input').value.trim();
-    if (!postcode) return;
+    var pc = document.getElementById('loc-postcode-input').value.trim();
+    if (!pc) return;
     try {
-        var resp = await fetch('/api/competitions/update-postcode', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({postcode: postcode})
-        });
+        var resp = await fetch('/api/geocode?postcode=' + encodeURIComponent(pc));
         if (resp.ok) {
-            location.reload();
+            localStorage.setItem('cg_postcode', pc);
+            var url = new URL(window.location);
+            url.searchParams.set('postcode', pc);
+            url.searchParams.delete('page');
+            window.location = url.toString();
         } else {
-            var data = await resp.json();
-            alert(data.detail || 'Invalid postcode');
+            alert('Invalid postcode');
         }
     } catch (e) {
-        alert('Failed to update postcode');
+        alert('Failed to validate postcode');
     }
 }
 
@@ -610,13 +627,18 @@ async function useMyLocation() {
     navigator.geolocation.getCurrentPosition(
         async function(pos) {
             try {
-                var resp = await fetch('/api/competitions/geolocate', {
+                var resp = await fetch('/api/geocode/reverse', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({lat: pos.coords.latitude, lng: pos.coords.longitude})
                 });
                 if (resp.ok) {
-                    location.reload();
+                    var data = await resp.json();
+                    localStorage.setItem('cg_postcode', data.postcode);
+                    var url = new URL(window.location);
+                    url.searchParams.set('postcode', data.postcode);
+                    url.searchParams.delete('page');
+                    window.location = url.toString();
                 } else {
                     var data = await resp.json().catch(function() { return {}; });
                     showGeoError(data.detail || 'Could not find a UK postcode for your location.');
@@ -691,9 +713,9 @@ function applyMobileFilters() {
     var dist = document.getElementById('max_distance_hidden').value;
     if (dist) url.searchParams.set('max_distance', dist);
 
-    /* Pony */
-    var pony = document.getElementById('pony_hidden').value;
-    if (pony) url.searchParams.set('pony', pony);
+    /* Postcode */
+    var pc = document.getElementById('postcode_hidden').value;
+    if (pc) url.searchParams.set('postcode', pc);
 
     /* Online */
     var online = document.getElementById('include_online_hidden').value;
@@ -712,7 +734,8 @@ function applyMobileFilters() {
 
 function clearAllFilters() {
     closeFilterDrawer();
-    window.location = '/';
+    var pc = localStorage.getItem('cg_postcode');
+    window.location = pc ? '/?postcode=' + encodeURIComponent(pc) : '/';
 }
 
 /* Show mobile chips when on mobile */

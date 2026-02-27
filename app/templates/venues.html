@@ -100,14 +100,14 @@
                     <thead>
                         <tr>
                             <th>
-                                <a href="?view=table&sort=name_{% if sort == 'name_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
+                                <a href="?view=table{% if postcode %}&postcode={{ postcode }}{% endif %}&sort=name_{% if sort == 'name_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
                                     Name
                                     {% if sort == 'name_asc' %}<i class="bi bi-sort-up" style="font-size: 0.75rem;"></i>{% elif sort == 'name_desc' %}<i class="bi bi-sort-down" style="font-size: 0.75rem;"></i>{% endif %}
                                 </a>
                             </th>
                             <th class="col-hide-md">Source / Parser</th>
                             <th class="col-hide-sm">
-                                <a href="?view=table&sort=postcode_{% if sort == 'postcode_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
+                                <a href="?view=table{% if postcode %}&postcode={{ postcode }}{% endif %}&sort=postcode_{% if sort == 'postcode_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
                                     Postcode
                                     {% if sort == 'postcode_asc' %}<i class="bi bi-sort-up" style="font-size: 0.75rem;"></i>{% elif sort == 'postcode_desc' %}<i class="bi bi-sort-down" style="font-size: 0.75rem;"></i>{% endif %}
                                 </a>
@@ -115,13 +115,13 @@
                             <th class="col-hide-lg">Latitude</th>
                             <th class="col-hide-lg">Longitude</th>
                             <th>
-                                <a href="?view=table&sort=distance_{% if sort == 'distance_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
+                                <a href="?view=table{% if postcode %}&postcode={{ postcode }}{% endif %}&sort=distance_{% if sort == 'distance_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
                                     Dist.
                                     {% if sort == 'distance_asc' %}<i class="bi bi-sort-up" style="font-size: 0.75rem;"></i>{% elif sort == 'distance_desc' %}<i class="bi bi-sort-down" style="font-size: 0.75rem;"></i>{% endif %}
                                 </a>
                             </th>
                             <th>
-                                <a href="?view=table&sort=competitions_{% if sort == 'competitions_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
+                                <a href="?view=table{% if postcode %}&postcode={{ postcode }}{% endif %}&sort=competitions_{% if sort == 'competitions_asc' %}desc{% else %}asc{% endif %}" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; color: inherit; cursor: pointer;">
                                     Events
                                     {% if sort == 'competitions_asc' %}<i class="bi bi-sort-up" style="font-size: 0.75rem;"></i>{% elif sort == 'competitions_desc' %}<i class="bi bi-sort-down" style="font-size: 0.75rem;"></i>{% endif %}
                                 </a>
@@ -170,8 +170,9 @@
                                 {% endif %}
                             </td>
                             <td style="white-space: nowrap;">
-                                {% if venue.distance_miles is not none %}
-                                {{ '%.0f'|format(venue.distance_miles) }} mi
+                                {% set dist = venue.__dict__.get('_computed_distance') %}
+                                {% if dist is not none %}
+                                {{ '%.0f'|format(dist) }} mi
                                 {% else %}
                                 &mdash;
                                 {% endif %}
@@ -209,6 +210,21 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
+/* localStorage postcode restore for venues page */
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    if (!params.get('postcode')) {
+        var saved = localStorage.getItem('cg_postcode');
+        if (saved) {
+            params.set('postcode', saved);
+            window.location.search = params.toString();
+            return; /* page will reload */
+        }
+    } else {
+        localStorage.setItem('cg_postcode', params.get('postcode'));
+    }
+})();
+
 (function() {
     var activeView = '{{ active_view }}';
     var mapInitialized = false;

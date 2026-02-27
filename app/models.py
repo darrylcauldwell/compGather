@@ -94,7 +94,7 @@ class Competition(Base):
 
     @property
     def distance_miles(self) -> float | None:
-        return self.venue.distance_miles if self.venue else None
+        return self.__dict__.get("_computed_distance")
 
 
 class VenueAlias(Base):

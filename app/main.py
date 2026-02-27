@@ -10,9 +10,8 @@ from sqlalchemy import update
 
 from app.config import settings
 from app.database import async_session, init_db
-from app.models import AppSetting, Scan, Venue
+from app.models import Scan
 from app.routers import competitions, health, pages, scanner, sources
-from app.services.geocoder import calculate_distance, init_home_location
 from app.services.scanner import (
     audit_venue_health,
     geocode_missing_venues,
@@ -56,11 +55,6 @@ async def lifespan(app: FastAPI):
         )
         if result.rowcount:
             logger.info("Cleaned up %d stale scans from previous run", result.rowcount)
-        # Load persisted home postcode from database
-        saved_pc = await session.get(AppSetting, "home_postcode")
-        if saved_pc:
-            settings.home_postcode = saved_pc.value
-            logger.info("Loaded home postcode from database: %s", saved_pc.value)
         await session.commit()
     await seed_sources()
     await seed_all_venues_from_seeds()
@@ -71,23 +65,7 @@ async def lifespan(app: FastAPI):
         await migrate_hardcoded_aliases(session)
     async with async_session() as session:
         await backfill_tbc_venues(session)
-    await init_home_location()
     await geocode_missing_venues()
-    # Calculate distance_miles for all venues with coordinates
-    async with async_session() as session:
-        from sqlalchemy import select
-        venues = (await session.execute(
-            select(Venue).where(Venue.latitude != None)
-        )).scalars().all()
-        updated = 0
-        for v in venues:
-            dist = calculate_distance(v.latitude, v.longitude)
-            if dist is not None and dist != v.distance_miles:
-                v.distance_miles = dist
-                updated += 1
-        if updated:
-            await session.commit()
-            logger.info("Venue distances: updated %d venues", updated)
     await audit_venue_health()
     start_scheduler()
     yield
@@ -109,5 +87,6 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(health.router)
 app.include_router(sources.router)
 app.include_router(competitions.router)
+app.include_router(competitions.geocode_router)
 app.include_router(scanner.router)
 app.include_router(pages.router)

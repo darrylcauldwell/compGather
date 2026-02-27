@@ -5,8 +5,6 @@ import math
 
 import httpx
 
-from app.config import settings
-
 logger = logging.getLogger(__name__)
 
 POSTCODES_IO_URL = "https://api.postcodes.io/postcodes"
@@ -29,26 +27,6 @@ def _coords_in_uk(lat: float, lng: float) -> bool:
     if lat == 0.0 and lng == 0.0:
         return False
     return _UK_LAT_MIN <= lat <= _UK_LAT_MAX and _UK_LNG_MIN <= lng <= _UK_LNG_MAX
-
-# Home coordinates, set on startup
-_home_lat: float | None = None
-_home_lng: float | None = None
-
-
-async def init_home_location():
-    """Geocode the home postcode on startup."""
-    global _home_lat, _home_lng
-    coords = await geocode_postcode(settings.home_postcode)
-    if coords:
-        _home_lat, _home_lng = coords
-        logger.info(
-            "Home location set: %s -> (%.4f, %.4f)",
-            settings.home_postcode,
-            _home_lat,
-            _home_lng,
-        )
-    else:
-        logger.warning("Failed to geocode home postcode: %s", settings.home_postcode)
 
 
 async def geocode_postcode(postcode: str) -> tuple[float, float] | None:
@@ -150,32 +128,7 @@ async def reverse_geocode(lat: float, lng: float) -> str | None:
     return None
 
 
-async def set_home_postcode(postcode: str) -> bool:
-    """Update the home postcode and re-geocode. Returns True on success."""
-    global _home_lat, _home_lng
-    coords = await geocode_postcode(postcode)
-    if coords:
-        _home_lat, _home_lng = coords
-        logger.info("Home location updated: %s -> (%.4f, %.4f)", postcode, _home_lat, _home_lng)
-        return True
-    return False
-
-
-def get_home_postcode_coords() -> tuple[float, float] | None:
-    """Return current home coordinates, or None if not set."""
-    if _home_lat is None or _home_lng is None:
-        return None
-    return (_home_lat, _home_lng)
-
-
-def calculate_distance(lat: float, lng: float) -> float | None:
-    """Calculate distance in miles from home to the given coordinates using haversine."""
-    if _home_lat is None or _home_lng is None:
-        return None
-    return _haversine(_home_lat, _home_lng, lat, lng)
-
-
-def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate the great-circle distance in miles between two points."""
     R = 3958.8  # Earth radius in miles
     phi1, phi2 = math.radians(lat1), math.radians(lat2)

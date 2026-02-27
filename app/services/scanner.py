@@ -30,7 +30,6 @@ from app.seed_data import get_venue_seeds
 from app.services.event_classifier import EventClassifier
 from app.services.geocoder import (
     _coords_in_uk,
-    calculate_distance,
     geocode_postcode,
     reverse_geocode,
 )
@@ -396,20 +395,16 @@ async def _ensure_venue_coords(
     parser_lat: float | None,
     parser_lng: float | None,
 ) -> None:
-    """Ensure a venue has coordinates and distance. Updates the venue row in-place.
+    """Ensure a venue has coordinates. Updates the venue row in-place.
 
     Priority: 1) existing venue coords  2) venue postcode  3) parser coords  4) postcode param.
     """
-    # Online/virtual venues: no physical location, always distance 0
+    # Online/virtual venues: no physical location
     if venue.name and venue.name.strip().lower() in ("online", "virtual"):
-        if venue.distance_miles is None:
-            venue.distance_miles = 0.0
         return
 
     # Already has valid coords
     if venue.latitude is not None and _coords_in_uk(venue.latitude, venue.longitude):
-        if venue.distance_miles is None:
-            venue.distance_miles = calculate_distance(venue.latitude, venue.longitude)
         if postcode and not venue.postcode:
             venue.postcode = postcode
         return
@@ -419,7 +414,6 @@ async def _ensure_venue_coords(
         coords = await geocode_postcode(venue.postcode)
         if coords:
             venue.latitude, venue.longitude = coords
-            venue.distance_miles = calculate_distance(*coords)
             return
 
     lat, lng = None, None
@@ -448,7 +442,6 @@ async def _ensure_venue_coords(
     if lat is not None:
         venue.latitude = lat
         venue.longitude = lng
-        venue.distance_miles = calculate_distance(lat, lng)
         # Fill venue postcode if missing
         if not venue.postcode:
             if postcode:
@@ -525,7 +518,6 @@ async def geocode_missing_venues() -> None:
             coords = await geocode_postcode(v.postcode)
             if coords:
                 v.latitude, v.longitude = coords
-                v.distance_miles = calculate_distance(*coords)
                 geocoded += 1
         if geocoded:
             await session.commit()
@@ -563,13 +555,11 @@ async def seed_venue_postcodes() -> None:
                 if lat is not None and venue.latitude is None:
                     venue.latitude = lat
                     venue.longitude = lng
-                    venue.distance_miles = calculate_distance(lat, lng)
                     coords_set += 1
             else:
-                dist = calculate_distance(lat, lng) if lat is not None else None
                 session.add(Venue(
                     name=name, postcode=postcode,
-                    latitude=lat, longitude=lng, distance_miles=dist,
+                    latitude=lat, longitude=lng,
                 ))
                 seeded += 1
                 if lat is not None:
@@ -698,17 +688,14 @@ async def seed_all_venues_from_seeds() -> None:
                 if lat is not None and existing.latitude is None:
                     existing.latitude = lat
                     existing.longitude = lng
-                    existing.distance_miles = calculate_distance(lat, lng)
                 updated += 1
             else:
                 # Create new venue from seed data
-                dist = calculate_distance(lat, lng) if lat is not None else None
                 venue = Venue(
                     name=canonical_name,
                     postcode=postcode,
                     latitude=lat,
                     longitude=lng,
-                    distance_miles=dist,
                     source="seed_data",
                     seed_batch="initial_seeds",
                     validation_source="seed_data",

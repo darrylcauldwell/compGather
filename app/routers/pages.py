@@ -16,6 +16,7 @@ from app.config import settings
 from app.database import get_session
 from app.models import Competition, Scan, Source, Venue, VenueAlias
 from app.services.tag_manager import deserialize_tags, get_tag_display_name
+from app.services.user_location import annotate_distances, get_user_coords
 
 templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["analytics_domain"] = settings.analytics_domain
@@ -93,16 +94,19 @@ async def competitions_page(
     sort: str | None = Query(None),
     event_type: str | None = Query(None),
     include_online: str | None = Query(None),
+    postcode: str | None = Query(None),
     page: int = Query(1, ge=1),
     session: AsyncSession = Depends(get_session),
 ):
+    # Geocode user postcode for per-request distance
+    user_coords = await get_user_coords(postcode)
+
     # Sortable columns mapping
     sort_columns = {
         "date": Competition.date_start,
         "name": Competition.name,
         "discipline": Competition.discipline,
         "venue": Venue.name,
-        "distance": Venue.distance_miles,
     }
 
     # Parse sort parameter
@@ -114,9 +118,13 @@ async def competitions_page(
         is_newest = True
     elif sort:
         parts = sort.rsplit("_", 1)
-        if len(parts) == 2 and parts[0] in sort_columns and parts[1] in ("asc", "desc"):
+        valid_cols = set(sort_columns) | {"distance"}
+        if len(parts) == 2 and parts[0] in valid_cols and parts[1] in ("asc", "desc"):
             sort_col_name = parts[0]
             sort_dir = parts[1]
+
+    # Distance sort/filter is handled in Python, not SQL
+    distance_in_python = sort_col_name == "distance" or (max_distance and max_distance.strip())
 
     # For date sorting, clamp date_start to today so multi-day events that
     # started in the past (but are still running) sort alongside today's events
@@ -140,11 +148,8 @@ async def competitions_page(
     if is_newest:
         stmt = base_opts.order_by(desc(Competition.first_seen_at))
     elif sort_col_name == "distance":
-        order_fn = asc if sort_dir == "asc" else desc
-        stmt = base_opts.order_by(
-            case((Venue.distance_miles == None, 1), else_=0),
-            order_fn(sort_columns[sort_col_name]),
-        )
+        # Distance sorting done in Python after annotation; use date as SQL fallback
+        stmt = base_opts.order_by(asc(effective_date))
     elif sort_col_name == "date":
         order_fn = asc if sort_dir == "asc" else desc
         stmt = base_opts.order_by(order_fn(effective_date))
@@ -193,11 +198,9 @@ async def competitions_page(
             stmt = stmt.where(Source.name == cleaned_sources[0])
         else:
             stmt = stmt.where(Source.name.in_(cleaned_sources))
-    if max_dist_float is not None:
-        stmt = stmt.where(Venue.distance_miles <= max_dist_float)
-        # When distance filtering is active, exclude online events by default unless include_online is explicitly "yes"
-        if include_online != "yes":
-            stmt = stmt.where(Venue.name != "Online")
+    # Distance filtering: when user has coords, filter in Python; without coords, distance filter has no effect
+    if max_dist_float is not None and include_online != "yes":
+        stmt = stmt.where(Venue.name != "Online")
     cleaned_venues = [v.strip() for v in venue if v.strip()]
     if len(cleaned_venues) == 1:
         stmt = stmt.where(Venue.name == cleaned_venues[0])
@@ -229,17 +232,44 @@ async def competitions_page(
             aff_conditions.append(Competition.tags.like(f'%"affiliation:{aff}"%'))
         stmt = stmt.where(or_(*aff_conditions))
 
-    # Count total results for pagination
-    count_stmt = select(func.count()).select_from(stmt.subquery())
-    total = (await session.execute(count_stmt)).scalar() or 0
-    total_pages = max(1, math.ceil(total / PER_PAGE))
-    page = min(page, total_pages)
+    # When distance filter/sort is active and user has coords, do Python-side pagination
+    if distance_in_python and user_coords:
+        # Fetch all matching rows (no SQL LIMIT/OFFSET)
+        result = await session.execute(stmt)
+        all_comps = list(result.unique().scalars().all())
 
-    # Apply pagination
-    stmt = stmt.limit(PER_PAGE).offset((page - 1) * PER_PAGE)
+        # Annotate distances
+        annotate_distances(all_comps, user_coords)
 
-    result = await session.execute(stmt)
-    competitions = result.unique().scalars().all()
+        # Apply distance filter
+        if max_dist_float is not None:
+            all_comps = [c for c in all_comps if c.distance_miles is not None and c.distance_miles <= max_dist_float]
+
+        # Sort by distance if requested
+        if sort_col_name == "distance":
+            all_comps.sort(
+                key=lambda c: (c.distance_miles is None, c.distance_miles or 0),
+                reverse=(sort_dir == "desc"),
+            )
+
+        # Paginate in Python
+        total = len(all_comps)
+        total_pages = max(1, math.ceil(total / PER_PAGE))
+        page = min(page, total_pages)
+        competitions = all_comps[(page - 1) * PER_PAGE : page * PER_PAGE]
+    else:
+        # Standard SQL pagination
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = (await session.execute(count_stmt)).scalar() or 0
+        total_pages = max(1, math.ceil(total / PER_PAGE))
+        page = min(page, total_pages)
+
+        stmt = stmt.limit(PER_PAGE).offset((page - 1) * PER_PAGE)
+        result = await session.execute(stmt)
+        competitions = result.unique().scalars().all()
+
+        # Annotate distances for display even without distance filter/sort
+        annotate_distances(competitions, user_coords)
 
     # Group competitions by date for date separators.
     # Use effective_date (clamped to today) so past-started multi-day events
@@ -315,6 +345,7 @@ async def competitions_page(
         "sort": sort or "",
         "event_type": event_type or "",
         "include_online": include_online or "",
+        "postcode": postcode or "",
     }
 
     # Build active filter chips: list of (label, url_without_this_filter)
@@ -367,7 +398,7 @@ async def competitions_page(
             "disciplines": disciplines,
             "affiliations_available": affiliations_available,
             "affiliation": cleaned_affiliations,
-            "home_postcode": settings.home_postcode,
+            "postcode": postcode or "",
             "sort": sort or "date_asc",
             "page": page,
             "total_pages": total_pages,
@@ -457,8 +488,12 @@ async def venues_page(
     request: Request,
     sort: str | None = Query(None),
     view: str | None = Query(None),
+    postcode: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
+    # Geocode user postcode for per-request distance
+    user_coords = await get_user_coords(postcode)
+
     # Parse sort parameter (format: "column_direction", e.g. "name_asc")
     sort_col = "name"
     sort_dir = "asc"
@@ -469,26 +504,29 @@ async def venues_page(
             sort_col = parts[0]
             sort_dir = parts[1]
 
-    # Base query
+    # Base query — distance sorting done in Python
     base_query = select(Venue)
 
-    # Apply sorting
+    # Apply sorting (distance handled in Python below)
     if sort_col == "name":
         order_fn = asc if sort_dir == "asc" else desc
         base_query = base_query.order_by(order_fn(Venue.name))
     elif sort_col == "postcode":
         order_fn = asc if sort_dir == "asc" else desc
         base_query = base_query.order_by(order_fn(Venue.postcode))
-    elif sort_col == "distance":
-        order_fn = asc if sort_dir == "asc" else desc
-        base_query = base_query.order_by(
-            case((Venue.distance_miles == None, 1), else_=0),
-            order_fn(Venue.distance_miles)
-        )
-    else:
+    elif sort_col != "distance":
         base_query = base_query.order_by(Venue.name)
 
     all_venues = (await session.execute(base_query)).scalars().all()
+
+    # Annotate distances on venue objects for display
+    if user_coords:
+        for v in all_venues:
+            if v.latitude is not None and v.longitude is not None:
+                from app.services.geocoder import haversine
+                v._computed_distance = haversine(user_coords[0], user_coords[1], v.latitude, v.longitude)
+            else:
+                v._computed_distance = None
 
     # Competition count per venue_id
     comp_counts_result = await session.execute(
@@ -540,9 +578,14 @@ async def venues_page(
             "parser_sources": parser_sources,
         }
 
-    # Apply competitions count sorting if needed
+    # Apply Python-side sorting for distance and competitions
     venues = list(all_venues)
-    if sort_col == "competitions":
+    if sort_col == "distance" and user_coords:
+        venues.sort(
+            key=lambda v: (getattr(v, "_computed_distance", None) is None, getattr(v, "_computed_distance", None) or 0),
+            reverse=(sort_dir == "desc"),
+        )
+    elif sort_col == "competitions":
         venues = sorted(
             venues,
             key=lambda v: comp_counts.get(v.id, 0),
@@ -558,7 +601,6 @@ async def venues_page(
             Venue.postcode,
             Venue.latitude,
             Venue.longitude,
-            Venue.distance_miles,
             func.count(Competition.id).label("event_count"),
             func.group_concat(distinct(Competition.discipline)).label("disciplines"),
         )
@@ -579,13 +621,17 @@ async def venues_page(
         disciplines = []
         if row.disciplines:
             disciplines = [d.strip() for d in row.disciplines.split(",") if d.strip()]
+        dist = None
+        if user_coords and row.latitude is not None and row.longitude is not None:
+            from app.services.geocoder import haversine
+            dist = round(haversine(user_coords[0], user_coords[1], row.latitude, row.longitude), 1)
         venues_json.append({
             "id": row.id,
             "name": row.name,
             "postcode": row.postcode or "",
             "lat": row.latitude,
             "lng": row.longitude,
-            "distance_miles": round(row.distance_miles, 1) if row.distance_miles else None,
+            "distance_miles": dist,
             "event_count": row.event_count,
             "disciplines": disciplines,
         })
@@ -603,6 +649,7 @@ async def venues_page(
             "sort": sort or "name_asc",
             "venues_json": venues_json,
             "active_view": active_view,
+            "postcode": postcode or "",
         }
     )
 
