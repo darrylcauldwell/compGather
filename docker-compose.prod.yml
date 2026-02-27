@@ -1,6 +1,6 @@
 services:
   compgather:
-    build: .
+    image: ghcr.io/darrylcauldwell/compgather:latest
     container_name: compgather
     restart: unless-stopped
     ports:
