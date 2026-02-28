@@ -313,7 +313,7 @@
         <button type="button" class="loc-change" id="m-geolocate-btn" onclick="useMobileLocation()" title="Use my location"><i class="bi bi-crosshair"></i></button>
         <span id="m-geolocate-error" style="color:var(--cg-red);font-size:0.75em;display:none;margin-left:0.25rem;"></span>
     </div>
-    <div class="loc-edit{% if not postcode %} visible{% endif %}" id="m-loc-edit-form" style="margin-top:0.25rem;">
+    <div class="loc-edit" id="m-loc-edit-form" style="margin-top:0.25rem;">
         <input type="text" id="m-loc-postcode-input" placeholder="e.g. SW1A 1AA" value="{{ postcode or '' }}">
         <button type="button" class="btn btn-primary btn-sm" onclick="updateMobilePostcode()">Update</button>
         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleMobileLocEdit()">Cancel</button>
