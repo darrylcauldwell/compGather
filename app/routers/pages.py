@@ -16,7 +16,7 @@ from app.config import settings
 from app.database import get_session
 from app.models import Competition, Scan, Source, Venue, VenueAlias
 from app.services.tag_manager import deserialize_tags, get_tag_display_name
-from app.services.user_location import annotate_distances, get_user_coords
+from app.services.user_location import annotate_distances, get_nearby_venue_ids, get_user_coords
 
 templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["analytics_domain"] = settings.analytics_domain
@@ -232,31 +232,42 @@ async def competitions_page(
             aff_conditions.append(Competition.tags.like(f'%"affiliation:{aff}"%'))
         stmt = stmt.where(or_(*aff_conditions))
 
-    # When distance filter/sort is active and user has coords, do Python-side pagination
+    # When distance filter/sort is active and user has coords, use bounding-box
+    # pre-filter in SQL then refine with haversine in Python.
     if distance_in_python and user_coords:
-        # Fetch all matching rows (no SQL LIMIT/OFFSET)
-        result = await session.execute(stmt)
-        all_comps = list(result.unique().scalars().all())
+        # Pre-filter: get venue IDs within bounding box (fast query on ~670 venues)
+        bbox_miles = max_dist_float if max_dist_float is not None else 500.0
+        nearby_ids = await get_nearby_venue_ids(session, user_coords, bbox_miles)
+        if nearby_ids:
+            stmt = stmt.where(Competition.venue_id.in_(nearby_ids))
 
-        # Annotate distances
-        annotate_distances(all_comps, user_coords)
+            result = await session.execute(stmt)
+            all_comps = list(result.unique().scalars().all())
 
-        # Apply distance filter
-        if max_dist_float is not None:
-            all_comps = [c for c in all_comps if c.distance_miles is not None and c.distance_miles <= max_dist_float]
+            # Annotate exact haversine distances on the reduced set
+            annotate_distances(all_comps, user_coords)
 
-        # Sort by distance if requested
-        if sort_col_name == "distance":
-            all_comps.sort(
-                key=lambda c: (c.distance_miles is None, c.distance_miles or 0),
-                reverse=(sort_dir == "desc"),
-            )
+            # Apply exact distance filter
+            if max_dist_float is not None:
+                all_comps = [c for c in all_comps if c.distance_miles is not None and c.distance_miles <= max_dist_float]
 
-        # Paginate in Python
-        total = len(all_comps)
-        total_pages = max(1, math.ceil(total / PER_PAGE))
-        page = min(page, total_pages)
-        competitions = all_comps[(page - 1) * PER_PAGE : page * PER_PAGE]
+            # Sort by distance if requested
+            if sort_col_name == "distance":
+                all_comps.sort(
+                    key=lambda c: (c.distance_miles is None, c.distance_miles or 0),
+                    reverse=(sort_dir == "desc"),
+                )
+
+            # Paginate in Python
+            total = len(all_comps)
+            total_pages = max(1, math.ceil(total / PER_PAGE))
+            page = min(page, total_pages)
+            competitions = all_comps[(page - 1) * PER_PAGE : page * PER_PAGE]
+        else:
+            # No venues nearby — empty result
+            total = 0
+            total_pages = 1
+            competitions = []
     else:
         # Standard SQL pagination
         count_stmt = select(func.count()).select_from(stmt.subquery())
@@ -504,20 +515,29 @@ async def shows_page(
         stmt = stmt.where(Competition.name.ilike(f"%{q.strip()}%"))
 
     if distance_in_python and user_coords:
-        result = await session.execute(stmt)
-        all_comps = list(result.unique().scalars().all())
-        annotate_distances(all_comps, user_coords)
-        if max_dist_float is not None:
-            all_comps = [c for c in all_comps if c.distance_miles is not None and c.distance_miles <= max_dist_float]
-        if sort_col_name == "distance":
-            all_comps.sort(
-                key=lambda c: (c.distance_miles is None, c.distance_miles or 0),
-                reverse=(sort_dir == "desc"),
-            )
-        total = len(all_comps)
-        total_pages = max(1, math.ceil(total / PER_PAGE))
-        page = min(page, total_pages)
-        competitions = all_comps[(page - 1) * PER_PAGE : page * PER_PAGE]
+        bbox_miles = max_dist_float if max_dist_float is not None else 500.0
+        nearby_ids = await get_nearby_venue_ids(session, user_coords, bbox_miles)
+        if nearby_ids:
+            stmt = stmt.where(Competition.venue_id.in_(nearby_ids))
+
+            result = await session.execute(stmt)
+            all_comps = list(result.unique().scalars().all())
+            annotate_distances(all_comps, user_coords)
+            if max_dist_float is not None:
+                all_comps = [c for c in all_comps if c.distance_miles is not None and c.distance_miles <= max_dist_float]
+            if sort_col_name == "distance":
+                all_comps.sort(
+                    key=lambda c: (c.distance_miles is None, c.distance_miles or 0),
+                    reverse=(sort_dir == "desc"),
+                )
+            total = len(all_comps)
+            total_pages = max(1, math.ceil(total / PER_PAGE))
+            page = min(page, total_pages)
+            competitions = all_comps[(page - 1) * PER_PAGE : page * PER_PAGE]
+        else:
+            total = 0
+            total_pages = 1
+            competitions = []
     else:
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await session.execute(count_stmt)).scalar() or 0
@@ -740,23 +760,26 @@ async def venues_page(
             venue_aliases[venue_id] = []
         venue_aliases[venue_id].append(alias_name)
 
-    # For each venue, determine its source/parser
+    # For each venue, determine its source/parser (single batched query)
+    dynamic_venue_ids = [v.id for v in all_venues if v.source == "dynamic"]
     venue_details = {}
+    if dynamic_venue_ids:
+        sources_result = await session.execute(
+            select(Competition.venue_id, Source.name)
+            .select_from(Competition)
+            .join(Source, Competition.source_id == Source.id)
+            .where(Competition.venue_id.in_(dynamic_venue_ids))
+            .distinct()
+            .order_by(Competition.venue_id, Source.name)
+        )
+        for venue_id, source_name in sources_result.all():
+            if venue_id not in venue_details:
+                venue_details[venue_id] = {"parser_sources": []}
+            venue_details[venue_id]["parser_sources"].append(source_name)
+    # Fill in empty entries for venues with no competitions or seed_data source
     for venue in all_venues:
-        parser_sources = []
-        if venue.source == "dynamic":
-            sources_result = await session.execute(
-                select(distinct(Source.name))
-                .select_from(Competition)
-                .join(Source, Competition.source_id == Source.id)
-                .where(Competition.venue_id == venue.id)
-                .order_by(Source.name)
-            )
-            parser_sources = [s for (s,) in sources_result.all()]
-
-        venue_details[venue.id] = {
-            "parser_sources": parser_sources,
-        }
+        if venue.id not in venue_details:
+            venue_details[venue.id] = {"parser_sources": []}
 
     # Apply Python-side sorting for distance and competitions
     venues = list(all_venues)

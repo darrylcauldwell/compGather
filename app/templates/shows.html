@@ -173,7 +173,15 @@
     </div>
     <div class="distance-loc-bar" style="margin-top:0.25rem;">
         <span>from</span>
-        <span class="loc-postcode">{{ postcode if postcode else 'Set postcode' }}</span>
+        <span class="loc-postcode" id="m-loc-postcode-display">{{ postcode if postcode else 'Set postcode' }}</span>
+        <button type="button" class="loc-change" onclick="toggleMobileLocEdit()">{% if postcode %}change{% else %}set{% endif %}</button>
+        <button type="button" class="loc-change" id="m-geolocate-btn" onclick="useMobileLocation()" title="Use my location"><i class="bi bi-crosshair"></i></button>
+        <span id="m-geolocate-error" style="color:var(--cg-red);font-size:0.75em;display:none;margin-left:0.25rem;"></span>
+    </div>
+    <div class="loc-edit{% if not postcode %} visible{% endif %}" id="m-loc-edit-form" style="margin-top:0.25rem;">
+        <input type="text" id="m-loc-postcode-input" placeholder="e.g. SW1A 1AA" value="{{ postcode or '' }}">
+        <button type="button" class="btn btn-primary btn-sm" onclick="updateMobilePostcode()">Update</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleMobileLocEdit()">Cancel</button>
     </div>
 
     <div class="filter-drawer-actions">
@@ -478,6 +486,92 @@ async function useMyLocation() {
     }
     function resetGeoBtn() {
         var btn = document.getElementById('geolocate-btn');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-crosshair"></i>';
+    }
+}
+
+/* ========================================
+   Mobile postcode edit
+   ======================================== */
+function toggleMobileLocEdit() {
+    var form = document.getElementById('m-loc-edit-form');
+    form.classList.toggle('visible');
+    if (form.classList.contains('visible')) {
+        document.getElementById('m-loc-postcode-input').focus();
+    }
+}
+
+async function updateMobilePostcode() {
+    var pc = document.getElementById('m-loc-postcode-input').value.trim();
+    if (!pc) return;
+    try {
+        var resp = await fetch('/api/geocode?postcode=' + encodeURIComponent(pc));
+        if (resp.ok) {
+            localStorage.setItem('cg_postcode', pc);
+            document.getElementById('postcode_hidden').value = pc;
+            var url = new URL(window.location);
+            url.searchParams.set('postcode', pc);
+            url.searchParams.delete('page');
+            window.location = url.toString();
+        } else {
+            alert('Invalid postcode');
+        }
+    } catch (e) {
+        alert('Failed to validate postcode');
+    }
+}
+
+async function useMobileLocation() {
+    if (!navigator.geolocation) {
+        showMobileGeoError('Geolocation not supported by this browser.');
+        return;
+    }
+    var btn = document.getElementById('m-geolocate-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat" style="display:inline-block;animation:spin 1s linear infinite;"></i>';
+    document.getElementById('m-geolocate-error').style.display = 'none';
+
+    navigator.geolocation.getCurrentPosition(
+        async function(pos) {
+            try {
+                var resp = await fetch('/api/geocode/reverse', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({lat: pos.coords.latitude, lng: pos.coords.longitude})
+                });
+                if (resp.ok) {
+                    var data = await resp.json();
+                    localStorage.setItem('cg_postcode', data.postcode);
+                    document.getElementById('postcode_hidden').value = data.postcode;
+                    var url = new URL(window.location);
+                    url.searchParams.set('postcode', data.postcode);
+                    url.searchParams.delete('page');
+                    window.location = url.toString();
+                } else {
+                    var data = await resp.json().catch(function() { return {}; });
+                    showMobileGeoError(data.detail || 'Could not find a UK postcode for your location.');
+                    resetMobileGeoBtn();
+                }
+            } catch (e) {
+                showMobileGeoError('Request failed. Please try again.');
+                resetMobileGeoBtn();
+            }
+        },
+        function(err) {
+            var msgs = {1: 'Location access denied.', 2: 'Location unavailable.', 3: 'Location request timed out.'};
+            showMobileGeoError(msgs[err.code] || 'Location error.');
+            resetMobileGeoBtn();
+        },
+        {timeout: 10000, maximumAge: 60000}
+    );
+
+    function showMobileGeoError(msg) {
+        var el = document.getElementById('m-geolocate-error');
+        el.textContent = msg; el.style.display = 'inline';
+    }
+    function resetMobileGeoBtn() {
+        var btn = document.getElementById('m-geolocate-btn');
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-crosshair"></i>';
     }
