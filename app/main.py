@@ -2,7 +2,7 @@ import logging
 import sys
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 from pythonjsonlogger import jsonlogger
@@ -81,6 +81,52 @@ Instrumentator(
     should_ignore_untemplated=True,
     excluded_handlers=["/health", "/metrics"],
 ).instrument(app).expose(app, endpoint="/metrics")
+
+# --- Cache-Control middleware for Cloudflare CDN ---
+# Routes that should never be cached (admin/management pages)
+_NO_STORE_PREFIXES = ("/admin", "/venues", "/sources", "/scans", "/classifier",
+                      "/api/scans", "/api/sources", "/api/disciplines",
+                      "/api/tag-keywords")
+
+
+@app.middleware("http")
+async def cache_control_middleware(request: Request, call_next):
+    response: Response = await call_next(request)
+
+    # Only cache GET requests with successful responses
+    if request.method != "GET" or response.status_code >= 400:
+        return response
+
+    path = request.url.path
+
+    # Static assets: browser 1 day, CDN 7 days
+    if path.startswith("/static/"):
+        response.headers["Cache-Control"] = "public, max-age=86400, s-maxage=604800"
+        return response
+
+    # Health/metrics: no caching needed
+    if path in ("/health", "/metrics"):
+        return response
+
+    # Admin and management pages: never cache
+    if any(path.startswith(p) for p in _NO_STORE_PREFIXES):
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    # iCal downloads: dynamic file downloads, don't cache
+    if "/ical" in path or "/export-ical" in path:
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    # Geocode API: postcodes rarely change — browser 1h, CDN 24h
+    if path.startswith("/api/geocode"):
+        response.headers["Cache-Control"] = "public, max-age=3600, s-maxage=86400"
+        return response
+
+    # All user-facing pages and API GETs: browser 1 min, CDN 10 min
+    response.headers["Cache-Control"] = "public, max-age=60, s-maxage=600"
+    return response
+
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
