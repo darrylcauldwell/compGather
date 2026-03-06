@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_api_key
@@ -55,6 +56,19 @@ async def trigger_scan(data: ScanCreate, session: AsyncSession = Depends(get_ses
     else:
         result = await session.execute(select(Source.id).where(Source.enabled == True))
         source_ids = list(result.scalars().all())
+
+    # Clean up stale scans stuck in pending/running for over 30 minutes
+    stale_cutoff = datetime.utcnow() - timedelta(minutes=30)
+    await session.execute(
+        update(Scan)
+        .where(
+            Scan.source_id.in_(source_ids),
+            Scan.status.in_(["running", "pending"]),
+            Scan.started_at < stale_cutoff,
+        )
+        .values(status="failed", error="Stale scan cleaned up")
+    )
+    await session.commit()
 
     # Skip sources that already have an active (running/pending) scan
     busy_result = await session.execute(
