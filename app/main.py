@@ -84,7 +84,7 @@ Instrumentator(
 
 # --- Cache-Control middleware for Cloudflare CDN ---
 # Routes that should never be cached (admin/management pages)
-_NO_STORE_PREFIXES = ("/admin", "/venues", "/sources", "/scans", "/classifier",
+_NO_STORE_PREFIXES = ("/admin", "/sources", "/scans", "/classifier",
                       "/api/scans", "/api/sources", "/api/disciplines",
                       "/api/tag-keywords")
 

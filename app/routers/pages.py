@@ -683,119 +683,15 @@ async def admin_page(request: Request, session: AsyncSession = Depends(get_sessi
     )
 
 
-@router.get("/venues")
-async def venues_page(
-    request: Request,
-    sort: str | None = Query(None),
-    view: str | None = Query(None),
+@router.get("/api/venues/map")
+async def venues_map_api(
     postcode: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
-    # Geocode user postcode for per-request distance
+    """Return venue map markers as JSON (lazy-loaded by the map view)."""
+    from fastapi.responses import JSONResponse
+
     user_coords = await get_user_coords(postcode)
-
-    # Parse sort parameter (format: "column_direction", e.g. "name_asc")
-    sort_col = "name"
-    sort_dir = "asc"
-
-    if sort:
-        parts = sort.rsplit("_", 1)
-        if len(parts) == 2 and parts[0] in ("name", "postcode", "distance", "competitions") and parts[1] in ("asc", "desc"):
-            sort_col = parts[0]
-            sort_dir = parts[1]
-
-    # Base query — distance sorting done in Python
-    base_query = select(Venue)
-
-    # Apply sorting (distance handled in Python below)
-    if sort_col == "name":
-        order_fn = asc if sort_dir == "asc" else desc
-        base_query = base_query.order_by(order_fn(Venue.name))
-    elif sort_col == "postcode":
-        order_fn = asc if sort_dir == "asc" else desc
-        base_query = base_query.order_by(order_fn(Venue.postcode))
-    elif sort_col != "distance":
-        base_query = base_query.order_by(Venue.name)
-
-    all_venues = (await session.execute(base_query)).scalars().all()
-
-    # Annotate distances on venue objects for display
-    if user_coords:
-        for v in all_venues:
-            if v.latitude is not None and v.longitude is not None:
-                from app.services.geocoder import haversine
-                v._computed_distance = haversine(user_coords[0], user_coords[1], v.latitude, v.longitude)
-            else:
-                v._computed_distance = None
-
-    # Competition count per venue_id
-    comp_counts_result = await session.execute(
-        select(Competition.venue_id, func.count(Competition.id))
-        .where(Competition.venue_id != None)
-        .group_by(Competition.venue_id)
-    )
-    comp_counts = dict(comp_counts_result.all())
-
-    # Get competition URLs for venues with 1-5 competitions (for linking to events)
-    venue_comp_links = {}
-    for venue_id, count in comp_counts.items():
-        if 1 <= count <= 5:
-            comp_results = await session.execute(
-                select(Competition.id, Competition.url)
-                .where(Competition.venue_id == venue_id)
-                .order_by(Competition.date_start)
-            )
-            links = [{"id": cid, "url": url} for cid, url in comp_results.all()]
-            if links:
-                venue_comp_links[venue_id] = links
-
-    # Get aliases for each venue
-    aliases_result = await session.execute(
-        select(VenueAlias.venue_id, VenueAlias.alias)
-        .order_by(VenueAlias.venue_id, VenueAlias.alias)
-    )
-    venue_aliases = {}
-    for venue_id, alias_name in aliases_result.all():
-        if venue_id not in venue_aliases:
-            venue_aliases[venue_id] = []
-        venue_aliases[venue_id].append(alias_name)
-
-    # For each venue, determine its source/parser (single batched query)
-    dynamic_venue_ids = [v.id for v in all_venues if v.source == "dynamic"]
-    venue_details = {}
-    if dynamic_venue_ids:
-        sources_result = await session.execute(
-            select(Competition.venue_id, Source.name)
-            .select_from(Competition)
-            .join(Source, Competition.source_id == Source.id)
-            .where(Competition.venue_id.in_(dynamic_venue_ids))
-            .distinct()
-            .order_by(Competition.venue_id, Source.name)
-        )
-        for venue_id, source_name in sources_result.all():
-            if venue_id not in venue_details:
-                venue_details[venue_id] = {"parser_sources": []}
-            venue_details[venue_id]["parser_sources"].append(source_name)
-    # Fill in empty entries for venues with no competitions or seed_data source
-    for venue in all_venues:
-        if venue.id not in venue_details:
-            venue_details[venue.id] = {"parser_sources": []}
-
-    # Apply Python-side sorting for distance and competitions
-    venues = list(all_venues)
-    if sort_col == "distance" and user_coords:
-        venues.sort(
-            key=lambda v: (getattr(v, "_computed_distance", None) is None, getattr(v, "_computed_distance", None) or 0),
-            reverse=(sort_dir == "desc"),
-        )
-    elif sort_col == "competitions":
-        venues = sorted(
-            venues,
-            key=lambda v: comp_counts.get(v.id, 0),
-            reverse=(sort_dir == "desc")
-        )
-
-    # Map data: aggregate venues with upcoming events and coordinates
     today = date.today()
     map_stmt = (
         select(
@@ -816,8 +712,7 @@ async def venues_page(
         )
         .group_by(Venue.id)
     )
-    map_result = await session.execute(map_stmt)
-    map_rows = map_result.all()
+    map_rows = (await session.execute(map_stmt)).all()
 
     venues_json = []
     for row in map_rows:
@@ -839,20 +734,192 @@ async def venues_page(
             "disciplines": disciplines,
         })
 
+    return JSONResponse(
+        content=venues_json,
+        headers={"Cache-Control": "public, max-age=300, s-maxage=3600"},
+    )
+
+
+@router.get("/venues")
+async def venues_page(
+    request: Request,
+    sort: str | None = Query(None),
+    view: str | None = Query(None),
+    postcode: str | None = Query(None),
+    page: int = Query(1, ge=1),
+    session: AsyncSession = Depends(get_session),
+):
+    # Geocode user postcode for per-request distance
+    user_coords = await get_user_coords(postcode)
+
+    # Parse sort parameter (format: "column_direction", e.g. "name_asc")
+    sort_col = "name"
+    sort_dir = "asc"
+
+    if sort:
+        parts = sort.rsplit("_", 1)
+        if len(parts) == 2 and parts[0] in ("name", "postcode", "distance", "competitions") and parts[1] in ("asc", "desc"):
+            sort_col = parts[0]
+            sort_dir = parts[1]
+
+    # For distance/competitions sort we need all venues first (Python sort + slice).
+    # For name/postcode sort we can use SQL LIMIT/OFFSET.
+    if sort_col in ("distance", "competitions"):
+        # Fetch all venues for Python-side sorting
+        base_query = select(Venue)
+        all_venues = list((await session.execute(base_query)).scalars().all())
+
+        # Annotate distances
+        if user_coords:
+            from app.services.geocoder import haversine
+            for v in all_venues:
+                if v.latitude is not None and v.longitude is not None:
+                    v._computed_distance = haversine(user_coords[0], user_coords[1], v.latitude, v.longitude)
+                else:
+                    v._computed_distance = None
+
+        # Need comp_counts for competitions sort (all venues)
+        comp_counts_result = await session.execute(
+            select(Competition.venue_id, func.count(Competition.id))
+            .where(Competition.venue_id != None)
+            .group_by(Competition.venue_id)
+        )
+        comp_counts = dict(comp_counts_result.all())
+
+        # Sort in Python
+        if sort_col == "distance" and user_coords:
+            all_venues.sort(
+                key=lambda v: (getattr(v, "_computed_distance", None) is None, getattr(v, "_computed_distance", None) or 0),
+                reverse=(sort_dir == "desc"),
+            )
+        elif sort_col == "competitions":
+            all_venues.sort(
+                key=lambda v: comp_counts.get(v.id, 0),
+                reverse=(sort_dir == "desc"),
+            )
+
+        # Paginate in Python
+        total = len(all_venues)
+        total_pages = max(1, math.ceil(total / PER_PAGE))
+        page = min(page, total_pages)
+        venues = all_venues[(page - 1) * PER_PAGE : page * PER_PAGE]
+    else:
+        # SQL pagination for name/postcode sort
+        base_query = select(Venue)
+        if sort_col == "name":
+            order_fn = asc if sort_dir == "asc" else desc
+            base_query = base_query.order_by(order_fn(Venue.name))
+        elif sort_col == "postcode":
+            order_fn = asc if sort_dir == "asc" else desc
+            base_query = base_query.order_by(order_fn(Venue.postcode))
+        else:
+            base_query = base_query.order_by(Venue.name)
+
+        # Count total
+        count_stmt = select(func.count()).select_from(Venue)
+        total = (await session.execute(count_stmt)).scalar() or 0
+        total_pages = max(1, math.ceil(total / PER_PAGE))
+        page = min(page, total_pages)
+
+        # Fetch page
+        stmt = base_query.limit(PER_PAGE).offset((page - 1) * PER_PAGE)
+        venues = list((await session.execute(stmt)).scalars().all())
+
+        # Annotate distances on page venues only
+        if user_coords:
+            from app.services.geocoder import haversine
+            for v in venues:
+                if v.latitude is not None and v.longitude is not None:
+                    v._computed_distance = haversine(user_coords[0], user_coords[1], v.latitude, v.longitude)
+                else:
+                    v._computed_distance = None
+
+        # Comp counts for page venues only
+        page_venue_ids = [v.id for v in venues]
+        if page_venue_ids:
+            comp_counts_result = await session.execute(
+                select(Competition.venue_id, func.count(Competition.id))
+                .where(Competition.venue_id.in_(page_venue_ids))
+                .group_by(Competition.venue_id)
+            )
+            comp_counts = dict(comp_counts_result.all())
+        else:
+            comp_counts = {}
+
+    # --- Secondary queries scoped to current page venue IDs ---
+    page_venue_ids = [v.id for v in venues]
+
+    # Batched comp_links query (replaces N+1 loop)
+    venue_comp_links = {}
+    if page_venue_ids:
+        eligible_ids = [vid for vid in page_venue_ids if 1 <= comp_counts.get(vid, 0) <= 5]
+        if eligible_ids:
+            comp_link_result = await session.execute(
+                select(Competition.venue_id, Competition.id, Competition.url)
+                .where(Competition.venue_id.in_(eligible_ids))
+                .order_by(Competition.venue_id, Competition.date_start)
+            )
+            for vid, cid, url in comp_link_result.all():
+                venue_comp_links.setdefault(vid, []).append({"id": cid, "url": url})
+
+    # Aliases for page venues only
+    venue_aliases = {}
+    if page_venue_ids:
+        aliases_result = await session.execute(
+            select(VenueAlias.venue_id, VenueAlias.alias)
+            .where(VenueAlias.venue_id.in_(page_venue_ids))
+            .order_by(VenueAlias.venue_id, VenueAlias.alias)
+        )
+        for venue_id, alias_name in aliases_result.all():
+            venue_aliases.setdefault(venue_id, []).append(alias_name)
+
+    # Parser sources for page venues only
+    dynamic_venue_ids = [v.id for v in venues if v.source == "dynamic"]
+    venue_details = {}
+    if dynamic_venue_ids:
+        sources_result = await session.execute(
+            select(Competition.venue_id, Source.name)
+            .select_from(Competition)
+            .join(Source, Competition.source_id == Source.id)
+            .where(Competition.venue_id.in_(dynamic_venue_ids))
+            .distinct()
+            .order_by(Competition.venue_id, Source.name)
+        )
+        for venue_id, source_name in sources_result.all():
+            venue_details.setdefault(venue_id, {"parser_sources": []})["parser_sources"].append(source_name)
+    for venue in venues:
+        if venue.id not in venue_details:
+            venue_details[venue.id] = {"parser_sources": []}
+
     active_view = view if view in ("map", "table") else "map"
+
+    # Build pagination URLs
+    filter_params = {}
+    if sort and sort != "name_asc":
+        filter_params["sort"] = sort
+    if view:
+        filter_params["view"] = view
+    if postcode:
+        filter_params["postcode"] = postcode
+    prev_url = _pagination_url(filter_params, page - 1, base_path="/venues") if page > 1 else None
+    next_url = _pagination_url(filter_params, page + 1, base_path="/venues") if page < total_pages else None
 
     return templates.TemplateResponse(
         "venues.html", {
             "request": request,
             "venues": venues,
+            "total": total,
             "comp_counts": comp_counts,
             "venue_details": venue_details,
             "venue_aliases": venue_aliases,
             "venue_comp_links": venue_comp_links,
             "sort": sort or "name_asc",
-            "venues_json": venues_json,
             "active_view": active_view,
             "postcode": postcode or "",
+            "page": page,
+            "total_pages": total_pages,
+            "prev_url": prev_url,
+            "next_url": next_url,
         }
     )
 
