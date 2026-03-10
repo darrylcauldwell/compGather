@@ -70,12 +70,10 @@
     </style>
     <div style="position: relative;">
         <div id="venue-map"></div>
-        {% if not venues_json %}
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; padding: 24px 32px; border-radius: 0.75rem; background: var(--cg-bg-card); border: 1px solid var(--cg-border-card); color: var(--cg-text); text-align: center; font-size: 1rem;">
+        <div id="map-empty-msg" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; padding: 24px 32px; border-radius: 0.75rem; background: var(--cg-bg-card); border: 1px solid var(--cg-border-card); color: var(--cg-text); text-align: center; font-size: 1rem;">
             <p style="font-weight: 600; margin-bottom: 4px;">No active venues found</p>
             <p style="color: var(--cg-text-muted); font-size: 0.875rem;">There are no venues with upcoming events to display.</p>
         </div>
-        {% endif %}
     </div>
 </div>
 
@@ -94,7 +92,7 @@
         <div class="card">
             <div class="card-header">
                 <i class="bi bi-geo-alt"></i>
-                {{ venues|length }} venue{{ 's' if venues|length != 1 }}
+                {{ total }} venue{{ 's' if total != 1 }}
             </div>
             <div class="table-responsive" style="border-radius: 0 0 0.75rem 0.75rem;">
                 <table class="table">
@@ -196,6 +194,29 @@
                 </table>
             </div>
         </div>
+        {% if total_pages > 1 %}
+        <nav class="pagination" aria-label="Pagination">
+            {% if prev_url %}
+            <a href="{{ prev_url }}" class="page-btn" aria-label="Previous page">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            {% else %}
+            <span class="page-btn disabled" aria-hidden="true">
+                <i class="bi bi-chevron-left"></i>
+            </span>
+            {% endif %}
+            <span class="page-info">{{ page }} / {{ total_pages }}</span>
+            {% if next_url %}
+            <a href="{{ next_url }}" class="page-btn" aria-label="Next page">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+            {% else %}
+            <span class="page-btn disabled" aria-hidden="true">
+                <i class="bi bi-chevron-right"></i>
+            </span>
+            {% endif %}
+        </nav>
+        {% endif %}
         {% else %}
         <div class="card">
             <div class="empty-state">
@@ -276,8 +297,6 @@
     };
 
     function initMap() {
-        var venues = {{ venues_json | tojson }};
-
         var darkTiles  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
         var lightTiles = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
         var tileAttr   = '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>';
@@ -306,28 +325,6 @@
             return div.innerHTML;
         }
 
-        var allMarkers = [];
-        venues.forEach(function(v) {
-            var popupParts = [];
-            popupParts.push('<div class="popup-venue-name">' + escHtml(v.name) + '</div>');
-            if (v.postcode) {
-                popupParts.push('<div class="popup-postcode">' + escHtml(v.postcode) + '</div>');
-            }
-            if (v.distance_miles !== null) {
-                popupParts.push('<div class="popup-distance">' + v.distance_miles + ' miles from home</div>');
-            }
-            popupParts.push('<div class="popup-events"><i class="bi bi-calendar3"></i> ' + v.event_count + ' upcoming event' + (v.event_count !== 1 ? 's' : '') + '</div>');
-            if (v.disciplines.length > 0) {
-                popupParts.push('<div class="popup-disciplines">' + v.disciplines.map(escHtml).join(' &bull; ') + '</div>');
-            }
-            popupParts.push('<a class="popup-link" href="/?venue=' + encodeURIComponent(v.name) + '">Browse events &rarr;</a>');
-
-            var marker = L.marker([v.lat, v.lng]);
-            marker.options.eventCount = v.event_count || 0;
-            marker.bindPopup(popupParts.join(''), { maxWidth: 260 });
-            allMarkers.push(marker);
-        });
-
         function eventsIconCreate(cluster) {
             var children = cluster.getAllChildMarkers();
             var total = 0;
@@ -343,6 +340,7 @@
         }
 
         var clusterMode = 'venues';
+        var allMarkers = [];
 
         function buildClusterGroup(mode) {
             var opts = { maxClusterRadius: 60 };
@@ -354,8 +352,40 @@
             return group;
         }
 
-        clusterGroup = buildClusterGroup(clusterMode);
-        map.addLayer(clusterGroup);
+        // Fetch map data from API
+        var postcode = '{{ postcode }}';
+        var apiUrl = '/api/venues/map' + (postcode ? '?postcode=' + encodeURIComponent(postcode) : '');
+        fetch(apiUrl)
+            .then(function(resp) { return resp.json(); })
+            .then(function(venues) {
+                if (venues.length === 0) {
+                    document.getElementById('map-empty-msg').style.display = 'block';
+                    return;
+                }
+                venues.forEach(function(v) {
+                    var popupParts = [];
+                    popupParts.push('<div class="popup-venue-name">' + escHtml(v.name) + '</div>');
+                    if (v.postcode) {
+                        popupParts.push('<div class="popup-postcode">' + escHtml(v.postcode) + '</div>');
+                    }
+                    if (v.distance_miles !== null) {
+                        popupParts.push('<div class="popup-distance">' + v.distance_miles + ' miles from home</div>');
+                    }
+                    popupParts.push('<div class="popup-events"><i class="bi bi-calendar3"></i> ' + v.event_count + ' upcoming event' + (v.event_count !== 1 ? 's' : '') + '</div>');
+                    if (v.disciplines.length > 0) {
+                        popupParts.push('<div class="popup-disciplines">' + v.disciplines.map(escHtml).join(' &bull; ') + '</div>');
+                    }
+                    popupParts.push('<a class="popup-link" href="/?venue=' + encodeURIComponent(v.name) + '">Browse events &rarr;</a>');
+
+                    var marker = L.marker([v.lat, v.lng]);
+                    marker.options.eventCount = v.event_count || 0;
+                    marker.bindPopup(popupParts.join(''), { maxWidth: 260 });
+                    allMarkers.push(marker);
+                });
+
+                clusterGroup = buildClusterGroup(clusterMode);
+                map.addLayer(clusterGroup);
+            });
 
         // Cluster toggle control (Venues/Events)
         var ToggleControl = L.Control.extend({
@@ -374,7 +404,7 @@
                     clusterMode = mode;
                     btnVenues.className = mode === 'venues' ? 'active' : '';
                     btnEvents.className = mode === 'events' ? 'active' : '';
-                    map.removeLayer(clusterGroup);
+                    if (clusterGroup) map.removeLayer(clusterGroup);
                     clusterGroup = buildClusterGroup(mode);
                     map.addLayer(clusterGroup);
                 }
