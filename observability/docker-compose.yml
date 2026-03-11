@@ -1,7 +1,7 @@
 services:
-  compgather-prometheus:
+  equicalendar-prometheus:
     image: prom/prometheus:v2.50.0
-    container_name: compgather-prometheus
+    container_name: equicalendar-prometheus
     restart: unless-stopped
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -9,7 +9,7 @@ services:
       - --storage.tsdb.retention.time=15d
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - compgather_prometheus_data:/prometheus
+      - equicalendar_prometheus_data:/prometheus
     networks:
       - web
     healthcheck:
@@ -19,9 +19,9 @@ services:
       retries: 3
       start_period: 10s
 
-  compgather-grafana:
+  equicalendar-grafana:
     image: grafana/grafana:10.3.1
-    container_name: compgather-grafana
+    container_name: equicalendar-grafana
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
@@ -33,7 +33,7 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
-      - compgather_grafana_data:/var/lib/grafana
+      - equicalendar_grafana_data:/var/lib/grafana
     networks:
       - web
     healthcheck:
@@ -43,14 +43,14 @@ services:
       retries: 3
       start_period: 10s
 
-  compgather-loki:
+  equicalendar-loki:
     image: grafana/loki:3.0.0
-    container_name: compgather-loki
+    container_name: equicalendar-loki
     restart: unless-stopped
     command: -config.file=/etc/loki/loki-config.yml
     volumes:
       - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
-      - compgather_loki_data:/loki
+      - equicalendar_loki_data:/loki
     networks:
       - web
     healthcheck:
@@ -60,9 +60,9 @@ services:
       retries: 3
       start_period: 10s
 
-  compgather-promtail:
+  equicalendar-promtail:
     image: grafana/promtail:3.0.0
-    container_name: compgather-promtail
+    container_name: equicalendar-promtail
     restart: unless-stopped
     command: -config.file=/etc/promtail/promtail-config.yml
     volumes:
@@ -72,7 +72,7 @@ services:
     networks:
       - web
     depends_on:
-      compgather-loki:
+      equicalendar-loki:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:9080/metrics"]
@@ -81,9 +81,9 @@ services:
       retries: 3
       start_period: 10s
 
-  compgather-cadvisor:
+  equicalendar-cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.49.1
-    container_name: compgather-cadvisor
+    container_name: equicalendar-cadvisor
     restart: unless-stopped
     privileged: true
     command:
@@ -104,6 +104,6 @@ services:
       start_period: 10s
 
 volumes:
-  compgather_prometheus_data:
-  compgather_grafana_data:
-  compgather_loki_data:
+  equicalendar_prometheus_data:
+  equicalendar_grafana_data:
+  equicalendar_loki_data:

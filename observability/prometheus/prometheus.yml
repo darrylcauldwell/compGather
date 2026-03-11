@@ -9,9 +9,9 @@ scrape_configs:
 
   - job_name: 'cadvisor'
     static_configs:
-      - targets: ['compgather-cadvisor:8080']
+      - targets: ['equicalendar-cadvisor:8080']
 
-  - job_name: 'compgather'
+  - job_name: 'equicalendar'
     static_configs:
-      - targets: ['compgather:8000']
+      - targets: ['equicalendar:8000']
     metrics_path: /metrics

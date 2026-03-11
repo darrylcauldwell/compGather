@@ -148,11 +148,11 @@ Tests run inside the Docker container:
 
 ```bash
 # Copy tests into container and run
-docker compose cp tests/ compgather:/app/tests/
-docker compose exec compgather pytest tests/ -v
+docker compose cp tests/ equicalendar:/app/tests/
+docker compose exec equicalendar pytest tests/ -v
 
 # Run a single test file
-docker compose exec compgather pytest tests/test_parsers.py -v
+docker compose exec equicalendar pytest tests/test_parsers.py -v
 ```
 
 ## Code Style

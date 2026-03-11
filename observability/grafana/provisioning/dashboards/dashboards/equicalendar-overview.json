@@ -36,7 +36,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "compgather_competitions_active",
+          "expr": "equicalendar_competitions_active",
           "refId": "A"
         }
       ],
@@ -60,7 +60,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "compgather_sources_enabled",
+          "expr": "equicalendar_sources_enabled",
           "refId": "A"
         }
       ],
@@ -84,7 +84,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "compgather_venues_with_coordinates",
+          "expr": "equicalendar_venues_with_coordinates",
           "refId": "A"
         }
       ],
@@ -113,7 +113,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum by (source) (compgather_venues_total)",
+          "expr": "sum by (source) (equicalendar_venues_total)",
           "refId": "A"
         }
       ],
@@ -159,7 +159,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "rate(http_requests_total{job=\"compgather\"}[5m])",
+          "expr": "rate(http_requests_total{job=\"equicalendar\"}[5m])",
           "legendFormat": "{{handler}}",
           "refId": "A"
         }
@@ -206,12 +206,12 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"compgather\"}[5m])) * 1000",
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"equicalendar\"}[5m])) * 1000",
           "legendFormat": "p95",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"compgather\"}[5m])) * 1000",
+          "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"equicalendar\"}[5m])) * 1000",
           "legendFormat": "p99",
           "refId": "B"
         }
@@ -223,13 +223,13 @@
   "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["compgather", "overview"],
+  "tags": ["equicalendar", "overview"],
   "templating": {"list": []},
   "time": {"from": "now-6h", "to": "now"},
   "timepicker": {},
   "timezone": "",
-  "title": "CompGather Overview",
-  "uid": "compgather-overview",
+  "title": "EquiCalendar Overview",
+  "uid": "equicalendar-overview",
   "version": 0,
   "weekStart": ""
 }

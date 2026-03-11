@@ -30,7 +30,7 @@ EquiCalendar scrapes all major UK equestrian listing sites daily, normalises the
 ```bash
 # Clone
 git clone https://github.com/darrylcauldwell/compGather.git
-cd compGather
+cd EquiCalendar
 
 # Start (builds Docker image with all dependencies)
 docker compose up -d --build

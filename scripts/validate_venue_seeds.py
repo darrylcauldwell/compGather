@@ -10,7 +10,7 @@ Checks:
   E) Coord-only completeness — venues with coords but no postcode
 
 Run inside Docker:
-    docker exec compgather python scripts/validate_venue_seeds.py
+    docker exec equicalendar python scripts/validate_venue_seeds.py
 
 Or locally (requires requests):
     python3 scripts/validate_venue_seeds.py
