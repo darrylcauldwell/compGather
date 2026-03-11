@@ -379,7 +379,7 @@ or support rollbacks.
 
 ### Pitfall: Data loss on container recreation
 
-SQLite file is stored in a Docker named volume (`compgather_data`). This
+SQLite file is stored in a Docker named volume (`equicalendar_data`). This
 survives container recreates but NOT `docker compose down -v`.
 
 **Current mitigations (data resilience)**:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Seed script to register new equestrian sources via the compGather API.
+"""Seed script to register new equestrian sources via the EquiCalendar API.
 
 Usage:
     python scripts/seed_new_sources.py [--base-url http://localhost:8001]
@@ -49,7 +49,7 @@ NEW_SOURCES = [
 
 def main():
     parser = argparse.ArgumentParser(description="Seed new equestrian sources")
-    parser.add_argument("--base-url", default="http://localhost:8001", help="compGather API base URL")
+    parser.add_argument("--base-url", default="http://localhost:8001", help="EquiCalendar API base URL")
     args = parser.parse_args()
 
     base = args.base_url.rstrip("/")

@@ -2,7 +2,7 @@
 """One-off script to re-normalise venue names after alias/suffix updates.
 
 Runs inside the Docker container:
-    docker exec compgather python scripts/renormalise_venues.py
+    docker exec equicalendar python scripts/renormalise_venues.py
 
 What it does (post venue-FK migration):
 1. Re-normalises venue names in the venues table
@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.parsers.utils import disambiguate_venue, normalise_venue_name  # noqa: E402
 from app.seed_data import get_venue_aliases  # noqa: E402
 
-DB_PATH = Path("data/compgather.db")
+DB_PATH = Path("data/equicalendar.db")
 
 
 def _resolve_name(name: str, postcode: str | None = None) -> str:

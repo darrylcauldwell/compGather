@@ -2,7 +2,7 @@
 """One-off script to fix HIGH priority venue data quality issues.
 
 Run inside the Docker container:
-    docker exec compgather python scripts/fix_venue_data.py
+    docker exec equicalendar python scripts/fix_venue_data.py
 
 What it does:
 A) Fix NULL distance_miles on venues that have coordinates
@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.parsers.utils import normalise_postcode  # noqa: E402
 
-DB_PATH = Path("data/compgather.db")
+DB_PATH = Path("data/equicalendar.db")
 
 # Disambiguated venue name pattern: "Brook Farm (TQ12)"
 _DISAMBIGUATED_RE = re.compile(r"\(([A-Z]{1,2}\d[A-Z\d]?)\)$")

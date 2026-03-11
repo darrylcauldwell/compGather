@@ -2,7 +2,7 @@
 """One-off migration script: backfill venue_id on competitions table.
 
 Run inside the Docker container after deploying the venue FK migration:
-    docker exec compgather python scripts/backfill_venue_id.py
+    docker exec equicalendar python scripts/backfill_venue_id.py
 
 What it does:
 1. For each competition with NULL venue_id, match venue_name → venues.name
@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-DB_PATH = Path("data/compgather.db")
+DB_PATH = Path("data/equicalendar.db")
 
 
 def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

@@ -10,7 +10,7 @@ from pathlib import Path
 from collections import defaultdict
 
 # Database path
-db_path = Path(__file__).parent.parent / "compGather.db"
+db_path = Path(__file__).parent.parent / "equicalendar.db"
 
 def find_duplicate_postcodes():
     """Query database for postcodes with multiple venues."""

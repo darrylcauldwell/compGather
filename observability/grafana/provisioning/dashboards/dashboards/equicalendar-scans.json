@@ -58,7 +58,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(compgather_scan_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, rate(equicalendar_scan_duration_seconds_bucket[5m]))",
           "legendFormat": "{{source_name}} (p95)",
           "refId": "A"
         }
@@ -105,7 +105,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "compgather_scan_competitions_found",
+          "expr": "equicalendar_scan_competitions_found",
           "legendFormat": "{{source_name}}",
           "refId": "A"
         }
@@ -136,7 +136,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum by (match_type) (compgather_venue_matches_total)",
+          "expr": "sum by (match_type) (equicalendar_venue_matches_total)",
           "refId": "A"
         }
       ],
@@ -167,7 +167,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum by (source_name, status) (compgather_scans_total)",
+          "expr": "sum by (source_name, status) (equicalendar_scans_total)",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -210,7 +210,7 @@
       "pluginVersion": "10.3.1",
       "targets": [
         {
-          "expr": "sum by (source_name, error_type) (compgather_parser_errors_total)",
+          "expr": "sum by (source_name, error_type) (equicalendar_parser_errors_total)",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -233,13 +233,13 @@
   "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["compgather", "scans"],
+  "tags": ["equicalendar", "scans"],
   "templating": {"list": []},
   "time": {"from": "now-24h", "to": "now"},
   "timepicker": {},
   "timezone": "",
-  "title": "CompGather Scans",
-  "uid": "compgather-scans",
+  "title": "EquiCalendar Scans",
+  "uid": "equicalendar-scans",
   "version": 0,
   "weekStart": ""
 }

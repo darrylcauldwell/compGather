@@ -12,7 +12,7 @@ These 9 parsers have Phase 4B done but Phase 4A skipped. They still filter out p
 
 ### 1. addington.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/addington.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/addington.py`
 
 **Line 13 - Remove import:**
 ```python
@@ -56,7 +56,7 @@ if not is_future_event(date_start, date_end):  # ← REMOVE THESE 2 LINES
 
 ### 2. arena_uk.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/arena_uk.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/arena_uk.py`
 
 **Line 14 - Remove import:**
 ```python
@@ -86,7 +86,7 @@ if not is_future_event(date_start, date_end):  # ← REMOVE THESE 2 LINES
 
 ### 3. ashwood.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/ashwood.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/ashwood.py`
 
 **Line 14 - Remove import:**
 ```python
@@ -126,7 +126,7 @@ if not is_future_event(date_start):  # ← REMOVE THESE 2 LINES
 
 ### 4. horsevents.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/horsevents.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/horsevents.py`
 
 **Line 14 - Remove import:**
 ```python
@@ -151,7 +151,7 @@ if not is_future_event(date_start, date_end):  # ← REMOVE THESE 2 LINES
 
 ### 5. my_riding_life.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/my_riding_life.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/my_riding_life.py`
 
 **Line 14 - Remove import:**
 ```python
@@ -181,7 +181,7 @@ if not is_future_event(date_start, date_end):  # ← REMOVE THESE 2 LINES
 
 ### 6. pony_club.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/pony_club.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/pony_club.py`
 
 **Line 13 - Remove import:**
 ```python
@@ -206,7 +206,7 @@ if not is_future_event(date_start):  # ← REMOVE THESE 2 LINES
 
 ### 7. showground.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/showground.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/showground.py`
 
 **Line 14 - Remove import:**
 ```python
@@ -236,7 +236,7 @@ if not is_future_event(date_start_str, date_end_str):  # ← REMOVE THESE 2 LINE
 
 ### 8. british_showjumping.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/british_showjumping.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/british_showjumping.py`
 
 **Line 13 - Remove import:**
 ```python
@@ -262,7 +262,7 @@ if is_future_event(date_start, date_end):  # ← INVERT THIS (remove the check)
 
 ### 9. equipe_online.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/equipe_online.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/equipe_online.py`
 
 **Line 10 - Remove import:**
 ```python
@@ -290,7 +290,7 @@ These 5 parsers were explicitly listed as Phase 4A fixed but git diff shows zero
 
 ### 1. brook_farm.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/brook_farm.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/brook_farm.py`
 
 **Line 12 - Remove import:**
 ```python
@@ -310,7 +310,7 @@ if not is_future_event(date_start):
 
 ### 2. dean_valley.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/dean_valley.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/dean_valley.py`
 
 **Line 12 - Remove import:**
 ```python
@@ -330,7 +330,7 @@ if not is_future_event(date_start):
 
 ### 3. hartpury.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/hartpury.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/hartpury.py`
 
 **Line 12 - Remove import:**
 ```python
@@ -350,7 +350,7 @@ if not is_future_event(date_start):
 
 ### 4. northallerton.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/northallerton.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/northallerton.py`
 
 **Line 12 - Remove import:**
 ```python
@@ -370,7 +370,7 @@ if not is_future_event(date_start):
 
 ### 5. port_royal.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/port_royal.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/port_royal.py`
 
 **Line 12 - Remove import:**
 ```python
@@ -392,7 +392,7 @@ if not is_future_event(date_start):
 
 ### 1. solihull.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/solihull.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/solihull.py`
 
 **Line 12 - Remove import:**
 ```python
@@ -412,7 +412,7 @@ if not is_future_event(date_start):
 
 ### 2. sykehouse.py
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/sykehouse.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/sykehouse.py`
 
 **Line 12 - Remove import:**
 ```python
@@ -432,7 +432,7 @@ if not is_future_event(date_start):
 
 ### 3. horse_events.py (SPECIAL CASE - Most Complex)
 
-**File:** `/Users/darrylcauldwell/Library/Mobile Documents/com~apple~CloudDocs/Development/compGather/app/parsers/horse_events.py`
+**File:** `/Users/darrylcauldwell/Development/compGather/app/parsers/horse_events.py`
 
 **Line 14 - Remove classify_event import:**
 ```python

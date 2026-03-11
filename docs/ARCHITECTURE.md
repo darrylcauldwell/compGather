@@ -55,7 +55,7 @@ EquiCalendar is a **scrape-normalise-store-serve** pipeline that aggregates UK e
 ## 2. Directory Structure
 
 ```
-compGather/
+EquiCalendar/
 ├── app/
 │   ├── config.py              # pydantic-settings: env vars
 │   ├── database.py            # async SQLAlchemy engine + migrations
