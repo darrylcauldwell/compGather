@@ -47,6 +47,21 @@ enum DateScope: String, CaseIterable, Identifiable {
 /// Distance radius options (miles). `nil` == any distance.
 let radiusOptions: [Double] = [10, 25, 30, 50, 100]
 
+/// An amateur competition pathway the user can filter to. `id` is the tag token
+/// matched server-side; `name` is the display label. Slice 1 uses pathways that
+/// are already tagged in the data; more (Trailblazers, Cricklands…) follow once
+/// the `series:` tags ship.
+struct SeriesOption: Identifiable, Sendable {
+    let id: String   // tag token, e.g. "affiliation:nsea"
+    let name: String
+}
+
+let seriesOptions: [SeriesOption] = [
+    .init(id: "affiliation:nsea", name: "NSEA"),
+    .init(id: "affiliation:pony-club", name: "Pony Club"),
+    .init(id: "affiliation:bsps", name: "BSPS"),
+]
+
 /// Drives the events list: holds the current filter, loads from the API, and
 /// resolves "near me" via the device location + server reverse-geocode.
 @MainActor
@@ -111,6 +126,14 @@ final class EventsViewModel {
 
     func setDiscipline(_ discipline: String?) async {
         filter.discipline = discipline
+        await load()
+    }
+
+    /// The selected series/pathway tag token (e.g. "affiliation:nsea"); nil == all.
+    var series: String? { filter.tags.first }
+
+    func setSeries(_ token: String?) async {
+        filter.tags = token.map { [$0] } ?? []
         await load()
     }
 

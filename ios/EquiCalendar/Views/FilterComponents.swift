@@ -14,6 +14,7 @@ struct FilterBar: View {
         ScrollView(.horizontal, showsIndicators: false) {
             GlassEffectContainer(spacing: 8) {
                 HStack(spacing: 8) {
+                    seriesMenu
                     disciplineMenu
                     dateMenu
                     distanceMenu
@@ -27,6 +28,28 @@ struct FilterBar: View {
             }
             .presentationDetents([.medium])
         }
+    }
+
+    /// Filter to an amateur pathway (NSEA, Pony Club, BSPS…). Composes with the
+    /// distance radius, so "NSEA within 50 miles" is just this + the distance pill.
+    private var seriesMenu: some View {
+        Menu {
+            menuItem("All series", selected: model.series == nil) {
+                Task { await model.setSeries(nil) }
+            }
+            ForEach(seriesOptions) { option in
+                menuItem(option.name, selected: model.series == option.id) {
+                    Task { await model.setSeries(option.id) }
+                }
+            }
+        } label: {
+            pill(seriesLabel, icon: "rosette", active: model.series != nil)
+        }
+    }
+
+    private var seriesLabel: String {
+        guard let token = model.series else { return "All series" }
+        return seriesOptions.first { $0.id == token }?.name ?? "Series"
     }
 
     private var disciplineMenu: some View {

@@ -9,10 +9,13 @@ struct EventFilter: Equatable, Sendable {
     var maxDistance: Double?
     var dateFrom: Date?
     var dateTo: Date?
+    /// Tag tokens to require, e.g. "affiliation:nsea", "series:trailblazers".
+    var tags: [String] = []
 
     var queryItems: [URLQueryItem] {
         var items: [URLQueryItem] = []
         if let d = discipline, !d.isEmpty { items.append(.init(name: "discipline", value: d)) }
+        for t in tags where !t.isEmpty { items.append(.init(name: "tag", value: t)) }
         if let t = eventType, !t.isEmpty { items.append(.init(name: "event_type", value: t)) }
         if let s = spectator { items.append(.init(name: "spectator", value: s ? "true" : "false")) }
         if let p = postcode, !p.isEmpty { items.append(.init(name: "postcode", value: p)) }
