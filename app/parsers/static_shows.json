@@ -58,110 +58,6 @@
       }
     ]
   },
-  "azelhof": {
-    "valid_until": "2026-03-29",
-    "events": [
-      {
-        "name": "Azelhof Autumn Tour Week 1",
-        "date_start": "2025-11-05",
-        "date_end": "2025-11-09",
-        "venue_name": "Azelhof",
-        "venue_postcode": null,
-        "latitude": 51.131,
-        "longitude": 4.57,
-        "discipline": "Show Jumping",
-        "event_type": "competition"
-      },
-      {
-        "name": "Azelhof X-Mas Tour Week 1",
-        "date_start": "2025-12-03",
-        "date_end": "2025-12-07",
-        "venue_name": "Azelhof",
-        "venue_postcode": null,
-        "latitude": 51.131,
-        "longitude": 4.57,
-        "discipline": "Show Jumping",
-        "event_type": "competition"
-      },
-      {
-        "name": "Azelhof X-Mas Tour Week 2",
-        "date_start": "2025-12-09",
-        "date_end": "2025-12-14",
-        "venue_name": "Azelhof",
-        "venue_postcode": null,
-        "latitude": 51.131,
-        "longitude": 4.57,
-        "discipline": "Show Jumping",
-        "event_type": "competition"
-      },
-      {
-        "name": "Azelhof New Year Tour",
-        "date_start": "2026-01-15",
-        "date_end": "2026-01-18",
-        "venue_name": "Azelhof",
-        "venue_postcode": null,
-        "latitude": 51.131,
-        "longitude": 4.57,
-        "discipline": "Show Jumping",
-        "event_type": "competition"
-      },
-      {
-        "name": "Azelhof Winter Tour",
-        "date_start": "2026-02-04",
-        "date_end": "2026-02-08",
-        "venue_name": "Azelhof",
-        "venue_postcode": null,
-        "latitude": 51.131,
-        "longitude": 4.57,
-        "discipline": "Show Jumping",
-        "event_type": "competition"
-      },
-      {
-        "name": "Azelhof CDI Lier",
-        "date_start": "2026-02-24",
-        "date_end": "2026-03-01",
-        "venue_name": "Azelhof",
-        "venue_postcode": null,
-        "latitude": 51.131,
-        "longitude": 4.57,
-        "discipline": "Show Jumping",
-        "event_type": "competition"
-      },
-      {
-        "name": "Azelhof Spring Tour Week 1",
-        "date_start": "2026-03-12",
-        "date_end": "2026-03-15",
-        "venue_name": "Azelhof",
-        "venue_postcode": null,
-        "latitude": 51.131,
-        "longitude": 4.57,
-        "discipline": "Show Jumping",
-        "event_type": "competition"
-      },
-      {
-        "name": "Azelhof Spring Tour Week 2",
-        "date_start": "2026-03-18",
-        "date_end": "2026-03-22",
-        "venue_name": "Azelhof",
-        "venue_postcode": null,
-        "latitude": 51.131,
-        "longitude": 4.57,
-        "discipline": "Show Jumping",
-        "event_type": "competition"
-      },
-      {
-        "name": "Azelhof Spring Tour Week 3",
-        "date_start": "2026-03-25",
-        "date_end": "2026-03-29",
-        "venue_name": "Azelhof",
-        "venue_postcode": null,
-        "latitude": 51.131,
-        "longitude": 4.57,
-        "discipline": "Show Jumping",
-        "event_type": "competition"
-      }
-    ]
-  },
   "bolesworth": {
     "valid_until": "2026-07-05",
     "events": [
@@ -957,22 +853,6 @@
       }
     ]
   },
-  "le_siepi": {
-    "valid_until": "2026-08-02",
-    "events": [
-      {
-        "name": "Adriatic Tour 2026",
-        "date_start": "2026-07-30",
-        "date_end": "2026-08-02",
-        "venue_name": "Circolo Ippico Le Siepi",
-        "venue_postcode": null,
-        "latitude": 44.268,
-        "longitude": 12.355,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      }
-    ]
-  },
   "lgct": {
     "valid_until": "2026-11-21",
     "events": [
@@ -1422,33 +1302,6 @@
       }
     ]
   },
-  "peelbergen": {
-    "valid_until": "2026-07-05",
-    "events": [
-      {
-        "name": "Peelbergen CSI February",
-        "date_start": "2026-02-16",
-        "date_end": "2026-02-22",
-        "venue_name": "Peelbergen Equestrian Centre",
-        "venue_postcode": null,
-        "latitude": 51.364,
-        "longitude": 6.11,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      },
-      {
-        "name": "Peelbergen EEF Series Semifinal",
-        "date_start": "2026-07-02",
-        "date_end": "2026-07-05",
-        "venue_name": "Peelbergen Equestrian Centre",
-        "venue_postcode": null,
-        "latitude": 51.364,
-        "longitude": 6.11,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      }
-    ]
-  },
   "pennsylvania_national": {
     "valid_until": "2026-10-18",
     "events": [
@@ -1460,33 +1313,6 @@
         "venue_postcode": null,
         "latitude": 40.2765,
         "longitude": -76.8813,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      }
-    ]
-  },
-  "riesenbeck": {
-    "valid_until": "2026-05-24",
-    "events": [
-      {
-        "name": "Riesenbeck International CSI February",
-        "date_start": "2026-02-04",
-        "date_end": "2026-02-08",
-        "venue_name": "Riesenbeck International",
-        "venue_postcode": null,
-        "latitude": 52.253,
-        "longitude": 7.5974,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      },
-      {
-        "name": "Riesenbeck International CSI May",
-        "date_start": "2026-05-21",
-        "date_end": "2026-05-24",
-        "venue_name": "Riesenbeck International",
-        "venue_postcode": null,
-        "latitude": 52.253,
-        "longitude": 7.5974,
         "discipline": "Show Jumping",
         "event_type": "show"
       }
@@ -1621,55 +1447,6 @@
         "venue_postcode": null,
         "latitude": 55.396,
         "longitude": 10.388,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      }
-    ]
-  },
-  "sentower_park": {
-    "valid_until": "2026-03-01",
-    "events": [
-      {
-        "name": "Sentower Park CSI November",
-        "date_start": "2025-11-27",
-        "date_end": "2025-11-30",
-        "venue_name": "Sentower Park",
-        "venue_postcode": null,
-        "latitude": 51.047,
-        "longitude": 5.588,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      },
-      {
-        "name": "Sentower Park Happy New Year CSI",
-        "date_start": "2025-12-19",
-        "date_end": "2025-12-21",
-        "venue_name": "Sentower Park",
-        "venue_postcode": null,
-        "latitude": 51.047,
-        "longitude": 5.588,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      },
-      {
-        "name": "Sentower Park CSI January",
-        "date_start": "2026-01-27",
-        "date_end": "2026-02-01",
-        "venue_name": "Sentower Park",
-        "venue_postcode": null,
-        "latitude": 51.047,
-        "longitude": 5.588,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      },
-      {
-        "name": "Zangersheide International",
-        "date_start": "2026-02-25",
-        "date_end": "2026-03-01",
-        "venue_name": "Sentower Park",
-        "venue_postcode": null,
-        "latitude": 51.047,
-        "longitude": 5.588,
         "discipline": "Show Jumping",
         "event_type": "show"
       }

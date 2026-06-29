@@ -5,6 +5,7 @@ from app.parsers import addington  # noqa: F401
 from app.parsers import arena_uk  # noqa: F401
 from app.parsers import asao  # noqa: F401
 from app.parsers import ashwood  # noqa: F401
+from app.parsers import azelhof  # noqa: F401
 from app.parsers import ballavartyn  # noqa: F401
 from app.parsers import british_dressage  # noqa: F401
 from app.parsers import british_eventing  # noqa: F401
@@ -32,13 +33,17 @@ from app.parsers import horse_monkey  # noqa: F401
 from app.parsers import horsevents  # noqa: F401
 from app.parsers import its_plain_sailing  # noqa: F401
 from app.parsers import kelsall_hill  # noqa: F401
+from app.parsers import le_siepi  # noqa: F401
 from app.parsers import morris  # noqa: F401
 from app.parsers import my_riding_life  # noqa: F401
 from app.parsers import northallerton  # noqa: F401
 from app.parsers import nsea  # noqa: F401
 from app.parsers import nvec  # noqa: F401
 from app.parsers import outdoor_shows  # noqa: F401
+from app.parsers import peelbergen  # noqa: F401
 from app.parsers import port_royal  # noqa: F401
+from app.parsers import riesenbeck  # noqa: F401
+from app.parsers import sentower_park  # noqa: F401
 from app.parsers import showground  # noqa: F401
 from app.parsers import solihull  # noqa: F401
 from app.parsers import sunshine_tour  # noqa: F401

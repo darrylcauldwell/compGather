@@ -617,6 +617,64 @@ def normalise_venue_name(name: str) -> str:
     return cleaned
 
 
+# ---------------------------------------------------------------------------
+# Continental / international venue classification
+#
+# Big continental venues (Peelbergen, Sentower, Azelhof, Riesenbeck …) run
+# parallel rings in one fixture: enterable youth/amateur classes (1*/2*/YH,
+# pony, U25) alongside elite internationals (CSIO3*+, CDI4*, Global Champions).
+# So event_type is decided PER EVENT, not per venue:
+#   - any entry-level marker present  -> "competition" (Compete; also Watch when
+#     starred, because a CSI venue is a fun day out)
+#   - otherwise, a purely-elite marker -> "show" (Watch-only)
+#   - neither -> "competition" (a plain national comp)
+# spectator is left to classify_spectator() in the scanner, which already
+# returns True for any "show", international code, or star rating.
+# ---------------------------------------------------------------------------
+
+_CONT_ENTERABLE = re.compile(
+    r"\b1\s*\*|\b2\s*\*|\bYH\b|young\s*horse|jonge\s*paard|\byouth\b|\bjunior"
+    r"|\bpony|\bchildren\b|\bU2[15]\b|amateur|talent|\bJ\s*/\s*P",
+    re.IGNORECASE,
+)
+_CONT_ELITE = re.compile(
+    r"\bCSIO\b|\bCHIO\b|\bCDIO\b|\bCCIO\b|[3-5]\s*\*|nations?\s*cup|world\s*cup"
+    r"|european\s*championship|global\s*champions|grand\s*champions|championship",
+    re.IGNORECASE,
+)
+
+
+def continental_event_type(name: str) -> str:
+    """Decide ``"competition"`` vs ``"show"`` for a continental fixture name.
+
+    Entry-level markers take precedence so mixed-tier fixtures (e.g.
+    ``"CSI 3*/1*/YH"``) are enterable (Compete) as well as watchable.
+    """
+    text = name or ""
+    if _CONT_ENTERABLE.search(text):
+        return "competition"
+    if _CONT_ELITE.search(text):
+        return "show"
+    return "competition"
+
+
+def continental_discipline(name: str) -> str:
+    """Best-effort discipline hint for a continental fixture (jumping venues)."""
+    n = (name or "").upper()
+    if "CDI" in n or "DRESSAGE" in n:
+        return "Dressage"
+    if "CCI" in n or "EVENTING" in n:
+        return "Eventing"
+    return "Show Jumping"
+
+
+def prefix_venue(name: str, label: str) -> str:
+    """Prepend a short venue *label* to *name* unless it already names the venue."""
+    name = (name or "").strip()
+    key = label.split()[0].lower()
+    return name if key in name.lower() else f"{label} — {name}"
+
+
 def extract_json_ld_event(soup: BeautifulSoup) -> dict | None:
     """Extract the first Event-typed JSON-LD block from a page.
 

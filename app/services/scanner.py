@@ -113,8 +113,8 @@ _SOURCE_DEFS: list[dict[str, str | None]] = [
     {"name": "Spruce Meadows Masters", "parser_key": "spruce_meadows", "url": "https://www.sprucemeadows.com/masters/"},
     {"name": "Aachen World Equestrian Festival", "parser_key": "aachen", "url": "https://www.chioaachen.de/en/"},
     # Winter circuit / international indoor events
-    {"name": "Azelhof", "parser_key": "azelhof", "url": "https://azelhof.be/en/home/"},
-    {"name": "Sentower Park", "parser_key": "sentower_park", "url": "https://www.sentowerpark.com/en/home/"},
+    {"name": "Azelhof", "parser_key": "azelhof", "url": "https://azelhof.be/en/events"},
+    {"name": "Sentower Park", "parser_key": "sentower_park", "url": "https://www.sentowerpark.com/events"},
     {"name": "Keysoe International", "parser_key": "keysoe_international", "url": "https://www.keysoe.com/"},
     {"name": "Vilamoura Classic", "parser_key": "vilamoura", "url": "https://grandprix-events.com/en/vilamoura-classic/"},
     {"name": "Jumping Indoor Maastricht", "parser_key": "jumping_indoor_maastricht", "url": "https://jumpingindoormaastricht.com/en/home-en/"},
@@ -129,13 +129,13 @@ _SOURCE_DEFS: list[dict[str, str | None]] = [
     {"name": "Equita Lyon", "parser_key": "equitalyon", "url": "https://www.equitalyon.com/en"},
     {"name": "Chantilly Classic", "parser_key": "chantilly", "url": "https://grandprix-events.com/en/chantilly-classic/"},
     # Italy
-    {"name": "Adriatic Tour (Le Siepi)", "parser_key": "le_siepi", "url": "https://lesiepicervia.it/"},
+    {"name": "Adriatic Tour (Le Siepi)", "parser_key": "le_siepi", "url": "https://lesiepicervia.it/concorsi/"},
     # Germany
-    {"name": "Riesenbeck International", "parser_key": "riesenbeck", "url": "https://riesenbeck-international.com/en/"},
+    {"name": "Riesenbeck International", "parser_key": "riesenbeck", "url": "https://riesenbeck-international.com/en/events/"},
     {"name": "Hof Kasselmann", "parser_key": "hof_kasselmann", "url": "https://horses-and-dreams.de/en/"},
     {"name": "Pferd International München", "parser_key": "munich_riem", "url": "https://www.pferdinternational.de/"},
     # Netherlands
-    {"name": "Peelbergen EC", "parser_key": "peelbergen", "url": "https://www.peelbergen.eu/"},
+    {"name": "Peelbergen EC", "parser_key": "peelbergen", "url": "https://www.peelbergen.eu/wp-json/tribe/events/v1/events"},
     {"name": "Jumping Amsterdam", "parser_key": "jumping_amsterdam", "url": "https://www.jumpingamsterdam.nl/en/"},
     {"name": "The Dutch Masters", "parser_key": "dutch_masters", "url": "https://www.thedutchmasters.com/en/"},
     {"name": "CHIO Rotterdam", "parser_key": "chio_rotterdam", "url": "https://chio.nl/en"},
