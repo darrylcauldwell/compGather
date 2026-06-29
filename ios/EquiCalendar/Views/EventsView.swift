@@ -10,30 +10,35 @@ struct EventsView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if model.isLoading && model.events.isEmpty {
-                    ProgressView("Loading events…")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let error = model.errorMessage, model.events.isEmpty {
-                    ContentUnavailableView {
-                        Label("Couldn't load events", systemImage: "wifi.exclamationmark")
-                    } description: {
-                        Text(error)
-                    } actions: {
-                        Button("Try Again") { Task { await model.load() } }
-                            .buttonStyle(.glassProminent)
-                    }
-                } else if model.events.isEmpty {
-                    ContentUnavailableView("No events found", systemImage: "calendar")
-                } else {
-                    eventList
-                }
-            }
-            .safeAreaInset(edge: .top, spacing: 8) {
+            // FilterBar is a normal sibling above the list (not a safeAreaInset
+            // overlay) so menu taps can't fall through to the list rows beneath.
+            VStack(spacing: 0) {
                 FilterBar(model: model)
                     .padding(.vertical, 8)
+
+                Group {
+                    if model.isLoading && model.events.isEmpty {
+                        ProgressView("Loading events…")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if let error = model.errorMessage, model.events.isEmpty {
+                        ContentUnavailableView {
+                            Label("Couldn't load events", systemImage: "wifi.exclamationmark")
+                        } description: {
+                            Text(error)
+                        } actions: {
+                            Button("Try Again") { Task { await model.load() } }
+                                .buttonStyle(.glassProminent)
+                        }
+                    } else if model.events.isEmpty {
+                        ContentUnavailableView("No events found", systemImage: "calendar")
+                    } else {
+                        eventList
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .navigationTitle("Events")
+            .navigationBarTitleDisplayMode(.inline)
             .task { if model.events.isEmpty { await model.load() } }
         }
     }
