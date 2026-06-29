@@ -693,7 +693,6 @@ async def admin_page(request: Request, session: AsyncSession = Depends(get_sessi
             "total_comp_counts": total_comp_counts,
             "total_training_counts": total_training_counts,
             "stale_source_ids": stale_source_ids,
-            "api_key": settings.api_key or "",
         }
     )
 
