@@ -6,20 +6,18 @@ import Observation
 /// Only obtains the coordinate; reverse-geocoding to a UK postcode is done
 /// server-side via `APIClient.reverseGeocode` (the device-side `CLGeocoder` is
 /// deprecated on iOS 26 and the backend already resolves postcodes).
+///
+/// Uses `startUpdatingLocation` and waits for the first good fix (with a
+/// timeout) rather than the one-shot `requestLocation`, which frequently fails
+/// with a transient "location unknown" error right after launch.
 @MainActor
 @Observable
 final class LocationManager: NSObject, CLLocationManagerDelegate {
-    enum State: Equatable {
-        case idle, requesting, resolved, denied, failed
-    }
-
-    private(set) var state: State = .idle
-    private(set) var coordinate: CLLocationCoordinate2D?
+    enum LocationError: Error { case denied, unavailable }
 
     private let manager = CLLocationManager()
     private var continuation: CheckedContinuation<CLLocationCoordinate2D, Error>?
-
-    enum LocationError: Error { case denied, failed }
+    private var timeoutTask: Task<Void, Never>?
 
     override init() {
         super.init()
@@ -27,54 +25,63 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
         manager.desiredAccuracy = kCLLocationAccuracyKilometer
     }
 
+    var isDenied: Bool {
+        switch manager.authorizationStatus {
+        case .denied, .restricted: true
+        default: false
+        }
+    }
+
     /// Request the device location once, returning its coordinate.
     func currentCoordinate() async throws -> CLLocationCoordinate2D {
-        state = .requesting
+        if isDenied { throw LocationError.denied }
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
+            timeoutTask = Task { @MainActor in
+                try? await Task.sleep(for: .seconds(10))
+                resume(.failure(LocationError.unavailable))
+            }
             switch manager.authorizationStatus {
             case .notDetermined:
-                manager.requestWhenInUseAuthorization()
-            case .authorizedWhenInUse, .authorizedAlways:
-                manager.requestLocation()
+                manager.requestWhenInUseAuthorization()  // prompt, then start in didChange
             default:
-                finish(.failure(LocationError.denied))
+                manager.startUpdatingLocation()
             }
         }
     }
 
-    private func finish(_ result: Result<CLLocationCoordinate2D, Error>) {
-        if case .failure(let error) = result {
-            state = (error as? LocationError) == .denied ? .denied : .failed
-        }
-        continuation?.resume(with: result)
-        continuation = nil
+    private func resume(_ result: Result<CLLocationCoordinate2D, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        timeoutTask?.cancel()
+        timeoutTask = nil
+        manager.stopUpdatingLocation()
+        continuation.resume(with: result)
     }
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         let status = manager.authorizationStatus
         Task { @MainActor in
+            guard continuation != nil else { return }
             switch status {
             case .authorizedWhenInUse, .authorizedAlways:
-                if state == .requesting { self.manager.requestLocation() }
+                self.manager.startUpdatingLocation()
             case .denied, .restricted:
-                finish(.failure(LocationError.denied))
+                resume(.failure(LocationError.denied))
             default:
-                break
+                break  // still undetermined — keep waiting for the prompt result
             }
         }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let coordinate = locations.last?.coordinate else { return }
-        Task { @MainActor in
-            self.coordinate = coordinate
-            state = .resolved
-            finish(.success(coordinate))
-        }
+        Task { @MainActor in resume(.success(coordinate)) }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        Task { @MainActor in finish(.failure(LocationError.failed)) }
+        // "Location unknown" is transient — keep waiting for the next update.
+        if (error as? CLError)?.code == .locationUnknown { return }
+        Task { @MainActor in resume(.failure(LocationError.unavailable)) }
     }
 }

@@ -144,6 +144,12 @@ final class EventsViewModel {
         await load()
     }
 
+    /// Re-attempt location (after the user enables it / taps Try again).
+    func retryLocation() async {
+        await acquireLocation()
+        await load()
+    }
+
     /// Best-effort device location → postcode (server-side reverse geocode).
     private func acquireLocation() async {
         do {

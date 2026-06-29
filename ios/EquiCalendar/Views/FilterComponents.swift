@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Discoverable filter bar: labelled Liquid Glass pills that open menus for
 /// discipline, date scope, location, and distance radius. Each pill shows the
@@ -73,6 +74,17 @@ struct FilterBar: View {
     /// defaults to 30 mi; pick another radius or "Any distance".
     private var distanceMenu: some View {
         Menu {
+            if model.locationDenied {
+                Button("Try again", systemImage: "arrow.clockwise") {
+                    Task { await model.retryLocation() }
+                }
+                Button("Open Settings", systemImage: "gear") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                Divider()
+            }
             menuItem("Any distance", selected: model.radiusMiles == nil) {
                 Task { await model.setRadius(nil) }
             }
