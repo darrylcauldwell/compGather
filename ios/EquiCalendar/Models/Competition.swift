@@ -19,15 +19,21 @@ struct Competition: Identifiable, Codable, Sendable, Hashable {
     let distanceMiles: Double?
     let eventType: String
     let url: String?
+    /// Event blurb (optional; tolerates older backends).
+    let description: String?
 
-    /// Backed by an optional so the app tolerates a backend that predates the
-    /// `tags` field (decodes to [] when absent).
+    /// Backed by optionals so the app tolerates a backend that predates the
+    /// `tags`/`classes` fields (decode to [] when absent).
     private let tagsField: [String]?
     var tags: [String] { tagsField ?? [] }
+    private let classesField: [String]?
+    /// Class list, e.g. ["Class 8: Trailblazers Qualifier", "Junior Foxhunter"].
+    var classes: [String] { classesField ?? [] }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, discipline, latitude, longitude, url
+        case id, name, discipline, latitude, longitude, url, description
         case tagsField = "tags"
+        case classesField = "classes"
         case dateStart = "date_start"
         case dateEnd = "date_end"
         case venueName = "venue_name"

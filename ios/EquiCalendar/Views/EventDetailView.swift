@@ -43,7 +43,18 @@ struct EventDetailView: View {
                 Text(competition.name)
                     .font(AppTypography.sectionTitle)
 
+                if let description = competition.description, !description.isEmpty {
+                    Text(description)
+                        .font(AppTypography.cardBody)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
                 factsCard
+
+                if !competition.classes.isEmpty {
+                    classesCard
+                }
 
                 if !competition.tags.isEmpty {
                     badges
@@ -86,6 +97,21 @@ struct EventDetailView: View {
             }
             if let distance = competition.distanceMiles {
                 detailRow("location.fill", "\(Int(distance.rounded())) miles away")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .glassEffect(.regular, in: .rect(cornerRadius: 20))
+    }
+
+    private var classesCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Classes")
+                .font(AppTypography.cardMeta)
+                .foregroundStyle(.secondary)
+            ForEach(competition.classes, id: \.self) { cls in
+                Label(cls, systemImage: "list.bullet")
+                    .font(AppTypography.cardBody)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
