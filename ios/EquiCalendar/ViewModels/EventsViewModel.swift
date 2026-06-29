@@ -82,6 +82,10 @@ final class EventsViewModel {
         self.location = location
         filter.eventType = baseEventType
         filter.spectator = baseSpectator
+        // Watch events are elite/destination fixtures — mostly continental, so a
+        // local radius would hide them. Default Watch to "any distance" (still
+        // distance-sorted); Compete keeps the local 30-mile default.
+        radiusMiles = baseSpectator == true ? nil : Self.defaultRadiusMiles
         let bounds = DateScope.upcoming.range()
         filter.dateFrom = bounds.from
         filter.dateTo = bounds.to
