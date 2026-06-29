@@ -48,6 +48,20 @@ struct CompetitionDecodingTests {
         #expect(comp.eventType == "show")
     }
 
+    @Test func decodesVenueMarker() throws {
+        let json = """
+        [{"id": 7, "name": "Test Arena", "postcode": "TE1 2ST",
+          "lat": 51.5, "lng": -0.1, "distance_miles": 12.4,
+          "event_count": 3, "disciplines": ["Dressage", "Show Jumping"]}]
+        """.data(using: .utf8)!
+        let venues = try JSONDecoder().decode([VenueMarker].self, from: json)
+        let venue = try #require(venues.first)
+        #expect(venue.latitude == 51.5)
+        #expect(venue.longitude == -0.1)
+        #expect(venue.eventCount == 3)
+        #expect(venue.disciplines == ["Dressage", "Show Jumping"])
+    }
+
     @Test func filterBuildsQueryItems() {
         var filter = EventFilter()
         filter.discipline = "Dressage"

@@ -59,6 +59,11 @@ struct APIClient: Sendable {
         return try await get(Competition.self, from: url)
     }
 
+    func venues() async throws -> [VenueMarker] {
+        let url = baseURL.appending(path: "api/venues/map")
+        return try await get([VenueMarker].self, from: url)
+    }
+
     /// Resolve a device coordinate to a UK postcode via the backend.
     func reverseGeocode(latitude: Double, longitude: Double) async throws -> String {
         let url = baseURL.appending(path: "api/geocode/reverse")

@@ -5,7 +5,13 @@ struct RootView: View {
     var body: some View {
         TabView {
             Tab("Events", systemImage: "calendar") {
-                EventsView()
+                EventsView(title: "Events", eventType: nil)
+            }
+            Tab("Shows", systemImage: "rosette") {
+                EventsView(title: "Shows", eventType: "show")
+            }
+            Tab("Venues", systemImage: "map") {
+                VenuesView()
             }
             Tab("Favourites", systemImage: "star") {
                 FavouritesView()

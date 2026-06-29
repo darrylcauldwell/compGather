@@ -72,9 +72,14 @@ final class EventsViewModel {
     private let location: LocationManager
     private var didStart = false
 
-    init(api: APIClient = APIClient(), location: LocationManager = LocationManager()) {
+    init(
+        api: APIClient = APIClient(),
+        location: LocationManager = LocationManager(),
+        baseEventType: String? = nil
+    ) {
         self.api = api
         self.location = location
+        filter.eventType = baseEventType
         let bounds = DateScope.upcoming.range()
         filter.dateFrom = bounds.from
         filter.dateTo = bounds.to

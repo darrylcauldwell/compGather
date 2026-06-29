@@ -1,10 +1,17 @@
 import SwiftData
 import SwiftUI
 
-/// Browse upcoming events with discipline + "near me" filtering.
+/// Browse events with discipline / date / distance filtering. Reused for the
+/// Events tab (competitions) and the Shows tab (`eventType: "show"`).
 struct EventsView: View {
-    @State private var model = EventsViewModel()
+    let title: String
+    @State private var model: EventsViewModel
     @Query private var favourites: [Favourite]
+
+    init(title: String = "Events", eventType: String? = nil) {
+        self.title = title
+        _model = State(initialValue: EventsViewModel(baseEventType: eventType))
+    }
 
     private var favouriteIDs: Set<Int> { Set(favourites.map(\.competitionId)) }
 
@@ -38,7 +45,7 @@ struct EventsView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .navigationTitle("Events")
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .task { await model.start() }
         }
