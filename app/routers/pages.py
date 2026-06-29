@@ -670,6 +670,20 @@ async def admin_page(request: Request, session: AsyncSession = Depends(get_sessi
     )
     total_training_counts = dict(total_training_result.all())
 
+    # Staleness: a source that has events in the DB but NONE upcoming has gone
+    # stale (e.g. an annual fixture whose hard-coded dates have all passed) and
+    # needs a refresh. Surface it so stale data doesn't rot unnoticed.
+    ever_result = await session.execute(
+        select(Competition.source_id, func.count(Competition.id))
+        .group_by(Competition.source_id)
+    )
+    ever_counts = dict(ever_result.all())
+    stale_source_ids = {
+        sid for sid, total in ever_counts.items()
+        if total > 0
+        and (total_comp_counts.get(sid, 0) + total_training_counts.get(sid, 0)) == 0
+    }
+
     return templates.TemplateResponse(
         "sources.html", {
             "request": request,
@@ -678,6 +692,7 @@ async def admin_page(request: Request, session: AsyncSession = Depends(get_sessi
             "latest_ok_scans": latest_ok_scans,
             "total_comp_counts": total_comp_counts,
             "total_training_counts": total_training_counts,
+            "stale_source_ids": stale_source_ids,
             "api_key": settings.api_key or "",
         }
     )
