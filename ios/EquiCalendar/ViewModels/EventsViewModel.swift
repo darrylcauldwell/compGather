@@ -57,9 +57,19 @@ struct SeriesOption: Identifiable, Sendable {
 }
 
 let seriesOptions: [SeriesOption] = [
+    // Affiliation pathways (source-tagged)
     .init(id: "affiliation:nsea", name: "NSEA"),
     .init(id: "affiliation:pony-club", name: "Pony Club"),
     .init(id: "affiliation:bsps", name: "BSPS"),
+    // Named unaffiliated series (text/class detected)
+    .init(id: "series:trailblazers", name: "Trailblazers"),
+    .init(id: "series:cricklands", name: "Cricklands"),
+    .init(id: "series:bs-club", name: "BS Club"),
+    .init(id: "series:blue-chip", name: "Blue Chip"),
+    // BS class series
+    .init(id: "class:junior-foxhunter", name: "Junior Foxhunter"),
+    .init(id: "class:foxhunter", name: "Foxhunter"),
+    .init(id: "class:british-novice", name: "British Novice"),
 ]
 
 /// Drives the events list: holds the current filter, loads from the API, and
