@@ -61,6 +61,7 @@ class Competition(Base):
     )
     discipline: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     event_type: Mapped[str] = mapped_column(Text, default="competition")  # "competition", "training", "venue_hire"
+    spectator: Mapped[bool] = mapped_column(Boolean, default=False)  # worth watching → Watch tab
     tags: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array of tag strings
     url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     venue_match_type: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

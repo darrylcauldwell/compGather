@@ -173,6 +173,16 @@ async def init_db():
         except Exception:
             pass  # column already exists
 
+    # spectator flag: drives the app's "Watch" tab (independent of event_type)
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(
+                text("ALTER TABLE competitions ADD COLUMN spectator BOOLEAN DEFAULT 0")
+            )
+            logger.info("Migration: added spectator column")
+        except Exception:
+            pass  # column already exists
+
     # Rename agricultural_show → show
     async with engine.begin() as conn:
         try:

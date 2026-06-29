@@ -26,6 +26,7 @@ async def list_competitions(
     max_distance: float | None = Query(None),
     discipline: str | None = Query(None),
     event_type: str | None = Query(None),
+    spectator: bool | None = Query(None),
     postcode: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
@@ -38,12 +39,17 @@ async def list_competitions(
         .order_by(Competition.date_start)
     )
 
-    if discipline and discipline.strip():
+    has_discipline = bool(discipline and discipline.strip())
+    has_event_type = bool(event_type and event_type.strip())
+    if has_discipline:
         stmt = stmt.where(Competition.discipline == discipline.strip())
-    if event_type and event_type.strip():
+    if has_event_type:
         stmt = stmt.where(Competition.event_type == event_type.strip())
-    elif not (discipline and discipline.strip()):
-        # Default (no discipline or type filter) shows competitions only.
+    if spectator is not None:
+        # "Watch" tab: spectator events of any event_type.
+        stmt = stmt.where(Competition.spectator == spectator)
+    elif not has_discipline and not has_event_type:
+        # Default "Compete" view: enterable competitions only.
         stmt = stmt.where(Competition.event_type == "competition")
     if date_from:
         # Include multi-day events that started before date_from but haven't ended

@@ -29,7 +29,7 @@ from app.parsers.utils import (
     normalise_venue_name,
 )
 from app.seed_data import get_venue_seeds
-from app.services.event_classifier import EventClassifier
+from app.services.event_classifier import EventClassifier, classify_spectator
 from app.services.geocoder import (
     geocode_postcode,
     reverse_geocode,
@@ -444,6 +444,12 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
             description=comp_data.description or "",
             event_type_hint=comp_data.event_type,
         )
+        # Spectator flag (Watch tab): parser hint wins, else derive from name/type.
+        spectator = (
+            comp_data.spectator
+            if comp_data.spectator is not None
+            else classify_spectator(comp_data.name, event_type)
+        )
 
         # Track competition vs training counts for scan metrics
         if event_type == "competition":
@@ -482,6 +488,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
             existing.last_seen_at = datetime.utcnow()
             existing.discipline = discipline
             existing.event_type = event_type
+            existing.spectator = spectator
             if existing.venue_id != venue_match.venue_id:
                 existing.venue_match_type = venue_match.match_type
             existing.venue_id = venue_match.venue_id
@@ -519,6 +526,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 venue_match_type=venue_match.match_type,
                 discipline=discipline,
                 event_type=event_type,
+                spectator=spectator,
                 tags=tags_json,
                 url=safe_url,
                 raw_extract=json.dumps(comp_data.model_dump()),

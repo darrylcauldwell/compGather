@@ -46,6 +46,7 @@ class CompetitionOut(BaseModel):
     longitude: float | None
     distance_miles: float | None
     event_type: str = "competition"
+    spectator: bool = False
     tags: list[str] = []
     url: str | None
     first_seen_at: datetime
@@ -87,6 +88,7 @@ class ExtractedEvent(BaseModel):
     longitude: float | None = None
     discipline: str | None = None  # Raw discipline hint, not normalized
     event_type: str | None = None  # Raw event type hint (e.g. "show")
+    spectator: bool | None = None  # Parser hint; None → scanner derives it
     has_pony_classes: bool = False
     classes: list[str] = []
     url: str | None = None

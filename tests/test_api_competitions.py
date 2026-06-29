@@ -446,3 +446,58 @@ class TestTagsAndEventType:
             resp = await client.get("/api/competitions?event_type=competition")
         names = {c["name"] for c in resp.json()}
         assert names == {"Champs"}
+
+
+async def _seed_spectator():
+    """Grassroots (compete only), county show (both), elite (watch only)."""
+    async with TestSession() as session:
+        src = Source(name="S", url="https://e.example", parser_key="t", enabled=True,
+                     created_at=datetime.utcnow())
+        session.add(src)
+        await session.flush()
+        venue = Venue(name="V", postcode="TE1 2ST")
+        session.add(venue)
+        await session.flush()
+        rows = [
+            ("Local Dressage", "competition", False),   # Compete only
+            ("County Show", "competition", True),        # both
+            ("Aachen CHIO", "show", True),               # Watch only
+        ]
+        for name, et, spec in rows:
+            session.add(Competition(
+                source_id=src.id, name=name, date_start=date(2026, 5, 1),
+                venue_id=venue.id, event_type=et, spectator=spec,
+                first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+            ))
+        await session.commit()
+
+
+class TestSpectator:
+    @pytest.mark.asyncio
+    async def test_compete_default_excludes_watch_only(self):
+        app = _get_app()
+        await _seed_spectator()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.get("/api/competitions")  # Compete tab
+        names = {c["name"] for c in resp.json()}
+        assert names == {"Local Dressage", "County Show"}  # enterable competitions
+
+    @pytest.mark.asyncio
+    async def test_watch_returns_spectator_events(self):
+        app = _get_app()
+        await _seed_spectator()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.get("/api/competitions?spectator=true")  # Watch tab
+        data = resp.json()
+        names = {c["name"] for c in data}
+        assert names == {"County Show", "Aachen CHIO"}  # both spectator=true
+        assert all(c["spectator"] for c in data)
+
+    @pytest.mark.asyncio
+    async def test_county_show_appears_in_both(self):
+        app = _get_app()
+        await _seed_spectator()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            compete = {c["name"] for c in (await client.get("/api/competitions")).json()}
+            watch = {c["name"] for c in (await client.get("/api/competitions?spectator=true")).json()}
+        assert "County Show" in compete and "County Show" in watch

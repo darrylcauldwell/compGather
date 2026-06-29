@@ -1,5 +1,6 @@
 """Event classification service - single source of truth for discipline + event_type."""
 
+import re
 from typing import Optional
 
 from app.parsers.utils import (
@@ -7,6 +8,29 @@ from app.parsers.utils import (
     get_discipline_patterns,
     normalise_discipline,
 )
+
+# Signals that an event is spectator-worthy (drives the app's "Watch" tab):
+# international competition codes, a FEI star rating, or marquee-show wording.
+_INTL_CODE = re.compile(r"\b(?:CSIO?|CDIO?|CCIO?|CHIO?)\b", re.IGNORECASE)
+_STAR = re.compile(r"\d\s*\*")
+_SPECTATOR_TERMS = re.compile(
+    r"\b(?:county show|country fair|agricultural|national championship|"
+    r"world championship|european championship|world cup|nations cup|"
+    r"international horse show)\b",
+    re.IGNORECASE,
+)
+
+
+def classify_spectator(name: str, event_type: str) -> bool:
+    """Whether an event belongs on the 'Watch' tab (worth spectating).
+
+    Used for scraped events; curated static shows set this explicitly. An event
+    can be both enterable (event_type == 'competition') and spectator-worthy.
+    """
+    if event_type == "show":
+        return True
+    text = name or ""
+    return bool(_INTL_CODE.search(text) or _STAR.search(text) or _SPECTATOR_TERMS.search(text))
 
 
 class EventClassifier:

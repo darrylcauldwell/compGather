@@ -74,8 +74,10 @@ class StaticShowParser(BaseParser):
             logger.warning("StaticShowParser: no fixtures for key %r", self.EVENT_KEY)
             return []
 
+        # Curated shows are all spectator-worthy (Watch tab); event_type decides
+        # whether they're also enterable (competition → Compete tab).
         events = [
-            ExtractedEvent(**{f: ev.get(f) for f in _EVENT_FIELDS}, url=url)
+            ExtractedEvent(**{f: ev.get(f) for f in _EVENT_FIELDS}, url=url, spectator=True)
             for ev in record.get("events", [])
         ]
         logger.info("%s: %d static fixture(s)", self.EVENT_KEY, len(events))
