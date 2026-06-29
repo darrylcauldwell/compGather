@@ -7,6 +7,7 @@ struct EventDetailView: View {
     let competition: Competition
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.openURL) private var openURL
     @Query private var favourites: [Favourite]
 
     @State private var calendarMessage: String?
@@ -21,12 +22,22 @@ struct EventDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 if let coordinate = coordinate {
-                    Map(initialPosition: .region(region(coordinate))) {
-                        Marker(competition.venueName, coordinate: coordinate)
+                    Button { openInMaps() } label: {
+                        Map(initialPosition: .region(region(coordinate))) {
+                            Marker(competition.venueName, coordinate: coordinate)
+                        }
+                        .frame(height: 200)
+                        .clipShape(.rect(cornerRadius: 20))
+                        .allowsHitTesting(false)
+                        .overlay(alignment: .bottomTrailing) {
+                            Label("Maps", systemImage: "arrow.up.forward.app")
+                                .font(AppTypography.badge)
+                                .padding(.horizontal, 10).padding(.vertical, 6)
+                                .glassEffect(.regular, in: .capsule)
+                                .padding(10)
+                        }
                     }
-                    .frame(height: 200)
-                    .clipShape(.rect(cornerRadius: 20))
-                    .allowsHitTesting(false)
+                    .buttonStyle(.plain)
                 }
 
                 Text(competition.name)
@@ -109,6 +120,12 @@ struct EventDetailView: View {
             .buttonStyle(.glassProminent)
             .disabled(isAddingToCalendar)
 
+            Button { openInMaps() } label: {
+                Label("Open in Apple Maps", systemImage: "map")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.glass)
+
             if let urlString = competition.url, let url = URL(string: urlString) {
                 Link(destination: url) {
                     Label("View on organiser site", systemImage: "safari")
@@ -124,6 +141,23 @@ struct EventDetailView: View {
     private var coordinate: CLLocationCoordinate2D? {
         guard let lat = competition.latitude, let lon = competition.longitude else { return nil }
         return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+    }
+
+    /// Open the venue in Apple Maps: a dropped pin if we have coordinates,
+    /// otherwise a search for the venue name + postcode (works for every event).
+    private func openInMaps() {
+        var components = URLComponents(string: "https://maps.apple.com/")!
+        if let lat = competition.latitude, let lng = competition.longitude {
+            components.queryItems = [
+                .init(name: "ll", value: "\(lat),\(lng)"),
+                .init(name: "q", value: competition.venueName),
+            ]
+        } else {
+            let query = [competition.venueName, competition.venuePostcode]
+                .compactMap { $0 }.joined(separator: " ")
+            components.queryItems = [.init(name: "q", value: query)]
+        }
+        if let url = components.url { openURL(url) }
     }
 
     private func region(_ coordinate: CLLocationCoordinate2D) -> MKCoordinateRegion {
