@@ -112,6 +112,7 @@ _SOURCE_DEFS: list[dict[str, str | None]] = [
     {"name": "Arc de Triomphe", "parser_key": "arc_de_triomphe", "url": "https://billetterie.france-galop.com/en/event/qatar-prix-de-larc-de-triomphe/"},
     {"name": "Spruce Meadows Masters", "parser_key": "spruce_meadows", "url": "https://www.sprucemeadows.com/masters/"},
     {"name": "Aachen World Equestrian Festival", "parser_key": "aachen", "url": "https://www.chioaachen.de/en/"},
+    {"name": "Global Champions Tour", "parser_key": "gc_global_champions", "url": "https://www.gcglobalchampions.com/schedule"},
     # Winter circuit / international indoor events
     {"name": "Azelhof", "parser_key": "azelhof", "url": "https://azelhof.be/en/events"},
     {"name": "Sentower Park", "parser_key": "sentower_park", "url": "https://www.sentowerpark.com/events"},

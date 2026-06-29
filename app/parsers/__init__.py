@@ -22,6 +22,7 @@ from app.parsers import epworth  # noqa: F401
 from app.parsers import equilive  # noqa: F401
 from app.parsers import equipe_online  # noqa: F401
 from app.parsers import equo_events  # noqa: F401
+from app.parsers import gc_global_champions  # noqa: F401
 from app.parsers import generic  # noqa: F401
 from app.parsers import hartpury  # noqa: F401
 from app.parsers import hickstead  # noqa: F401
