@@ -11,7 +11,7 @@ from sqlalchemy import update
 from app.config import settings
 from app.database import async_session, init_db
 from app.models import Scan
-from app.routers import competitions, health, pages, scanner, sources
+from app.routers import competitions, health, pages, sources
 from app.services.scanner import (
     audit_venue_health,
     geocode_missing_venues,
@@ -85,7 +85,7 @@ Instrumentator(
 # --- Cache-Control middleware for Cloudflare CDN ---
 # Routes that should never be cached (admin/management pages)
 _NO_STORE_PREFIXES = ("/admin", "/sources", "/scans", "/classifier",
-                      "/api/scans", "/api/sources", "/api/disciplines",
+                      "/api/sources", "/api/disciplines",
                       "/api/tag-keywords")
 
 
@@ -134,5 +134,4 @@ app.include_router(health.router)
 app.include_router(sources.router)
 app.include_router(competitions.router)
 app.include_router(competitions.geocode_router)
-app.include_router(scanner.router)
 app.include_router(pages.router)

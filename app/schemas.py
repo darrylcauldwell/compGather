@@ -52,25 +52,6 @@ class CompetitionOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# --- Scans ---
-class ScanCreate(BaseModel):
-    source_id: int | None = None
-
-
-class ScanOut(BaseModel):
-    id: int
-    source_id: int | None
-    started_at: datetime
-    completed_at: datetime | None
-    status: str
-    competitions_found: int
-    competitions_found_comp: int = 0
-    competitions_found_training: int = 0
-    error: str | None
-
-    model_config = {"from_attributes": True}
-
-
 # --- Extractor ---
 class ExtractedEvent(BaseModel):
     """Raw event data extracted from a source.
