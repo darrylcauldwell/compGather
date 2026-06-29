@@ -143,6 +143,7 @@ async def competitions_page(
             selectinload(Competition.source),
             contains_eager(Competition.venue),
         )
+        .where(Competition.hidden.is_not(True))
     )
 
     if is_newest:
@@ -475,6 +476,7 @@ async def shows_page(
             selectinload(Competition.source),
             contains_eager(Competition.venue),
         )
+        .where(Competition.hidden.is_not(True))
     )
 
     if is_newest:
@@ -721,6 +723,7 @@ async def venues_map_api(
         .join(Competition, Competition.venue_id == Venue.id)
         .where(
             Competition.date_start >= today,
+            Competition.hidden.is_not(True),
             Venue.latitude != None,
             Venue.longitude != None,
         )

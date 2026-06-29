@@ -183,6 +183,30 @@ async def init_db():
         except Exception:
             pass  # column already exists
 
+    # hidden flag: programme/league/badge-scheme/placeholder junk, excluded from listings
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(
+                text("ALTER TABLE competitions ADD COLUMN hidden BOOLEAN DEFAULT 0")
+            )
+            logger.info("Migration: added hidden column")
+        except Exception:
+            pass  # column already exists
+
+    # Backfill: hide implausibly long-span entries (leagues, badge schemes,
+    # season-long challenges) — these aren't single datable competitions and
+    # otherwise dominate the top of date-sorted lists with a stale start date.
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(text(
+                "UPDATE competitions SET hidden = 1 "
+                "WHERE date_end IS NOT NULL "
+                "AND julianday(date_end) - julianday(date_start) > 90"
+            ))
+            logger.info("Migration: hid long-span programme entries")
+        except Exception:
+            pass
+
     # Rename agricultural_show → show
     async with engine.begin() as conn:
         try:

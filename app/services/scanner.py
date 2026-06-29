@@ -42,6 +42,12 @@ logger = logging.getLogger(__name__)
 # Disambiguated venue name pattern: "Brook Farm (TQ12)", "Rectory Farm (GL7)"
 _DISAMBIGUATED_RE = re.compile(r"\([A-Z]{1,2}\d[A-Z\d]?\)$")
 
+# A real competition spans at most a couple of weeks; an over-long span means the
+# entry is a programme / league / badge scheme, not a single datable event. These
+# are hidden from listings (they otherwise dominate the top of date-sorted lists
+# with a stale start date — e.g. a 2024→2030 club "Badges" scheme).
+MAX_EVENT_SPAN_DAYS = 90
+
 
 # Canonical source definitions — seeded into the sources table at startup.
 # parser_key must match @register_parser("key") in app/parsers/*.py
@@ -452,6 +458,10 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
             else classify_spectator(comp_data.name, event_type)
         )
 
+        # Hide programme/league/badge-scheme entries: an implausibly long span
+        # means this isn't a single datable competition.
+        hidden = bool(date_end and (date_end - date_start).days > MAX_EVENT_SPAN_DAYS)
+
         # Track competition vs training counts for scan metrics
         if event_type == "competition":
             scan_comp_count += 1
@@ -490,6 +500,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
             existing.discipline = discipline
             existing.event_type = event_type
             existing.spectator = spectator
+            existing.hidden = hidden
             if existing.venue_id != venue_match.venue_id:
                 existing.venue_match_type = venue_match.match_type
             existing.venue_id = venue_match.venue_id
@@ -528,6 +539,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 discipline=discipline,
                 event_type=event_type,
                 spectator=spectator,
+                hidden=hidden,
                 tags=tags_json,
                 url=safe_url,
                 raw_extract=json.dumps(comp_data.model_dump()),

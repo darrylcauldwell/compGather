@@ -39,6 +39,9 @@ async def list_competitions(
         .order_by(Competition.date_start)
     )
 
+    # Exclude hidden entries (programmes/leagues/badge schemes, placeholder junk).
+    stmt = stmt.where(Competition.hidden.is_not(True))
+
     has_discipline = bool(discipline and discipline.strip())
     has_event_type = bool(event_type and event_type.strip())
     if has_discipline:
@@ -70,6 +73,12 @@ async def list_competitions(
     if max_distance is not None and user_coords:
         comps = [c for c in comps if c.distance_miles is not None and c.distance_miles <= max_distance]
 
+    # Sort by effective date (mirrors the web pages): an event already under way
+    # sorts as "today" (ordered by when it ends), not by a stale start date, so a
+    # long-running fixture can't sit above genuinely upcoming events.
+    today = date.today()
+    comps.sort(key=lambda c: (max(c.date_start, today), c.date_end or c.date_start))
+
     return comps
 
 
@@ -94,6 +103,7 @@ async def export_ical(
         .outerjoin(Venue, Competition.venue_id == Venue.id)
         .options(contains_eager(Competition.venue))
         .order_by(Competition.date_start)
+        .where(Competition.hidden.is_not(True))
     )
 
     if discipline and discipline.strip():

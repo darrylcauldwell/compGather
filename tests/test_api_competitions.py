@@ -5,7 +5,7 @@ Uses an in-memory SQLite database and FastAPI TestClient.
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -501,3 +501,69 @@ class TestSpectator:
             compete = {c["name"] for c in (await client.get("/api/competitions")).json()}
             watch = {c["name"] for c in (await client.get("/api/competitions?spectator=true")).json()}
         assert "County Show" in compete and "County Show" in watch
+
+
+# ---------------------------------------------------------------------------
+# Hidden flag + effective-date sort
+# ---------------------------------------------------------------------------
+class TestHiddenAndSort:
+    @pytest.mark.asyncio
+    async def test_hidden_events_excluded(self):
+        app = _get_app()
+        async with TestSession() as session:
+            src = Source(name="S", url="u", parser_key="p", enabled=True, created_at=datetime.utcnow())
+            session.add(src)
+            await session.flush()
+            v = Venue(name="V")
+            session.add(v)
+            await session.flush()
+            today = date.today()
+            session.add(Competition(
+                source_id=src.id, name="Visible Show", date_start=today + timedelta(days=3),
+                venue_id=v.id, event_type="competition",
+                first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+            ))
+            session.add(Competition(
+                source_id=src.id, name="Hidden Programme", date_start=today + timedelta(days=1),
+                date_end=today + timedelta(days=400), venue_id=v.id, event_type="competition",
+                hidden=True, first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+            ))
+            await session.commit()
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.get("/api/competitions")
+        names = [c["name"] for c in resp.json()]
+        assert "Visible Show" in names
+        assert "Hidden Programme" not in names
+
+    @pytest.mark.asyncio
+    async def test_effective_date_sort_puts_today_above_stale_ongoing(self):
+        """A stale-but-ongoing event must not sort above a real event happening
+        today (it would under a plain date_start sort)."""
+        app = _get_app()
+        async with TestSession() as session:
+            src = Source(name="S", url="u", parser_key="p", enabled=True, created_at=datetime.utcnow())
+            session.add(src)
+            await session.flush()
+            v = Venue(name="V")
+            session.add(v)
+            await session.flush()
+            today = date.today()
+            # Stale ongoing (started 50d ago, ends in 5d) — span 55d, not hidden.
+            session.add(Competition(
+                source_id=src.id, name="Ongoing Stale", date_start=today - timedelta(days=50),
+                date_end=today + timedelta(days=5), venue_id=v.id, event_type="competition",
+                first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+            ))
+            # Genuine one-day event happening today.
+            session.add(Competition(
+                source_id=src.id, name="Today Show", date_start=today, date_end=today,
+                venue_id=v.id, event_type="competition",
+                first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+            ))
+            await session.commit()
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.get(f"/api/competitions?date_from={date.today().isoformat()}")
+        names = [c["name"] for c in resp.json()]
+        assert names.index("Today Show") < names.index("Ongoing Stale")

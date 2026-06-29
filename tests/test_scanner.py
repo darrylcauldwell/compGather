@@ -216,3 +216,46 @@ async def test_scheduler_rotates_past_failing_source():
     await engine.dispose()
     assert len(picked) == 2
     assert picked[0] != picked[1]  # rotated to the other source, not stuck on the first
+
+
+@pytest.mark.asyncio
+async def test_long_span_events_are_hidden(db_session):
+    """Programme/league/badge-scheme entries (implausibly long span) are hidden;
+    normal events and legitimate multi-week tours stay visible."""
+    source = Source(name="Test Source", url="https://example.com", enabled=True)
+    db_session.add(source)
+    await db_session.commit()
+    await db_session.refresh(source)
+
+    mock_extracted = [
+        ExtractedCompetition(  # 5-year "Badges" programme → hidden
+            name="Faversham Badges Programme",
+            date_start="2026-01-01", date_end="2030-12-31",
+            venue_name="Faversham RC", venue_postcode="ME13 8XZ",
+        ),
+        ExtractedCompetition(  # ordinary one-day show → visible
+            name="Normal One-Day Show",
+            date_start="2026-07-15", date_end="2026-07-15",
+            venue_name="Faversham RC", venue_postcode="ME13 8XZ",
+        ),
+        ExtractedCompetition(  # 48-day tour → legitimate, visible
+            name="Multi-week Tour",
+            date_start="2026-02-02", date_end="2026-03-22",
+            venue_name="Faversham RC", venue_postcode="ME13 8XZ",
+        ),
+    ]
+    mock_parser = MagicMock()
+    mock_parser.fetch_and_parse = AsyncMock(return_value=mock_extracted)
+
+    with (
+        patch("app.services.scanner.get_parser", return_value=mock_parser),
+        patch("app.services.scanner.geocode_postcode", new_callable=AsyncMock, return_value=(51.3, 0.9)),
+    ):
+        from app.services.scanner import _scan_source
+        await _scan_source(db_session, source)
+
+    result = await db_session.execute(select(Competition))
+    by_name = {c.name: c for c in result.scalars().all()}
+    assert by_name["Faversham Badges Programme"].hidden is True
+    assert by_name["Normal One-Day Show"].hidden is False
+    assert by_name["Multi-week Tour"].hidden is False
