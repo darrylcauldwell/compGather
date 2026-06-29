@@ -567,3 +567,49 @@ class TestHiddenAndSort:
             resp = await client.get(f"/api/competitions?date_from={date.today().isoformat()}")
         names = [c["name"] for c in resp.json()]
         assert names.index("Today Show") < names.index("Ongoing Stale")
+
+
+# ---------------------------------------------------------------------------
+# Tag filter (series / affiliation / qualifier pathways)
+# ---------------------------------------------------------------------------
+class TestTagFilter:
+    async def _seed_two(self, session):
+        src = Source(name="S", url="u", parser_key="p", enabled=True, created_at=datetime.utcnow())
+        session.add(src)
+        await session.flush()
+        v = Venue(name="V")
+        session.add(v)
+        await session.flush()
+        today = date.today()
+        session.add(Competition(
+            source_id=src.id, name="NSEA Champs Qualifier", date_start=today + timedelta(days=5),
+            venue_id=v.id, event_type="competition", tags='["affiliation:nsea"]',
+            first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+        ))
+        session.add(Competition(
+            source_id=src.id, name="BD Dressage", date_start=today + timedelta(days=6),
+            venue_id=v.id, event_type="competition", tags='["affiliation:british-dressage"]',
+            first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+        ))
+        await session.commit()
+
+    @pytest.mark.asyncio
+    async def test_filter_by_tag(self):
+        app = _get_app()
+        async with TestSession() as session:
+            await self._seed_two(session)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.get("/api/competitions?tag=affiliation:nsea")
+        assert [c["name"] for c in resp.json()] == ["NSEA Champs Qualifier"]
+
+    @pytest.mark.asyncio
+    async def test_malformed_tag_is_ignored(self):
+        """A malformed tag must be rejected by the guard (not injected), and simply
+        apply no tag filter rather than erroring."""
+        app = _get_app()
+        async with TestSession() as session:
+            await self._seed_two(session)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.get("/api/competitions", params={"tag": "% OR 1=1"})
+        assert resp.status_code == 200
+        assert len(resp.json()) == 2  # invalid token ignored → no filter

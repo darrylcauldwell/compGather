@@ -28,6 +28,7 @@ async def list_competitions(
     event_type: str | None = Query(None),
     spectator: bool | None = Query(None),
     postcode: str | None = Query(None),
+    tag: list[str] | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
     user_coords = await get_user_coords(postcode)
@@ -41,6 +42,15 @@ async def list_competitions(
 
     # Exclude hidden entries (programmes/leagues/badge schemes, placeholder junk).
     stmt = stmt.where(Competition.hidden.is_not(True))
+
+    # Filter by tag token(s) — e.g. affiliation:nsea, series:trailblazers,
+    # special:qualifier. Validated to the "<namespace>:<slug>" shape; multiple
+    # tags are ANDed (e.g. NSEA + qualifier). Matches the quoted token in the
+    # JSON tags column (same approach as the web affiliation filter).
+    for raw_tag in tag or []:
+        token = raw_tag.strip()
+        if re.fullmatch(r"[a-z][a-z-]*:[a-z0-9-]+", token):
+            stmt = stmt.where(Competition.tags.like(f'%"{token}"%'))
 
     has_discipline = bool(discipline and discipline.strip())
     has_event_type = bool(event_type and event_type.strip())

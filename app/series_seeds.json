@@ -1,0 +1,94 @@
+{
+  "_meta": {
+    "status": "DRAFT — for review. Not wired into extraction yet (slice 2).",
+    "purpose": "Canonical amateur competition pathways. Drives the series: tag in tag_manager (slice 2) and the iOS Series filter. Slice 1 already ships the 'detect: tag' pathways (NSEA/Pony Club/BSPS) via their existing affiliation: tags.",
+    "axes": {
+      "series": "named pathway (NSEA, Trailblazers, Cricklands...) — what to aim for",
+      "level": "elite | affiliated | bs-club | unaffiliated | schools | youth — how serious",
+      "stage": "qualifier | championship | league | season-series — orthogonal stepping-stone flag, NOT a series"
+    },
+    "rules": [
+      "detect=tag → already tagged in the data, expose as-is (no parsing).",
+      "detect=name → match keywords on the event NAME; anchor on the distinctive literal token.",
+      "require_keywords → ALL must be present (disambiguation).",
+      "exclude_keywords → if any present, do NOT match (kills venue/format false positives).",
+      "source_hint → tag every event from this source (name often lacks the brand)."
+    ],
+    "counts": "from the live prod data scan, 2026-06-29"
+  },
+
+  "series": {
+    "nsea": {
+      "display": "NSEA", "level": "schools", "scope": "cross-venue",
+      "detect": "tag", "tag": "affiliation:nsea", "count": 97,
+      "note": "Name-only would miss ~77% (only 22/97 say 'NSEA') — MUST use the tag."
+    },
+    "pony-club": {
+      "display": "Pony Club", "level": "youth", "scope": "cross-venue",
+      "detect": "tag", "tag": "affiliation:pony-club", "count": 214
+    },
+    "bsps": {
+      "display": "BSPS (ponies)", "level": "affiliated", "scope": "cross-venue",
+      "detect": "tag", "tag": "affiliation:bsps", "count": 113
+    },
+
+    "trailblazers": {
+      "display": "Trailblazers", "level": "unaffiliated", "scope": "cross-venue",
+      "detect": "name", "keywords": ["trailblazers", "trailblazer"],
+      "source_hint": "trailblazers", "count": 164,
+      "note": "Clean distinctive token; also has its own source for name-less rows."
+    },
+    "cricklands": {
+      "display": "Cricklands", "level": "unaffiliated", "scope": "championship + cross-venue qualifiers",
+      "detect": "name", "keywords": ["cricklands", "crickland"],
+      "exclude_keywords": ["south view"], "count": 37,
+      "note": "Cricklands is a CHAMPIONSHIP grassroots venues run qualifiers for (e.g. NVEC 'inc Cricklands qualifiers'). South View (49) is a different VENUE — exclude it."
+    },
+    "bs-club": {
+      "display": "BS Club", "level": "bs-club", "scope": "cross-venue",
+      "detect": "name", "keywords": ["bs club"], "count": 217,
+      "note": "Literal 'BS Club' only — a loose club+showjumping regex explodes to 1106 false hits."
+    },
+    "blue-chip": {
+      "display": "Blue Chip", "level": "unaffiliated", "scope": "cross-venue",
+      "detect": "name", "keywords": ["blue chip"], "count": 14
+    },
+    "just-for-schools": {
+      "display": "Just for Schools", "level": "schools", "scope": "cross-venue",
+      "detect": "name", "keywords": ["just for schools"], "count": 19
+    },
+
+    "sunshine-tour-uk": {
+      "display": "Sunshine Tour (UK grassroots)", "level": "unaffiliated", "scope": "Hickstead + qualifiers",
+      "detect": "name", "keywords": ["sunshine tour"],
+      "require_keywords": ["qualifier"], "exclude_keywords": ["csi"],
+      "count": "subset of 121",
+      "note": "Same name as the ELITE Spanish CSI Sunshine Tour — disambiguate: must say 'Qualifier', must NOT say 'CSI'."
+    },
+    "brc": {
+      "display": "British Riding Clubs", "level": "affiliated", "scope": "cross-venue",
+      "detect": "name", "keywords": ["british riding clubs", "brc", "area festival"],
+      "count": "~65", "deferred": true,
+      "note": "Do NOT match bare 'riding club' (240 hits, only ~65 real BRC). Deferred until anchored rules are verified."
+    }
+  },
+
+  "stage_flags": {
+    "_note": "Orthogonal stepping-stone markers, layered onto a series — NOT series themselves. 'Qualifier within 50mi' alone already surfaces 'things to aim for'.",
+    "qualifier":      { "keywords": ["qualifier"], "tag": "special:qualifier", "count": 408, "note": "Cleanest flag in the data (name+tag agree on 391)." },
+    "championship":   { "keywords": ["championship", "champs"], "count": 237 },
+    "league":         { "keywords": ["league"], "count": 228 },
+    "season-series":  { "keywords": ["summer series", "winter series", "summer league", "winter league"], "count": 177 }
+  },
+
+  "blacklist": {
+    "_note": "Never treat these as a series — venue names or class formats.",
+    "south-view": "venue that hosts Cricklands, not the series",
+    "pyo": "'Pick Your Own' is a class format (646 hits), not a pathway"
+  },
+
+  "absent_needs_sources": {
+    "_note": "Wanted, but barely present until grassroots sources are added (e.g. the 63 Equus Organiser venues).",
+    "trec": 1, "equifest": 7, "naf-five-star": 8
+  }
+}
