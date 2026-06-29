@@ -1,0 +1,28 @@
+# VCS / tooling
+.git
+.gitignore
+.github/
+.ruff_cache/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# iOS app (not part of the backend image)
+ios/
+
+# Docs and analysis (not needed at runtime)
+*.md
+docs/
+
+# Local data / secrets / compose / observability
+data/
+*.db
+.env
+.env.*
+docker-compose*.yml
+observability/
+
+# Local Python / Node environments
+.venv/
+venv/
+node_modules/
