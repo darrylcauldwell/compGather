@@ -15,6 +15,7 @@ struct FilterBar: View {
             GlassEffectContainer(spacing: 8) {
                 HStack(spacing: 8) {
                     seriesMenu
+                    tierMenu
                     disciplineMenu
                     dateMenu
                     distanceMenu
@@ -50,6 +51,27 @@ struct FilterBar: View {
     private var seriesLabel: String {
         guard let token = model.series else { return "All series" }
         return seriesOptions.first { $0.id == token }?.name ?? "Series"
+    }
+
+    /// Compete shows a "Level" filter (Unaffiliated/Affiliated/Elite); Watch
+    /// shows a "Type" filter (Elite/County Show/National). Both filter on tier:.
+    private var tierMenu: some View {
+        let options = model.isWatch ? watchTypeOptions : levelOptions
+        let label = model.isWatch ? "Type" : "Level"
+        return Menu {
+            menuItem("All \(label.lowercased())s", selected: model.tier == nil) {
+                Task { await model.setTier(nil) }
+            }
+            ForEach(options) { option in
+                menuItem(option.name, selected: model.tier == option.id) {
+                    Task { await model.setTier(option.id) }
+                }
+            }
+        } label: {
+            pill(options.first { $0.id == model.tier }?.name ?? label,
+                 icon: model.isWatch ? "binoculars" : "chart.bar.fill",
+                 active: model.tier != nil)
+        }
     }
 
     private var disciplineMenu: some View {

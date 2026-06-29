@@ -72,6 +72,20 @@ let seriesOptions: [SeriesOption] = [
     .init(id: "class:british-novice", name: "British Novice"),
 ]
 
+/// Compete "Level" filter options (the affiliation ladder).
+let levelOptions: [SeriesOption] = [
+    .init(id: "tier:unaffiliated", name: "Unaffiliated"),
+    .init(id: "tier:affiliated", name: "Affiliated"),
+    .init(id: "tier:elite", name: "Elite"),
+]
+
+/// Watch "Type" filter options (spectator categories).
+let watchTypeOptions: [SeriesOption] = [
+    .init(id: "tier:elite", name: "Elite"),
+    .init(id: "tier:county-show", name: "County Show"),
+    .init(id: "tier:national", name: "National"),
+]
+
 /// Drives the events list: holds the current filter, loads from the API, and
 /// resolves "near me" via the device location + server reverse-geocode.
 @MainActor
@@ -139,12 +153,27 @@ final class EventsViewModel {
         await load()
     }
 
-    /// The selected series/pathway tag token (e.g. "affiliation:nsea"); nil == all.
-    var series: String? { filter.tags.first }
+    /// Selected filter tags, tracked per axis and combined into filter.tags (AND).
+    private(set) var series: String?   // series:/affiliation:/class: token
+    private(set) var tier: String?     // tier: token (Level / Watch Type)
+
+    /// True on the Watch tab — drives the Level-vs-Type menu.
+    var isWatch: Bool { filter.spectator == true }
 
     func setSeries(_ token: String?) async {
-        filter.tags = token.map { [$0] } ?? []
+        series = token
+        rebuildTags()
         await load()
+    }
+
+    func setTier(_ token: String?) async {
+        tier = token
+        rebuildTags()
+        await load()
+    }
+
+    private func rebuildTags() {
+        filter.tags = [series, tier].compactMap { $0 }
     }
 
     func setDateScope(_ scope: DateScope) async {
