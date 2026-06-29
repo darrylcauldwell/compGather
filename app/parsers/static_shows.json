@@ -1,0 +1,2151 @@
+{
+  "aachen": {
+    "valid_until": "2026-08-23",
+    "events": [
+      {
+        "name": "TSCHIO Aachen 2026",
+        "date_start": "2026-05-22",
+        "date_end": "2026-05-24",
+        "venue_name": "Aachen Soers",
+        "venue_postcode": null,
+        "latitude": 50.7933,
+        "longitude": 6.0972,
+        "discipline": null,
+        "event_type": "show"
+      },
+      {
+        "name": "FEI World Championships Aachen 2026",
+        "date_start": "2026-08-11",
+        "date_end": "2026-08-23",
+        "venue_name": "Aachen Soers",
+        "venue_postcode": null,
+        "latitude": 50.7933,
+        "longitude": 6.0972,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "al_shiraaa": {
+    "valid_until": "2026-01-25",
+    "events": [
+      {
+        "name": "Al Shira'aa International Horse Show 2026",
+        "date_start": "2026-01-20",
+        "date_end": "2026-01-25",
+        "venue_name": "Al Forsan International Sports Resort",
+        "venue_postcode": null,
+        "latitude": 24.419,
+        "longitude": 54.655,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "arc_de_triomphe": {
+    "valid_until": "2026-10-04",
+    "events": [
+      {
+        "name": "Prix de l'Arc de Triomphe 2026",
+        "date_start": "2026-10-03",
+        "date_end": "2026-10-04",
+        "venue_name": "ParisLongchamp",
+        "venue_postcode": null,
+        "latitude": 48.8575,
+        "longitude": 2.231,
+        "discipline": "Flat Racing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "azelhof": {
+    "valid_until": "2026-03-29",
+    "events": [
+      {
+        "name": "Azelhof Autumn Tour Week 1",
+        "date_start": "2025-11-05",
+        "date_end": "2025-11-09",
+        "venue_name": "Azelhof",
+        "venue_postcode": null,
+        "latitude": 51.131,
+        "longitude": 4.57,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Azelhof X-Mas Tour Week 1",
+        "date_start": "2025-12-03",
+        "date_end": "2025-12-07",
+        "venue_name": "Azelhof",
+        "venue_postcode": null,
+        "latitude": 51.131,
+        "longitude": 4.57,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Azelhof X-Mas Tour Week 2",
+        "date_start": "2025-12-09",
+        "date_end": "2025-12-14",
+        "venue_name": "Azelhof",
+        "venue_postcode": null,
+        "latitude": 51.131,
+        "longitude": 4.57,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Azelhof New Year Tour",
+        "date_start": "2026-01-15",
+        "date_end": "2026-01-18",
+        "venue_name": "Azelhof",
+        "venue_postcode": null,
+        "latitude": 51.131,
+        "longitude": 4.57,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Azelhof Winter Tour",
+        "date_start": "2026-02-04",
+        "date_end": "2026-02-08",
+        "venue_name": "Azelhof",
+        "venue_postcode": null,
+        "latitude": 51.131,
+        "longitude": 4.57,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Azelhof CDI Lier",
+        "date_start": "2026-02-24",
+        "date_end": "2026-03-01",
+        "venue_name": "Azelhof",
+        "venue_postcode": null,
+        "latitude": 51.131,
+        "longitude": 4.57,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Azelhof Spring Tour Week 1",
+        "date_start": "2026-03-12",
+        "date_end": "2026-03-15",
+        "venue_name": "Azelhof",
+        "venue_postcode": null,
+        "latitude": 51.131,
+        "longitude": 4.57,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Azelhof Spring Tour Week 2",
+        "date_start": "2026-03-18",
+        "date_end": "2026-03-22",
+        "venue_name": "Azelhof",
+        "venue_postcode": null,
+        "latitude": 51.131,
+        "longitude": 4.57,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Azelhof Spring Tour Week 3",
+        "date_start": "2026-03-25",
+        "date_end": "2026-03-29",
+        "venue_name": "Azelhof",
+        "venue_postcode": null,
+        "latitude": 51.131,
+        "longitude": 4.57,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "bolesworth": {
+    "valid_until": "2026-07-05",
+    "events": [
+      {
+        "name": "Bolesworth International CSI4* Week 1",
+        "date_start": "2026-06-25",
+        "date_end": "2026-06-28",
+        "venue_name": "Bolesworth Castle",
+        "venue_postcode": "SY14 8DD",
+        "latitude": 53.0975,
+        "longitude": -2.7175,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Bolesworth International CSI4* Week 2",
+        "date_start": "2026-07-02",
+        "date_end": "2026-07-05",
+        "venue_name": "Bolesworth Castle",
+        "venue_postcode": "SY14 8DD",
+        "latitude": 53.0975,
+        "longitude": -2.7175,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "brussels_stephex": {
+    "valid_until": "2026-08-30",
+    "events": [
+      {
+        "name": "Brussels Stephex Masters 2026",
+        "date_start": "2026-08-27",
+        "date_end": "2026-08-30",
+        "venue_name": "Stephex Stables, Brussels",
+        "venue_postcode": null,
+        "latitude": 50.8167,
+        "longitude": 4.2833,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "carolina_international": {
+    "valid_until": "2026-03-22",
+    "events": [
+      {
+        "name": "Carolina International CCI4*-S 2026",
+        "date_start": "2026-03-19",
+        "date_end": "2026-03-22",
+        "venue_name": "Carolina Horse Park, Raeford",
+        "venue_postcode": null,
+        "latitude": 35.04,
+        "longitude": -79.27,
+        "discipline": "Eventing",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "cavaliada": {
+    "valid_until": "2026-03-01",
+    "events": [
+      {
+        "name": "CAVALIADA Krakow 2026",
+        "date_start": "2026-02-26",
+        "date_end": "2026-03-01",
+        "venue_name": "Tauron Arena, Krakow",
+        "venue_postcode": null,
+        "latitude": 50.0645,
+        "longitude": 20.01,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "chantilly": {
+    "valid_until": "2026-07-13",
+    "events": [
+      {
+        "name": "Chantilly Classic 2026",
+        "date_start": "2026-07-10",
+        "date_end": "2026-07-13",
+        "venue_name": "Domaine de Chantilly",
+        "venue_postcode": null,
+        "latitude": 49.1883,
+        "longitude": 2.4717,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "chatsworth": {
+    "valid_until": "2026-09-06",
+    "events": [
+      {
+        "name": "Chatsworth Country Fair 2026",
+        "date_start": "2026-09-04",
+        "date_end": "2026-09-06",
+        "venue_name": "Chatsworth House",
+        "venue_postcode": "DE45 1PP",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "chi_geneva": {
+    "valid_until": "2026-12-13",
+    "events": [
+      {
+        "name": "CHI Geneva 2026",
+        "date_start": "2026-12-10",
+        "date_end": "2026-12-13",
+        "venue_name": "Palexpo, Geneva",
+        "venue_postcode": null,
+        "latitude": 46.2333,
+        "longitude": 6.1167,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "chio_rotterdam": {
+    "valid_until": "2026-06-21",
+    "events": [
+      {
+        "name": "CHIO Rotterdam 2026",
+        "date_start": "2026-06-18",
+        "date_end": "2026-06-21",
+        "venue_name": "Kralingse Bos, Rotterdam",
+        "venue_postcode": null,
+        "latitude": 51.9265,
+        "longitude": 4.49,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "csio_barcelona": {
+    "valid_until": "2026-10-04",
+    "events": [
+      {
+        "name": "CSIO Barcelona 2026",
+        "date_start": "2026-10-01",
+        "date_end": "2026-10-04",
+        "venue_name": "Real Club de Polo, Barcelona",
+        "venue_postcode": null,
+        "latitude": 41.3867,
+        "longitude": 2.127,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "csio_roma": {
+    "valid_until": "2026-05-31",
+    "events": [
+      {
+        "name": "CSIO Roma — Piazza di Siena 2026",
+        "date_start": "2026-05-28",
+        "date_end": "2026-05-31",
+        "venue_name": "Piazza di Siena, Roma",
+        "venue_postcode": null,
+        "latitude": 41.9147,
+        "longitude": 12.4842,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "deauville": {
+    "valid_until": "2026-08-16",
+    "events": [
+      {
+        "name": "Jumping International de Deauville CSI4* 2026",
+        "date_start": "2026-08-13",
+        "date_end": "2026-08-16",
+        "venue_name": "Pole International du Cheval, Deauville",
+        "venue_postcode": null,
+        "latitude": 49.3475,
+        "longitude": 0.0656,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "desert_international": {
+    "valid_until": "2026-02-15",
+    "events": [
+      {
+        "name": "Desert Circuit 1 — CSI3*",
+        "date_start": "2026-01-06",
+        "date_end": "2026-01-11",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Desert Circuit 2 — CSI4*",
+        "date_start": "2026-01-13",
+        "date_end": "2026-01-18",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Desert Circuit 3 — CSI5*",
+        "date_start": "2026-01-20",
+        "date_end": "2026-01-25",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Desert Circuit 4 — CSI5*-W World Cup",
+        "date_start": "2026-01-27",
+        "date_end": "2026-02-01",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Desert Circuit 5 — CSI3*",
+        "date_start": "2026-02-03",
+        "date_end": "2026-02-08",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Desert Circuit 6 — CSI3*",
+        "date_start": "2026-02-10",
+        "date_end": "2026-02-15",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "devon_horse_show": {
+    "valid_until": "2026-06-01",
+    "events": [
+      {
+        "name": "Devon Horse Show 2026",
+        "date_start": "2026-05-21",
+        "date_end": "2026-06-01",
+        "venue_name": "Devon Horse Show Grounds",
+        "venue_postcode": null,
+        "latitude": 40.0474,
+        "longitude": -75.4198,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "dinard": {
+    "valid_until": "2026-08-02",
+    "events": [
+      {
+        "name": "Jumping International de Dinard CSI5* 2026",
+        "date_start": "2026-07-30",
+        "date_end": "2026-08-02",
+        "venue_name": "Hippodrome de Dinard",
+        "venue_postcode": null,
+        "latitude": 48.6311,
+        "longitude": -2.0658,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "dressage_at_devon": {
+    "valid_until": "2026-09-27",
+    "events": [
+      {
+        "name": "Dressage at Devon 2026",
+        "date_start": "2026-09-22",
+        "date_end": "2026-09-27",
+        "venue_name": "Devon Horse Show Grounds",
+        "venue_postcode": null,
+        "latitude": 40.0474,
+        "longitude": -75.4198,
+        "discipline": "Dressage",
+        "event_type": "show"
+      }
+    ]
+  },
+  "dubai_sj_championship": {
+    "valid_until": "2026-01-18",
+    "events": [
+      {
+        "name": "Dubai Show Jumping Championship CSI5* 2026",
+        "date_start": "2026-01-15",
+        "date_end": "2026-01-18",
+        "venue_name": "Emirates Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 25.092,
+        "longitude": 55.375,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "dublin_horse_show": {
+    "valid_until": "2026-08-09",
+    "events": [
+      {
+        "name": "Dublin Horse Show 2026",
+        "date_start": "2026-08-05",
+        "date_end": "2026-08-09",
+        "venue_name": "RDS, Dublin",
+        "venue_postcode": null,
+        "latitude": 53.3254,
+        "longitude": -6.2312,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "dutch_masters": {
+    "valid_until": "2026-03-15",
+    "events": [
+      {
+        "name": "The Dutch Masters 2026",
+        "date_start": "2026-03-12",
+        "date_end": "2026-03-15",
+        "venue_name": "Brabanthallen, Den Bosch",
+        "venue_postcode": null,
+        "latitude": 51.6978,
+        "longitude": 5.3037,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "equitalyon": {
+    "valid_until": "2026-11-01",
+    "events": [
+      {
+        "name": "Equita Lyon 2026",
+        "date_start": "2026-10-28",
+        "date_end": "2026-11-01",
+        "venue_name": "Eurexpo Lyon",
+        "venue_postcode": null,
+        "latitude": 45.738,
+        "longitude": 4.9401,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "falsterbo": {
+    "valid_until": "2026-07-12",
+    "events": [
+      {
+        "name": "Falsterbo Horse Show 2026",
+        "date_start": "2026-07-04",
+        "date_end": "2026-07-12",
+        "venue_name": "Falsterbo Horse Show",
+        "venue_postcode": null,
+        "latitude": 55.385,
+        "longitude": 12.8233,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "fei_world_cup_finals": {
+    "valid_until": "2026-04-12",
+    "events": [
+      {
+        "name": "FEI World Cup Finals 2026",
+        "date_start": "2026-04-08",
+        "date_end": "2026-04-12",
+        "venue_name": "Dickies Arena, Fort Worth",
+        "venue_postcode": null,
+        "latitude": 32.7409,
+        "longitude": -97.3689,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "fontainebleau": {
+    "valid_until": "2026-04-26",
+    "events": [
+      {
+        "name": "Grand Parquet Fontainebleau 2026",
+        "date_start": "2026-04-16",
+        "date_end": "2026-04-26",
+        "venue_name": "Grand Parquet, Fontainebleau",
+        "venue_postcode": null,
+        "latitude": 48.4167,
+        "longitude": 2.7,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "global_dressage_festival": {
+    "valid_until": "2026-03-22",
+    "events": [
+      {
+        "name": "GDF Week 1 — CDI3*/National",
+        "date_start": "2026-01-07",
+        "date_end": "2026-01-11",
+        "venue_name": "Equestrian Village, Wellington",
+        "venue_postcode": null,
+        "latitude": 26.653,
+        "longitude": -80.2525,
+        "discipline": "Dressage",
+        "event_type": "competition"
+      },
+      {
+        "name": "GDF Week 2 — CDI3*",
+        "date_start": "2026-01-14",
+        "date_end": "2026-01-18",
+        "venue_name": "Equestrian Village, Wellington",
+        "venue_postcode": null,
+        "latitude": 26.653,
+        "longitude": -80.2525,
+        "discipline": "Dressage",
+        "event_type": "competition"
+      },
+      {
+        "name": "GDF Week 3 — CDI-W World Cup Qualifier",
+        "date_start": "2026-01-21",
+        "date_end": "2026-01-25",
+        "venue_name": "Equestrian Village, Wellington",
+        "venue_postcode": null,
+        "latitude": 26.653,
+        "longitude": -80.2525,
+        "discipline": "Dressage",
+        "event_type": "competition"
+      },
+      {
+        "name": "GDF Week 4 — CDI3*/CDI4*",
+        "date_start": "2026-01-28",
+        "date_end": "2026-02-01",
+        "venue_name": "Equestrian Village, Wellington",
+        "venue_postcode": null,
+        "latitude": 26.653,
+        "longitude": -80.2525,
+        "discipline": "Dressage",
+        "event_type": "competition"
+      },
+      {
+        "name": "GDF Week 5 — CDI3*/CDI4*",
+        "date_start": "2026-02-04",
+        "date_end": "2026-02-08",
+        "venue_name": "Equestrian Village, Wellington",
+        "venue_postcode": null,
+        "latitude": 26.653,
+        "longitude": -80.2525,
+        "discipline": "Dressage",
+        "event_type": "competition"
+      },
+      {
+        "name": "GDF Week 6 — CDI4*/CDI-W",
+        "date_start": "2026-02-11",
+        "date_end": "2026-02-15",
+        "venue_name": "Equestrian Village, Wellington",
+        "venue_postcode": null,
+        "latitude": 26.653,
+        "longitude": -80.2525,
+        "discipline": "Dressage",
+        "event_type": "competition"
+      },
+      {
+        "name": "GDF Week 7 — CDI4*",
+        "date_start": "2026-02-18",
+        "date_end": "2026-02-22",
+        "venue_name": "Equestrian Village, Wellington",
+        "venue_postcode": null,
+        "latitude": 26.653,
+        "longitude": -80.2525,
+        "discipline": "Dressage",
+        "event_type": "competition"
+      },
+      {
+        "name": "GDF Week 8 — CDI5* Palm Beach Derby",
+        "date_start": "2026-02-25",
+        "date_end": "2026-03-01",
+        "venue_name": "Equestrian Village, Wellington",
+        "venue_postcode": null,
+        "latitude": 26.653,
+        "longitude": -80.2525,
+        "discipline": "Dressage",
+        "event_type": "competition"
+      },
+      {
+        "name": "GDF Week 9 — CDI3*",
+        "date_start": "2026-03-04",
+        "date_end": "2026-03-08",
+        "venue_name": "Equestrian Village, Wellington",
+        "venue_postcode": null,
+        "latitude": 26.653,
+        "longitude": -80.2525,
+        "discipline": "Dressage",
+        "event_type": "competition"
+      },
+      {
+        "name": "GDF Week 10 — CDI4*/CDI-W Finale",
+        "date_start": "2026-03-18",
+        "date_end": "2026-03-22",
+        "venue_name": "Equestrian Village, Wellington",
+        "venue_postcode": null,
+        "latitude": 26.653,
+        "longitude": -80.2525,
+        "discipline": "Dressage",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "gothenburg": {
+    "valid_until": "2026-02-22",
+    "events": [
+      {
+        "name": "Gothenburg Horse Show 2026",
+        "date_start": "2026-02-18",
+        "date_end": "2026-02-22",
+        "venue_name": "Scandinavium, Gothenburg",
+        "venue_postcode": null,
+        "latitude": 57.6928,
+        "longitude": 11.986,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "great_meadow": {
+    "valid_until": "2026-07-05",
+    "events": [
+      {
+        "name": "MARS Great Meadow International 2026",
+        "date_start": "2026-07-03",
+        "date_end": "2026-07-05",
+        "venue_name": "Great Meadow, The Plains",
+        "venue_postcode": null,
+        "latitude": 38.862,
+        "longitude": -77.76,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "great_yorkshire": {
+    "valid_until": "2026-07-17",
+    "events": [
+      {
+        "name": "Great Yorkshire Show 2026",
+        "date_start": "2026-07-14",
+        "date_end": "2026-07-17",
+        "venue_name": "Great Yorkshire Showground",
+        "venue_postcode": "HG2 8NZ",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "hampton_classic": {
+    "valid_until": "2026-08-30",
+    "events": [
+      {
+        "name": "Hampton Classic Horse Show 2026",
+        "date_start": "2026-08-23",
+        "date_end": "2026-08-30",
+        "venue_name": "Hampton Classic Showgrounds, Bridgehampton",
+        "venue_postcode": null,
+        "latitude": 40.9227,
+        "longitude": -72.3133,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "helsinki_horse_show": {
+    "valid_until": "2026-10-25",
+    "events": [
+      {
+        "name": "Helsinki International Horse Show 2026",
+        "date_start": "2026-10-22",
+        "date_end": "2026-10-25",
+        "venue_name": "Messukeskus, Helsinki",
+        "venue_postcode": null,
+        "latitude": 60.2058,
+        "longitude": 24.9292,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "hof_kasselmann": {
+    "valid_until": "2026-07-05",
+    "events": [
+      {
+        "name": "Horses & Dreams 2026",
+        "date_start": "2026-04-22",
+        "date_end": "2026-04-26",
+        "venue_name": "Hof Kasselmann",
+        "venue_postcode": null,
+        "latitude": 52.1972,
+        "longitude": 7.9782,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "Nations Cup Hagen 2026",
+        "date_start": "2026-07-01",
+        "date_end": "2026-07-05",
+        "venue_name": "Hof Kasselmann",
+        "venue_postcode": null,
+        "latitude": 52.1972,
+        "longitude": 7.9782,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "hope_show": {
+    "valid_until": "2026-08-31",
+    "events": [
+      {
+        "name": "Hope Show 2026",
+        "date_start": "2026-08-31",
+        "date_end": null,
+        "venue_name": "Hope Showground",
+        "venue_postcode": "S33 8RZ",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "hoys": {
+    "valid_until": "2026-10-11",
+    "events": [
+      {
+        "name": "Horse of the Year Show 2026",
+        "date_start": "2026-10-07",
+        "date_end": "2026-10-11",
+        "venue_name": "NEC Birmingham",
+        "venue_postcode": "B40 1NT",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "jumping_amsterdam": {
+    "valid_until": "2026-01-25",
+    "events": [
+      {
+        "name": "Jumping Amsterdam 2026",
+        "date_start": "2026-01-22",
+        "date_end": "2026-01-25",
+        "venue_name": "RAI Amsterdam",
+        "venue_postcode": null,
+        "latitude": 52.3414,
+        "longitude": 4.888,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "jumping_indoor_maastricht": {
+    "valid_until": "2026-11-08",
+    "events": [
+      {
+        "name": "Jumping Indoor Maastricht 2026",
+        "date_start": "2026-11-05",
+        "date_end": "2026-11-08",
+        "venue_name": "MECC Maastricht",
+        "venue_postcode": null,
+        "latitude": 50.8397,
+        "longitude": 5.7104,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "jumping_verona": {
+    "valid_until": "2026-11-08",
+    "events": [
+      {
+        "name": "Jumping Verona — Fieracavalli 2026",
+        "date_start": "2026-11-05",
+        "date_end": "2026-11-08",
+        "venue_name": "Veronafiere",
+        "venue_postcode": null,
+        "latitude": 45.4289,
+        "longitude": 10.9628,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "kentucky_three_day": {
+    "valid_until": "2026-04-26",
+    "events": [
+      {
+        "name": "Kentucky Three-Day Event CCI5*-L 2026",
+        "date_start": "2026-04-23",
+        "date_end": "2026-04-26",
+        "venue_name": "Kentucky Horse Park, Lexington",
+        "venue_postcode": null,
+        "latitude": 38.15,
+        "longitude": -84.5206,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "keysoe_international": {
+    "valid_until": "2026-07-04",
+    "events": [
+      {
+        "name": "Keysoe International CSI2* 2026",
+        "date_start": "2026-07-02",
+        "date_end": "2026-07-04",
+        "venue_name": "The College Equestrian Centre, Keysoe",
+        "venue_postcode": "MK44 2JP",
+        "latitude": 52.254,
+        "longitude": -0.4238,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "la_baule": {
+    "valid_until": "2026-06-14",
+    "events": [
+      {
+        "name": "Jumping La Baule CSIO5* 2026",
+        "date_start": "2026-06-11",
+        "date_end": "2026-06-14",
+        "venue_name": "Stade Francois Andre, La Baule",
+        "venue_postcode": null,
+        "latitude": 47.2806,
+        "longitude": -2.3928,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "lake_placid": {
+    "valid_until": "2026-07-05",
+    "events": [
+      {
+        "name": "Lake Placid Horse Show CSI3* 2026",
+        "date_start": "2026-06-23",
+        "date_end": "2026-06-28",
+        "venue_name": "Lake Placid Horse Show Grounds",
+        "venue_postcode": null,
+        "latitude": 44.2779,
+        "longitude": -73.9546,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "I Love New York Horse Show CSI3* 2026",
+        "date_start": "2026-06-30",
+        "date_end": "2026-07-05",
+        "venue_name": "Lake Placid Horse Show Grounds",
+        "venue_postcode": null,
+        "latitude": 44.2779,
+        "longitude": -73.9546,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "le_siepi": {
+    "valid_until": "2026-08-02",
+    "events": [
+      {
+        "name": "Adriatic Tour 2026",
+        "date_start": "2026-07-30",
+        "date_end": "2026-08-02",
+        "venue_name": "Circolo Ippico Le Siepi",
+        "venue_postcode": null,
+        "latitude": 44.268,
+        "longitude": 12.355,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "lgct": {
+    "valid_until": "2026-11-21",
+    "events": [
+      {
+        "name": "LGCT Doha 2026",
+        "date_start": "2026-03-04",
+        "date_end": "2026-03-07",
+        "venue_name": "Al Shaqab",
+        "venue_postcode": null,
+        "latitude": 25.3178,
+        "longitude": 51.4286,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Miami Beach 2026",
+        "date_start": "2026-04-03",
+        "date_end": "2026-04-05",
+        "venue_name": "Miami Beach",
+        "venue_postcode": null,
+        "latitude": 25.7907,
+        "longitude": -80.13,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Mexico City 2026",
+        "date_start": "2026-04-16",
+        "date_end": "2026-04-19",
+        "venue_name": "Campo Marte",
+        "venue_postcode": null,
+        "latitude": 19.4326,
+        "longitude": -99.1332,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Shanghai 2026",
+        "date_start": "2026-05-01",
+        "date_end": "2026-05-03",
+        "venue_name": "Shanghai",
+        "venue_postcode": null,
+        "latitude": 31.2304,
+        "longitude": 121.4737,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Madrid 2026",
+        "date_start": "2026-05-15",
+        "date_end": "2026-05-17",
+        "venue_name": "Club de Campo Villa de Madrid",
+        "venue_postcode": null,
+        "latitude": 40.4378,
+        "longitude": -3.7495,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Cannes 2026",
+        "date_start": "2026-06-04",
+        "date_end": "2026-06-06",
+        "venue_name": "Cannes",
+        "venue_postcode": null,
+        "latitude": 43.5528,
+        "longitude": 7.0174,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT St Tropez 2026",
+        "date_start": "2026-06-11",
+        "date_end": "2026-06-13",
+        "venue_name": "Ramatuelle",
+        "venue_postcode": null,
+        "latitude": 43.2185,
+        "longitude": 6.611,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Paris 2026",
+        "date_start": "2026-06-19",
+        "date_end": "2026-06-21",
+        "venue_name": "Champ de Mars, Paris",
+        "venue_postcode": null,
+        "latitude": 48.8566,
+        "longitude": 2.2945,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Monaco 2026",
+        "date_start": "2026-07-02",
+        "date_end": "2026-07-04",
+        "venue_name": "Port Hercule, Monaco",
+        "venue_postcode": null,
+        "latitude": 43.7384,
+        "longitude": 7.4246,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Riesenbeck 2026",
+        "date_start": "2026-07-16",
+        "date_end": "2026-07-19",
+        "venue_name": "Riesenbeck International",
+        "venue_postcode": null,
+        "latitude": 52.2733,
+        "longitude": 7.65,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT London 2026",
+        "date_start": "2026-08-07",
+        "date_end": "2026-08-09",
+        "venue_name": "Royal Hospital Chelsea",
+        "venue_postcode": "SW3 4SR",
+        "latitude": 51.4883,
+        "longitude": -0.1579,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Valkenswaard 2026",
+        "date_start": "2026-09-04",
+        "date_end": "2026-09-06",
+        "venue_name": "Tops International Arena",
+        "venue_postcode": null,
+        "latitude": 51.3512,
+        "longitude": 5.4614,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Vienna 2026",
+        "date_start": "2026-09-24",
+        "date_end": "2026-09-27",
+        "venue_name": "Vienna",
+        "venue_postcode": null,
+        "latitude": 48.2082,
+        "longitude": 16.3738,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Rome 2026",
+        "date_start": "2026-10-09",
+        "date_end": "2026-10-11",
+        "venue_name": "Rome",
+        "venue_postcode": null,
+        "latitude": 41.9028,
+        "longitude": 12.4964,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Cairo 2026",
+        "date_start": "2026-10-22",
+        "date_end": "2026-10-24",
+        "venue_name": "Cairo",
+        "venue_postcode": null,
+        "latitude": 30.0444,
+        "longitude": 31.2357,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Rabat 2026",
+        "date_start": "2026-10-30",
+        "date_end": "2026-11-01",
+        "venue_name": "Rabat",
+        "venue_postcode": null,
+        "latitude": 34.0209,
+        "longitude": -6.8416,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "LGCT Riyadh 2026",
+        "date_start": "2026-11-18",
+        "date_end": "2026-11-21",
+        "venue_name": "Riyadh",
+        "venue_postcode": null,
+        "latitude": 24.7136,
+        "longitude": 46.6753,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "live_oak": {
+    "valid_until": "2026-03-15",
+    "events": [
+      {
+        "name": "Live Oak International 2026",
+        "date_start": "2026-03-12",
+        "date_end": "2026-03-15",
+        "venue_name": "Live Oak Stud, Ocala",
+        "venue_postcode": null,
+        "latitude": 29.2017,
+        "longitude": -82.24,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "london_international": {
+    "valid_until": "2026-12-21",
+    "events": [
+      {
+        "name": "London International Horse Show 2026",
+        "date_start": "2026-12-17",
+        "date_end": "2026-12-21",
+        "venue_name": "ExCeL London",
+        "venue_postcode": "E16 1XL",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "luhmuhlen": {
+    "valid_until": "2026-06-21",
+    "events": [
+      {
+        "name": "Luhmuhlen Horse Trials 2026",
+        "date_start": "2026-06-18",
+        "date_end": "2026-06-21",
+        "venue_name": "Luhmuhlen",
+        "venue_postcode": null,
+        "latitude": 53.2567,
+        "longitude": 10.0333,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "madrid_horse_week": {
+    "valid_until": "2026-11-29",
+    "events": [
+      {
+        "name": "Madrid Horse Week 2026",
+        "date_start": "2026-11-26",
+        "date_end": "2026-11-29",
+        "venue_name": "IFEMA, Madrid",
+        "venue_postcode": null,
+        "latitude": 40.4668,
+        "longitude": -3.6171,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "maryland_5_star": {
+    "valid_until": "2026-10-18",
+    "events": [
+      {
+        "name": "Maryland 5 Star at Fair Hill 2026",
+        "date_start": "2026-10-15",
+        "date_end": "2026-10-18",
+        "venue_name": "Fair Hill",
+        "venue_postcode": null,
+        "latitude": 39.7048,
+        "longitude": -75.8399,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "mondial_du_lion": {
+    "valid_until": "2026-10-18",
+    "events": [
+      {
+        "name": "Mondial du Lion 2026",
+        "date_start": "2026-10-15",
+        "date_end": "2026-10-18",
+        "venue_name": "Le Lion d'Angers",
+        "venue_postcode": null,
+        "latitude": 47.63,
+        "longitude": -0.7,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "munich_riem": {
+    "valid_until": "2026-05-17",
+    "events": [
+      {
+        "name": "Pferd International München 2026",
+        "date_start": "2026-05-14",
+        "date_end": "2026-05-17",
+        "venue_name": "Olympia-Reitanlage München-Riem",
+        "venue_postcode": null,
+        "latitude": 48.1431,
+        "longitude": 11.6662,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "national_equine_show": {
+    "valid_until": "2026-03-01",
+    "events": [
+      {
+        "name": "National Equine Show 2026",
+        "date_start": "2026-02-28",
+        "date_end": "2026-03-01",
+        "venue_name": "NEC Birmingham",
+        "venue_postcode": "B40 1NT",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "national_horse_show": {
+    "valid_until": "2026-11-01",
+    "events": [
+      {
+        "name": "National Horse Show 2026",
+        "date_start": "2026-10-21",
+        "date_end": "2026-11-01",
+        "venue_name": "Tryon International Equestrian Center",
+        "venue_postcode": null,
+        "latitude": 35.3261,
+        "longitude": -82.1532,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "ocala": {
+    "valid_until": "2026-03-22",
+    "events": [
+      {
+        "name": "Ocala Winter Spectacular 2026",
+        "date_start": "2025-12-31",
+        "date_end": "2026-03-22",
+        "venue_name": "World Equestrian Center, Ocala",
+        "venue_postcode": null,
+        "latitude": 29.1872,
+        "longitude": -82.1401,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "old_salem_farm": {
+    "valid_until": "2026-09-27",
+    "events": [
+      {
+        "name": "Old Salem Farm Spring CSI3* Week 1",
+        "date_start": "2026-05-12",
+        "date_end": "2026-05-17",
+        "venue_name": "Old Salem Farm, North Salem",
+        "venue_postcode": null,
+        "latitude": 41.3346,
+        "longitude": -73.5779,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Old Salem Farm Spring CSI3* Week 2",
+        "date_start": "2026-05-19",
+        "date_end": "2026-05-24",
+        "venue_name": "Old Salem Farm, North Salem",
+        "venue_postcode": null,
+        "latitude": 41.3346,
+        "longitude": -73.5779,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "American Gold Cup CSI4*-W 2026",
+        "date_start": "2026-09-24",
+        "date_end": "2026-09-27",
+        "venue_name": "Old Salem Farm, North Salem",
+        "venue_postcode": null,
+        "latitude": 41.3346,
+        "longitude": -73.5779,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "osberton": {
+    "valid_until": "2026-10-04",
+    "events": [
+      {
+        "name": "Osberton International Horse Trials (1) 2026",
+        "date_start": "2026-05-22",
+        "date_end": "2026-05-24",
+        "venue_name": "Osberton",
+        "venue_postcode": "S80 2LW",
+        "latitude": null,
+        "longitude": null,
+        "discipline": "Eventing",
+        "event_type": "show"
+      },
+      {
+        "name": "Osberton International Horse Trials (2) 2026",
+        "date_start": "2026-10-02",
+        "date_end": "2026-10-04",
+        "venue_name": "Osberton",
+        "venue_postcode": "S80 2LW",
+        "latitude": null,
+        "longitude": null,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "oslo_horse_show": {
+    "valid_until": "2026-10-11",
+    "events": [
+      {
+        "name": "Oslo Horse Show 2026",
+        "date_start": "2026-10-09",
+        "date_end": "2026-10-11",
+        "venue_name": "Telenor Arena, Oslo",
+        "venue_postcode": null,
+        "latitude": 59.9075,
+        "longitude": 10.6317,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "pau": {
+    "valid_until": "2026-10-25",
+    "events": [
+      {
+        "name": "Les 5 Etoiles de Pau 2026",
+        "date_start": "2026-10-22",
+        "date_end": "2026-10-25",
+        "venue_name": "Domaine de Sers, Pau",
+        "venue_postcode": null,
+        "latitude": 43.2951,
+        "longitude": -0.3708,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "peelbergen": {
+    "valid_until": "2026-07-05",
+    "events": [
+      {
+        "name": "Peelbergen CSI February",
+        "date_start": "2026-02-16",
+        "date_end": "2026-02-22",
+        "venue_name": "Peelbergen Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 51.364,
+        "longitude": 6.11,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Peelbergen EEF Series Semifinal",
+        "date_start": "2026-07-02",
+        "date_end": "2026-07-05",
+        "venue_name": "Peelbergen Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 51.364,
+        "longitude": 6.11,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "pennsylvania_national": {
+    "valid_until": "2026-10-18",
+    "events": [
+      {
+        "name": "Pennsylvania National Horse Show 2026",
+        "date_start": "2026-10-08",
+        "date_end": "2026-10-18",
+        "venue_name": "Pennsylvania Farm Show Complex, Harrisburg",
+        "venue_postcode": null,
+        "latitude": 40.2765,
+        "longitude": -76.8813,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "riesenbeck": {
+    "valid_until": "2026-05-24",
+    "events": [
+      {
+        "name": "Riesenbeck International CSI February",
+        "date_start": "2026-02-04",
+        "date_end": "2026-02-08",
+        "venue_name": "Riesenbeck International",
+        "venue_postcode": null,
+        "latitude": 52.253,
+        "longitude": 7.5974,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Riesenbeck International CSI May",
+        "date_start": "2026-05-21",
+        "date_end": "2026-05-24",
+        "venue_name": "Riesenbeck International",
+        "venue_postcode": null,
+        "latitude": 52.253,
+        "longitude": 7.5974,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "royal_cornwall": {
+    "valid_until": "2026-06-06",
+    "events": [
+      {
+        "name": "Royal Cornwall Show 2026",
+        "date_start": "2026-06-04",
+        "date_end": "2026-06-06",
+        "venue_name": "Royal Cornwall Showground",
+        "venue_postcode": "PL27 7JE",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "royal_highland": {
+    "valid_until": "2026-06-21",
+    "events": [
+      {
+        "name": "Royal Highland Show 2026",
+        "date_start": "2026-06-18",
+        "date_end": "2026-06-21",
+        "venue_name": "Royal Highland Showground",
+        "venue_postcode": "EH28 8NB",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "royal_welsh": {
+    "valid_until": "2026-07-23",
+    "events": [
+      {
+        "name": "Royal Welsh Show 2026",
+        "date_start": "2026-07-20",
+        "date_end": "2026-07-23",
+        "venue_name": "Royal Welsh Showground",
+        "venue_postcode": "LD2 3SY",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "royal_windsor": {
+    "valid_until": "2026-05-17",
+    "events": [
+      {
+        "name": "Royal Windsor Horse Show 2026",
+        "date_start": "2026-05-14",
+        "date_end": "2026-05-17",
+        "venue_name": "Royal Windsor Horse Show",
+        "venue_postcode": "SL4 1NG",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "samorin": {
+    "valid_until": "2026-09-20",
+    "events": [
+      {
+        "name": "Samorin CSI4* Spring",
+        "date_start": "2026-04-09",
+        "date_end": "2026-04-12",
+        "venue_name": "X-Bionic Sphere, Samorin",
+        "venue_postcode": null,
+        "latitude": 48.0078,
+        "longitude": 17.3139,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Samorin CSIO3* Nations Cup",
+        "date_start": "2026-06-04",
+        "date_end": "2026-06-07",
+        "venue_name": "X-Bionic Sphere, Samorin",
+        "venue_postcode": null,
+        "latitude": 48.0078,
+        "longitude": 17.3139,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Samorin CSI4* Autumn",
+        "date_start": "2026-09-17",
+        "date_end": "2026-09-20",
+        "venue_name": "X-Bionic Sphere, Samorin",
+        "venue_postcode": null,
+        "latitude": 48.0078,
+        "longitude": 17.3139,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "saut_hermes": {
+    "valid_until": "2026-03-22",
+    "events": [
+      {
+        "name": "Saut Hermès 2026",
+        "date_start": "2026-03-20",
+        "date_end": "2026-03-22",
+        "venue_name": "Grand Palais, Paris",
+        "venue_postcode": null,
+        "latitude": 48.8661,
+        "longitude": 2.3122,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "scandinavia_jumping": {
+    "valid_until": "2026-02-14",
+    "events": [
+      {
+        "name": "Scandinavia Jumping Tour 2026",
+        "date_start": "2026-02-06",
+        "date_end": "2026-02-14",
+        "venue_name": "Odense Congress Center",
+        "venue_postcode": null,
+        "latitude": 55.396,
+        "longitude": 10.388,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "sentower_park": {
+    "valid_until": "2026-03-01",
+    "events": [
+      {
+        "name": "Sentower Park CSI November",
+        "date_start": "2025-11-27",
+        "date_end": "2025-11-30",
+        "venue_name": "Sentower Park",
+        "venue_postcode": null,
+        "latitude": 51.047,
+        "longitude": 5.588,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Sentower Park Happy New Year CSI",
+        "date_start": "2025-12-19",
+        "date_end": "2025-12-21",
+        "venue_name": "Sentower Park",
+        "venue_postcode": null,
+        "latitude": 51.047,
+        "longitude": 5.588,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Sentower Park CSI January",
+        "date_start": "2026-01-27",
+        "date_end": "2026-02-01",
+        "venue_name": "Sentower Park",
+        "venue_postcode": null,
+        "latitude": 51.047,
+        "longitude": 5.588,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Zangersheide International",
+        "date_start": "2026-02-25",
+        "date_end": "2026-03-01",
+        "venue_name": "Sentower Park",
+        "venue_postcode": null,
+        "latitude": 51.047,
+        "longitude": 5.588,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "spruce_meadows": {
+    "valid_until": "2026-09-13",
+    "events": [
+      {
+        "name": "Spruce Meadows Masters 2026",
+        "date_start": "2026-09-09",
+        "date_end": "2026-09-13",
+        "venue_name": "Spruce Meadows",
+        "venue_postcode": null,
+        "latitude": 50.8745,
+        "longitude": -114.1066,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "stockholm_horse_show": {
+    "valid_until": "2026-11-29",
+    "events": [
+      {
+        "name": "Stockholm International Horse Show 2026",
+        "date_start": "2026-11-27",
+        "date_end": "2026-11-29",
+        "venue_name": "Friends Arena, Stockholm",
+        "venue_postcode": null,
+        "latitude": 59.3725,
+        "longitude": 18.0,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "toscana_tour": {
+    "valid_until": "2026-04-12",
+    "events": [
+      {
+        "name": "Toscana Tour Week 1 — CSI2*/CSI3*",
+        "date_start": "2026-03-17",
+        "date_end": "2026-03-22",
+        "venue_name": "Arezzo Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 43.4617,
+        "longitude": 11.8819,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Toscana Tour Week 2 — CSI2*/CSI3*",
+        "date_start": "2026-03-24",
+        "date_end": "2026-03-29",
+        "venue_name": "Arezzo Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 43.4617,
+        "longitude": 11.8819,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Toscana Tour Week 3 — CSI3*/CSI4*",
+        "date_start": "2026-03-31",
+        "date_end": "2026-04-05",
+        "venue_name": "Arezzo Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 43.4617,
+        "longitude": 11.8819,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Toscana Tour Week 4 — CSI3*/CSI4*",
+        "date_start": "2026-04-07",
+        "date_end": "2026-04-12",
+        "venue_name": "Arezzo Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 43.4617,
+        "longitude": 11.8819,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "trailblazers": {
+    "valid_until": "2026-08-03",
+    "events": [
+      {
+        "name": "SEIB Trailblazers Championships 2026",
+        "date_start": "2026-07-31",
+        "date_end": "2026-08-03",
+        "venue_name": "Addington Manor",
+        "venue_postcode": "MK18 2JR",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "traverse_city": {
+    "valid_until": "2026-09-20",
+    "events": [
+      {
+        "name": "Traverse City Spring I — CSI3*",
+        "date_start": "2026-06-02",
+        "date_end": "2026-06-07",
+        "venue_name": "Flintfields Horse Park, Traverse City",
+        "venue_postcode": null,
+        "latitude": 44.7631,
+        "longitude": -85.4115,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Traverse City Spring II — CSI3*",
+        "date_start": "2026-06-09",
+        "date_end": "2026-06-14",
+        "venue_name": "Flintfields Horse Park, Traverse City",
+        "venue_postcode": null,
+        "latitude": 44.7631,
+        "longitude": -85.4115,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "GLEF Week I — CSI3*",
+        "date_start": "2026-06-23",
+        "date_end": "2026-06-28",
+        "venue_name": "Flintfields Horse Park, Traverse City",
+        "venue_postcode": null,
+        "latitude": 44.7631,
+        "longitude": -85.4115,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "GLEF Week II — CSI4*",
+        "date_start": "2026-06-30",
+        "date_end": "2026-07-05",
+        "venue_name": "Flintfields Horse Park, Traverse City",
+        "venue_postcode": null,
+        "latitude": 44.7631,
+        "longitude": -85.4115,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "GLEF Week III — CSI4*/CSI5*",
+        "date_start": "2026-07-07",
+        "date_end": "2026-07-12",
+        "venue_name": "Flintfields Horse Park, Traverse City",
+        "venue_postcode": null,
+        "latitude": 44.7631,
+        "longitude": -85.4115,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "GLEF Week IV — CSI5*",
+        "date_start": "2026-07-14",
+        "date_end": "2026-07-19",
+        "venue_name": "Flintfields Horse Park, Traverse City",
+        "venue_postcode": null,
+        "latitude": 44.7631,
+        "longitude": -85.4115,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Traverse City Summer — CSI3*",
+        "date_start": "2026-08-04",
+        "date_end": "2026-08-09",
+        "venue_name": "Flintfields Horse Park, Traverse City",
+        "venue_postcode": null,
+        "latitude": 44.7631,
+        "longitude": -85.4115,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Traverse City Fall International — CSI5*-W",
+        "date_start": "2026-09-15",
+        "date_end": "2026-09-20",
+        "venue_name": "Flintfields Horse Park, Traverse City",
+        "venue_postcode": null,
+        "latitude": 44.7631,
+        "longitude": -85.4115,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "uae_presidents_cup": {
+    "valid_until": "2026-01-11",
+    "events": [
+      {
+        "name": "CSI5* UAE President's Cup 2026",
+        "date_start": "2026-01-07",
+        "date_end": "2026-01-11",
+        "venue_name": "Abu Dhabi Equestrian Club",
+        "venue_postcode": null,
+        "latitude": 24.455,
+        "longitude": 54.38,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "upperville": {
+    "valid_until": "2026-06-07",
+    "events": [
+      {
+        "name": "Upperville Colt & Horse Show 2026",
+        "date_start": "2026-06-01",
+        "date_end": "2026-06-07",
+        "venue_name": "Grafton & Salem Showgrounds, Upperville",
+        "venue_postcode": null,
+        "latitude": 38.9693,
+        "longitude": -77.8786,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "vilamoura": {
+    "valid_until": "2026-12-06",
+    "events": [
+      {
+        "name": "Vilamoura Classic Tour II Week 1",
+        "date_start": "2026-10-20",
+        "date_end": "2026-10-25",
+        "venue_name": "Vilamoura Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 37.104,
+        "longitude": -8.125,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Vilamoura Classic Tour II Week 2",
+        "date_start": "2026-10-27",
+        "date_end": "2026-11-01",
+        "venue_name": "Vilamoura Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 37.104,
+        "longitude": -8.125,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Vilamoura Classic Tour II Week 3",
+        "date_start": "2026-11-03",
+        "date_end": "2026-11-08",
+        "venue_name": "Vilamoura Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 37.104,
+        "longitude": -8.125,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Vilamoura Classic Tour III Week 1",
+        "date_start": "2026-11-17",
+        "date_end": "2026-11-22",
+        "venue_name": "Vilamoura Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 37.104,
+        "longitude": -8.125,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Vilamoura Classic Tour III Week 2",
+        "date_start": "2026-11-24",
+        "date_end": "2026-11-29",
+        "venue_name": "Vilamoura Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 37.104,
+        "longitude": -8.125,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "Vilamoura Classic Tour III Week 3",
+        "date_start": "2026-12-01",
+        "date_end": "2026-12-06",
+        "venue_name": "Vilamoura Equestrian Centre",
+        "venue_postcode": null,
+        "latitude": 37.104,
+        "longitude": -8.125,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "washington_international": {
+    "valid_until": "2026-10-25",
+    "events": [
+      {
+        "name": "Washington International Horse Show 2026",
+        "date_start": "2026-10-19",
+        "date_end": "2026-10-25",
+        "venue_name": "Show Place Arena, Upper Marlboro",
+        "venue_postcode": null,
+        "latitude": 38.8163,
+        "longitude": -76.7497,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      }
+    ]
+  },
+  "wef": {
+    "valid_until": "2026-03-29",
+    "events": [
+      {
+        "name": "WEF Week 1 — CSI2*/CSI3*",
+        "date_start": "2025-12-31",
+        "date_end": "2026-01-04",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 2 — CSI2*/CSI3*",
+        "date_start": "2026-01-07",
+        "date_end": "2026-01-11",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 3 — CSI3*/CSI4*",
+        "date_start": "2026-01-14",
+        "date_end": "2026-01-18",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 4 — CSI3*/CSI4*",
+        "date_start": "2026-01-21",
+        "date_end": "2026-01-25",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 5 — CSI4*",
+        "date_start": "2026-01-28",
+        "date_end": "2026-02-01",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 6 — CSI3*/CSI4*",
+        "date_start": "2026-02-04",
+        "date_end": "2026-02-08",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 7 — CSI4*/CSI5*",
+        "date_start": "2026-02-11",
+        "date_end": "2026-02-15",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 8 — CSI5*",
+        "date_start": "2026-02-18",
+        "date_end": "2026-02-22",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 9 — CSI4*/CSI5*",
+        "date_start": "2026-02-25",
+        "date_end": "2026-03-01",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 10 — CSI4*",
+        "date_start": "2026-03-04",
+        "date_end": "2026-03-08",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 11 — CSI3*/CSI5*",
+        "date_start": "2026-03-11",
+        "date_end": "2026-03-15",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 12 — CSI5*",
+        "date_start": "2026-03-18",
+        "date_end": "2026-03-22",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      },
+      {
+        "name": "WEF Week 13 — CSI5* Grand Finale",
+        "date_start": "2026-03-25",
+        "date_end": "2026-03-29",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "competition"
+      }
+    ]
+  },
+  "your_horse_live": {
+    "valid_until": "2026-11-08",
+    "events": [
+      {
+        "name": "Your Horse Live 2026",
+        "date_start": "2026-11-06",
+        "date_end": "2026-11-08",
+        "venue_name": "Stoneleigh Park",
+        "venue_postcode": "CV8 2LZ",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  }
+}
