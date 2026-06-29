@@ -59,6 +59,8 @@ final class EventsViewModel {
     /// The postcode currently powering distance sorting, for display.
     var activePostcode: String?
     var dateScope: DateScope = .upcoming
+    /// A specific chosen day; when set it overrides `dateScope`.
+    var customDate: Date?
     /// Selected radius in miles; nil == any distance.
     var radiusMiles: Double?
 
@@ -98,11 +100,24 @@ final class EventsViewModel {
 
     func setDateScope(_ scope: DateScope) async {
         dateScope = scope
+        customDate = nil
         let bounds = scope.range()
         filter.dateFrom = bounds.from
         filter.dateTo = bounds.to
         await load()
     }
+
+    /// Filter to a single specific day.
+    func setCustomDate(_ date: Date) async {
+        customDate = date
+        let day = Calendar.current.startOfDay(for: date)
+        filter.dateFrom = day
+        filter.dateTo = day
+        await load()
+    }
+
+    /// True if any non-default date filter is active.
+    var dateFilterActive: Bool { customDate != nil || dateScope != .upcoming }
 
     func setRadius(_ miles: Double?) async {
         radiusMiles = miles

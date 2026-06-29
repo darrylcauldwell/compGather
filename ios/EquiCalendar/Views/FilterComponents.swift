@@ -6,6 +6,9 @@ import SwiftUI
 struct FilterBar: View {
     let model: EventsViewModel
 
+    @State private var showDatePicker = false
+    @State private var pickedDate = Date()
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             GlassEffectContainer(spacing: 8) {
@@ -17,6 +20,12 @@ struct FilterBar: View {
                 }
                 .padding(.horizontal)
             }
+        }
+        .sheet(isPresented: $showDatePicker) {
+            DatePickerSheet(initialDate: model.customDate ?? Date()) { chosen in
+                Task { await model.setCustomDate(chosen) }
+            }
+            .presentationDetents([.medium])
         }
     }
 
@@ -40,13 +49,25 @@ struct FilterBar: View {
     private var dateMenu: some View {
         Menu {
             ForEach(DateScope.allCases) { scope in
-                menuItem(scope.title, selected: model.dateScope == scope) {
+                menuItem(scope.title, selected: model.customDate == nil && model.dateScope == scope) {
                     Task { await model.setDateScope(scope) }
                 }
             }
+            Divider()
+            Button("Pick a date…", systemImage: "calendar") {
+                pickedDate = model.customDate ?? Date()
+                showDatePicker = true
+            }
         } label: {
-            pill(model.dateScope.title, icon: "calendar", active: model.dateScope != .upcoming)
+            pill(dateLabel, icon: "calendar", active: model.dateFilterActive)
         }
+    }
+
+    private var dateLabel: String {
+        if let date = model.customDate {
+            return EventFormatting.dateText(start: date, end: nil)
+        }
+        return model.dateScope.title
     }
 
     @ViewBuilder
@@ -107,5 +128,37 @@ struct FilterBar: View {
             active ? .regular.tint(.accentColor).interactive() : .regular.interactive(),
             in: .capsule
         )
+    }
+}
+
+/// A modal calendar for choosing a single day to filter on.
+private struct DatePickerSheet: View {
+    let onPick: (Date) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var date: Date
+
+    init(initialDate: Date, onPick: @escaping (Date) -> Void) {
+        self.onPick = onPick
+        _date = State(initialValue: initialDate)
+    }
+
+    var body: some View {
+        NavigationStack {
+            DatePicker("Event date", selection: $date, displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .padding()
+                .frame(maxHeight: .infinity, alignment: .top)
+                .navigationTitle("Pick a date")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { dismiss() }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Show") { onPick(date); dismiss() }
+                    }
+                }
+        }
     }
 }

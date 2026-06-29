@@ -15,6 +15,7 @@ struct EventsView: View {
             VStack(spacing: 0) {
                 FilterBar(model: model)
                     .padding(.vertical, 8)
+                Divider()
 
                 Group {
                     if model.isLoading && model.events.isEmpty {
