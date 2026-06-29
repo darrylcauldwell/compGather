@@ -207,6 +207,24 @@ async def init_db():
         except Exception:
             pass
 
+    # description column: event blurb + class list, for richer tag extraction
+    # (series/affiliation often appear only in the class list) and for display.
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(text("ALTER TABLE competitions ADD COLUMN description TEXT"))
+            logger.info("Migration: added description column")
+        except Exception:
+            pass  # column already exists
+
+    # classes column: JSON array of class names (e.g. "Junior Foxhunter") for
+    # display and class-level filtering.
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(text("ALTER TABLE competitions ADD COLUMN classes TEXT"))
+            logger.info("Migration: added classes column")
+        except Exception:
+            pass  # column already exists
+
     # Rename agricultural_show → show
     async with engine.begin() as conn:
         try:

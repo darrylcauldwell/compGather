@@ -12,7 +12,8 @@
       "detect=name → match keywords on the event NAME; anchor on the distinctive literal token.",
       "require_keywords → ALL must be present (disambiguation).",
       "exclude_keywords → if any present, do NOT match (kills venue/format false positives).",
-      "source_hint → tag every event from this source (name often lacks the brand)."
+      "source_hint → tag every event from this source (name often lacks the brand).",
+      "CLASS-LEVEL: series/qualifier signals often live in the class list, not the event title (e.g. an event named 'Unaffiliated Show Jumping' with 'Class 8: Trailblazers Qualifier'). Detect from competitions.classes (now stored), not just the name."
     ],
     "counts": "from the live prod data scan, 2026-06-29"
   },
@@ -79,6 +80,16 @@
     "championship":   { "keywords": ["championship", "champs"], "count": 237 },
     "league":         { "keywords": ["league"], "count": 228 },
     "season-series":  { "keywords": ["summer series", "winter series", "summer league", "winter league"], "count": 177 }
+  },
+
+  "class_series": {
+    "_note": "BS class series live in the CLASS list, not the event title (e.g. 'Class 8: Trailblazers Qualifier', 'Junior Foxhunter'). Detect from competitions.classes; many double as qualifiers — pair with stage_flags.qualifier. Match 'junior/senior foxhunter' before bare 'foxhunter'.",
+    "british-novice":   { "display": "British Novice",   "keywords": ["british novice"],   "height": "0.90m" },
+    "discovery":        { "display": "Discovery",        "keywords": ["discovery"],        "height": "1.00m" },
+    "newcomers":        { "display": "Newcomers",        "keywords": ["newcomers"],        "height": "1.10m" },
+    "foxhunter":        { "display": "Foxhunter",        "keywords": ["foxhunter"],        "height": "1.20m" },
+    "junior-foxhunter": { "display": "Junior Foxhunter", "keywords": ["junior foxhunter"], "note": "a specific aim for junior riders" },
+    "senior-foxhunter": { "display": "Senior Foxhunter", "keywords": ["senior foxhunter"] }
   },
 
   "blacklist": {

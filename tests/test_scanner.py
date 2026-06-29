@@ -3,6 +3,7 @@
 These tests verify the scan pipeline logic using mocked external services.
 """
 
+import json
 import logging
 from datetime import date, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -259,3 +260,38 @@ async def test_long_span_events_are_hidden(db_session):
     assert by_name["Faversham Badges Programme"].hidden is True
     assert by_name["Normal One-Day Show"].hidden is False
     assert by_name["Multi-week Tour"].hidden is False
+
+
+@pytest.mark.asyncio
+async def test_tags_and_classes_from_class_list(db_session):
+    """Class lists are stored structurally, and affiliation signals that appear
+    only in class names (not the event title) are still tagged."""
+    source = Source(name="Test Source", url="https://example.com", enabled=True)
+    db_session.add(source)
+    await db_session.commit()
+    await db_session.refresh(source)
+
+    mock_extracted = [
+        ExtractedCompetition(
+            name="Unaffiliated Show Jumping",  # title gives no clue
+            date_start="2026-07-15",
+            venue_name="Test Arena",
+            venue_postcode="SW1A 1AA",
+            classes=["Class 6: 80cm Open", "Class 8: NSEA Qualifier"],
+        ),
+    ]
+    mock_parser = MagicMock()
+    mock_parser.fetch_and_parse = AsyncMock(return_value=mock_extracted)
+
+    with (
+        patch("app.services.scanner.get_parser", return_value=mock_parser),
+        patch("app.services.scanner.geocode_postcode", new_callable=AsyncMock, return_value=(51.5, -0.1)),
+    ):
+        from app.services.scanner import _scan_source
+        await _scan_source(db_session, source)
+
+    comp = (await db_session.execute(select(Competition))).scalars().first()
+    # Class list stored structurally.
+    assert json.loads(comp.classes) == ["Class 6: 80cm Open", "Class 8: NSEA Qualifier"]
+    # NSEA appears only in a class name — must still be tagged via the deeper text.
+    assert comp.tags is not None and "affiliation:nsea" in comp.tags

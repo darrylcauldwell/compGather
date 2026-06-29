@@ -64,6 +64,8 @@ class Competition(Base):
     spectator: Mapped[bool] = mapped_column(Boolean, default=False)  # worth watching → Watch tab
     hidden: Mapped[bool] = mapped_column(Boolean, default=False)  # programme/placeholder junk → excluded from listings
     tags: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array of tag strings
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # event blurb, for tagging & display
+    classes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array of class names (e.g. "Junior Foxhunter")
     url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     venue_match_type: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     raw_extract: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

@@ -443,12 +443,23 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 comp_data.latitude, comp_data.longitude,
             )
 
+        # Detail text for classification + tagging: the description plus the
+        # class list. Series/affiliation signals (e.g. "Trailblazers", "NSEA")
+        # often live in class names even when the event title omits them.
+        detail_text = " ".join(
+            filter(None, [comp_data.description, " ".join(comp_data.classes or [])])
+        ).strip()
+        description = comp_data.description or None
+        # Store the class list structurally (JSON) so the app can show it and we
+        # can filter on specific classes (e.g. "Junior Foxhunter").
+        classes_json = json.dumps(comp_data.classes) if comp_data.classes else None
+
         # EventClassifier is the single source of truth for classification.
         # It determines canonical discipline and event_type independently.
         discipline, event_type = EventClassifier.classify(
             name=comp_data.name,
             discipline_hint=comp_data.discipline,
-            description=comp_data.description or "",
+            description=detail_text,
             event_type_hint=comp_data.event_type,
         )
         # Spectator flag (Watch tab): parser hint wins, else derive from name/type.
@@ -501,6 +512,8 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
             existing.event_type = event_type
             existing.spectator = spectator
             existing.hidden = hidden
+            existing.description = description
+            existing.classes = classes_json
             if existing.venue_id != venue_match.venue_id:
                 existing.venue_match_type = venue_match.match_type
             existing.venue_id = venue_match.venue_id
@@ -512,7 +525,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
             # Re-extract tags on rescan
             tags = extract_tags(
                 name=comp_data.name,
-                description=comp_data.description or "",
+                description=detail_text,
                 discipline=discipline,
                 event_type=event_type,
                 source_affiliation=source_affiliation,
@@ -522,7 +535,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
             # Extract tags from event name and details
             tags = extract_tags(
                 name=comp_data.name,
-                description=comp_data.description or "",
+                description=detail_text,
                 discipline=discipline,
                 event_type=event_type,
                 source_affiliation=source_affiliation,
@@ -541,6 +554,8 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 spectator=spectator,
                 hidden=hidden,
                 tags=tags_json,
+                description=description,
+                classes=classes_json,
                 url=safe_url,
                 raw_extract=json.dumps(comp_data.model_dump()),
             )

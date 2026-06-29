@@ -48,16 +48,18 @@ class CompetitionOut(BaseModel):
     event_type: str = "competition"
     spectator: bool = False
     tags: list[str] = []
+    classes: list[str] = []
+    description: str | None = None
     url: str | None
     first_seen_at: datetime
     last_seen_at: datetime
 
     model_config = {"from_attributes": True}
 
-    @field_validator("tags", mode="before")
+    @field_validator("tags", "classes", mode="before")
     @classmethod
-    def _deserialize_tags(cls, value: object) -> list[str]:
-        """Competition.tags is stored as a JSON string; expose it as a list."""
+    def _deserialize_json_list(cls, value: object) -> list[str]:
+        """tags/classes are stored as JSON strings; expose them as lists."""
         if isinstance(value, str):
             try:
                 parsed = json.loads(value)
