@@ -25,6 +25,7 @@ async def list_competitions(
     date_to: date | None = Query(None),
     max_distance: float | None = Query(None),
     discipline: str | None = Query(None),
+    event_type: str | None = Query(None),
     postcode: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
@@ -39,7 +40,10 @@ async def list_competitions(
 
     if discipline and discipline.strip():
         stmt = stmt.where(Competition.discipline == discipline.strip())
-    else:
+    if event_type and event_type.strip():
+        stmt = stmt.where(Competition.event_type == event_type.strip())
+    elif not (discipline and discipline.strip()):
+        # Default (no discipline or type filter) shows competitions only.
         stmt = stmt.where(Competition.event_type == "competition")
     if date_from:
         # Include multi-day events that started before date_from but haven't ended

@@ -378,3 +378,71 @@ class TestGeocodeEndpoint:
                 )
 
         assert resp.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# tags field + event_type filter (for the iOS app)
+# ---------------------------------------------------------------------------
+async def _seed_typed():
+    """One competition (with tags) and one show, sharing a venue."""
+    async with TestSession() as session:
+        src = Source(name="S", url="https://e.example", parser_key="t", enabled=True,
+                     created_at=datetime.utcnow())
+        session.add(src)
+        await session.flush()
+        venue = Venue(name="V", postcode="TE1 2ST")
+        session.add(venue)
+        await session.flush()
+        session.add(Competition(
+            source_id=src.id, name="Champs", date_start=date(2026, 5, 1),
+            venue_id=venue.id, discipline="Dressage", event_type="competition",
+            tags='["discipline:dressage", "type:competition", "level:championship"]',
+            first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+        ))
+        session.add(Competition(
+            source_id=src.id, name="County Show", date_start=date(2026, 5, 2),
+            venue_id=venue.id, discipline=None, event_type="show",
+            tags=None,
+            first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+        ))
+        await session.commit()
+
+
+class TestTagsAndEventType:
+    @pytest.mark.asyncio
+    async def test_tags_deserialized_as_list(self):
+        app = _get_app()
+        await _seed_typed()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.get("/api/competitions")
+        comp = next(c for c in resp.json() if c["name"] == "Champs")
+        assert comp["tags"] == ["discipline:dressage", "type:competition", "level:championship"]
+
+    @pytest.mark.asyncio
+    async def test_null_tags_become_empty_list(self):
+        app = _get_app()
+        await _seed_typed()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.get("/api/competitions?event_type=show")
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["name"] == "County Show"
+        assert data[0]["tags"] == []
+
+    @pytest.mark.asyncio
+    async def test_default_excludes_shows(self):
+        app = _get_app()
+        await _seed_typed()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.get("/api/competitions")
+        names = {c["name"] for c in resp.json()}
+        assert names == {"Champs"}  # show excluded by default
+
+    @pytest.mark.asyncio
+    async def test_event_type_filter(self):
+        app = _get_app()
+        await _seed_typed()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.get("/api/competitions?event_type=competition")
+        names = {c["name"] for c in resp.json()}
+        assert names == {"Champs"}
