@@ -1,38 +1,57 @@
-"""Tag management for event classification."""
+"""Tag management for event classification.
+
+Tags are derived per event and stored as a JSON array on Competition.tags, e.g.
+["discipline:dressage", "type:competition", "affiliation:british-dressage"].
+
+Matching uses WORD BOUNDARIES (\\b regex), not naive substring containment, so
+"International" no longer matches "national", "Herbs Workshop" is not tagged
+show-jumping, etc. Discipline is taken from the classifier's canonical result
+(the same value stored in Competition.discipline) so the badge, the column and
+the filter never disagree.
+"""
 
 import json
+import re
+from functools import lru_cache
 from typing import Optional
+
+from app.seed_data import get_discipline_seeds
+
+
+def _slug(name: str) -> str:
+    """Canonical discipline name -> tag slug, e.g. 'Show Jumping' -> 'show-jumping'."""
+    return name.lower().replace(" ", "-")
+
+
+# Discipline vocabulary is DERIVED from the seed data (the documented single
+# source of truth) so it can never drift out of sync with the classifier.
+_DISCIPLINE_SLUGS = [_slug(d) for d in get_discipline_seeds()]
 
 # Canonical tag vocabulary
 VALID_TAGS = {
-    # Discipline (required in extract_tags, one or more allowed)
-    "discipline": [
-        "show-jumping", "dressage", "eventing", "cross-country",
-        "combined-training", "hunter-trial", "arena-eventing",
-        "showing", "working-hunter", "tetrathlon", "endurance", "gymkhana", "mounted-games",
-        "polocrosse", "polo", "driving", "drag-hunt", "hobby-horse", "horse-boarding"
-    ],
-    # Event Type (required in extract_tags, but only one allowed)
+    # Discipline (one, mirrors Competition.discipline; derived from seeds)
+    "discipline": _DISCIPLINE_SLUGS,
+    # Event type (exactly one, from the classifier)
     "type": ["competition", "training", "venue-hire", "show", "social", "other"],
-    # Level (optional, at most one)
+    # Level (at most one)
     "level": ["beginner", "novice", "intermediate", "advanced", "championship", "mixed"],
-    # Affiliation (optional, zero or more)
+    # Affiliation (zero or more)
     "affiliation": [
         "british-dressage", "british-showjumping", "british-eventing",
         "pony-club", "nsea", "endurance-gb", "unaffiliated",
-        "bsps", "bsha", "british-horseball", "hpa-polo"
+        "bsps", "bsha", "british-horseball", "hpa-polo",
     ],
-    # Format (optional, zero or more)
-    "format": ["individual", "team", "in-hand", "clinic", "workshop"],
-    # Scope (optional, at most one)
-    "scope": ["local", "regional", "national", "international", "championship"],
-    # Age Group (optional, zero or more)
+    # Format (zero or more)
+    "format": ["team", "in-hand", "clinic", "workshop"],
+    # Scope (at most one; strictly geographic)
+    "scope": ["national", "international"],
+    # Age group (zero or more)
     "age": ["junior", "young-rider", "adult", "senior"],
-    # Special (optional, zero or more)
+    # Special (zero or more)
     "special": [
         "qualifier", "invitational", "breed-specific",
-        "long-format", "mountain-and-moorland", "native-breed"
-    ]
+        "mountain-and-moorland", "native-breed", "long-format",
+    ],
 }
 
 
@@ -48,7 +67,6 @@ def serialize_tags(tags: list[str]) -> Optional[str]:
     """Convert list of tags to JSON string for storage."""
     if not tags:
         return None
-    # Validate all tags before serializing
     for tag in tags:
         if not validate_tag(tag):
             raise ValueError(f"Invalid tag: {tag}")
@@ -77,6 +95,28 @@ _EVENT_TYPE_TO_TAG = {
 }
 
 
+@lru_cache(maxsize=1024)
+def _pattern(keyword: str) -> "re.Pattern[str]":
+    """Compiled whole-word/phrase matcher for a lowercase keyword.
+
+    Simple alphabetic words (>=4 letters) also match their plural ('championship'
+    -> 'championships'). Short codes and phrases match exactly.
+    """
+    suffix = r"s?\b" if (keyword.isalpha() and len(keyword) >= 4) else r"\b"
+    return re.compile(r"\b" + re.escape(keyword) + suffix)
+
+
+def _matches(text: str, keywords: list[str]) -> bool:
+    """True if any keyword matches *text* on word boundaries."""
+    return any(_pattern(kw).search(text) for kw in keywords)
+
+
+def _normalise(name: str, description: str) -> str:
+    """Lowercase, expand '&' to 'and', and collapse whitespace for matching."""
+    combined = f"{name} {description}".lower().replace("&", " and ")
+    return re.sub(r"\s+", " ", combined).strip()
+
+
 def extract_tags(
     name: str,
     description: str = "",
@@ -84,104 +124,44 @@ def extract_tags(
     event_type: str = "competition",
     source_affiliation: Optional[str] = None,
 ) -> list[str]:
-    """Extract tags from event name/description based on keywords.
+    """Extract tags from an event.
 
-    Extracts BOTH discipline(s) and event type INDEPENDENTLY, allowing
-    granular tagging like "Dressage Training" → discipline:dressage + type:training.
-
-    Args:
-        name: Event name
-        description: Event description
-        discipline: Canonical discipline (from classifier, used as fallback)
-        event_type: Event type from classifier ("competition"|"training"|"venue_hire"|"show")
-        source_affiliation: Source-level affiliation tag (e.g. "british-dressage")
-
-    Returns:
-        List of valid tags to attach to the event
+    Discipline and type are authoritative inputs from EventClassifier (not
+    re-derived from text here — that previously diverged from the stored column).
+    Level/scope/affiliation/format/age/special are inferred from the event text
+    using word-boundary matching.
     """
     tags: list[str] = []
-    combined = f"{name} {description}".lower()
+    combined = _normalise(name, description)
 
-    # 1. Extract DISCIPLINE(s) independently from event name/description
-    # Collect ALL matching disciplines (no break on first match)
-    discipline_keywords = {
-        "show-jumping": ["show jump", "sjq", "sj ", "bs "],
-        "dressage": ["dressage", "bd "],
-        "eventing": ["eventing", "one day event", "ode ", "horse trial", "ecq"],
-        "cross-country": ["cross country", "xc ", "show cross"],
-        "arena-eventing": ["arena eventing"],
-        "combined-training": ["combined training", " ct "],
-        "hunter-trial": ["hunter trial"],
-        "working-hunter": ["working hunter", "whp"],
-        "showing": ["showing"],
-        "tetrathlon": ["tetrathlon", "triathlon", " tet "],
-        "endurance": ["endurance", "pleasure ride", "fun ride"],
-        "gymkhana": ["gymkhana"],
-        "mounted-games": ["mounted games"],
-        "polocrosse": ["polocrosse"],
-        "polo": [" polo", "polo "],
-        "driving": ["carriage driving", "driving trial"],
-        "drag-hunt": ["drag hunt", "draghound"],
-        "hobby-horse": ["hobby horse"],
-        "horse-boarding": ["horse boarding"],
-    }
+    # 1. Discipline — single source of truth: the classifier's canonical result.
+    if discipline:
+        slug = _slug(discipline)
+        if slug in VALID_TAGS["discipline"]:
+            tags.append(f"discipline:{slug}")
 
-    extracted_disciplines: list[str] = []
-    for disc_tag, keywords in discipline_keywords.items():
-        if any(kw in combined for kw in keywords):
-            extracted_disciplines.append(disc_tag)
+    # 2. Event type — from the classifier, mapped to tag format.
+    tags.append(f"type:{_EVENT_TYPE_TO_TAG.get(event_type, 'competition')}")
 
-    # Use extracted disciplines, fall back to pre-classified if none found
-    if not extracted_disciplines and discipline:
-        canonical_to_tag = {
-            "Show Jumping": "show-jumping",
-            "Dressage": "dressage",
-            "Eventing": "eventing",
-            "Cross Country": "cross-country",
-            "Arena Eventing": "arena-eventing",
-            "Combined Training": "combined-training",
-            "Hunter Trial": "hunter-trial",
-            "Showing": "showing",
-            "Working Hunter": "working-hunter",
-            "Tetrathlon": "tetrathlon",
-            "Endurance": "endurance",
-            "Gymkhana": "gymkhana",
-            "Mounted Games": "mounted-games",
-            "Polocrosse": "polocrosse",
-            "Polo": "polo",
-            "Driving": "driving",
-            "Drag Hunt": "drag-hunt",
-            "Hobby Horse": "hobby-horse",
-            "Horse Boarding": "horse-boarding",
-        }
-        fallback = canonical_to_tag.get(discipline)
-        if fallback:
-            extracted_disciplines = [fallback]
-
-    for disc_tag in extracted_disciplines:
-        tags.append(f"discipline:{disc_tag}")
-
-    # 2. Event type — use classifier result, mapped to tag format
-    type_tag = _EVENT_TYPE_TO_TAG.get(event_type, "competition")
-    tags.append(f"type:{type_tag}")
-
-    # 3. Level (optional, only if explicitly stated)
-    level_keywords = {
-        "beginner": ["beginner"],
-        "novice": ["novice"],
-        "intermediate": ["intermediate"],
-        "advanced": ["advanced", "advanced level"],
-        "championship": ["championship", "grand prix", "national championship"],
-        "mixed": ["all levels", "mixed level"],
-    }
-    for level, keywords in level_keywords.items():
-        if any(kw in combined for kw in keywords):
+    # 3. Level (at most one; most significant first). 'advanced' must not be the
+    # administrative "advanced booking/notice/entries".
+    advanced = bool(re.search(r"\badvanced\b(?!\s+(?:booking|notice|entr))", combined))
+    level_checks = [
+        ("championship", lambda: _matches(combined, ["championship"])),
+        ("advanced", lambda: advanced),
+        ("intermediate", lambda: _matches(combined, ["intermediate"])),
+        ("novice", lambda: _matches(combined, ["novice"])),
+        ("beginner", lambda: _matches(combined, ["beginner"])),
+        ("mixed", lambda: _matches(combined, ["all levels", "mixed level"])),
+    ]
+    for level, check in level_checks:
+        if check():
             tags.append(f"level:{level}")
             break
 
-    # 5. Affiliation (optional, zero or more)
+    # 4. Affiliation (zero or more) from text, plus the source-level affiliation.
     affiliation_keywords = {
-        "british-dressage": ["british dressage", "bd "],
+        "british-dressage": ["british dressage", "bd"],
         "british-showjumping": ["british showjumping", "bs area"],
         "british-eventing": ["british eventing"],
         "pony-club": ["pony club"],
@@ -190,108 +170,108 @@ def extract_tags(
         "bsps": ["bsps", "british show pony"],
         "bsha": ["bsha", "british show horse"],
         "british-horseball": ["british horseball"],
-        "hpa-polo": ["hpa polo", "hpa-polo"],
+        "hpa-polo": ["hpa polo"],
     }
     added_affiliations = set()
     for affiliation, keywords in affiliation_keywords.items():
-        if any(kw in combined for kw in keywords):
+        if _matches(combined, keywords):
             tags.append(f"affiliation:{affiliation}")
             added_affiliations.add(affiliation)
+    if (
+        source_affiliation
+        and source_affiliation not in added_affiliations
+        and source_affiliation in VALID_TAGS["affiliation"]
+    ):
+        tags.append(f"affiliation:{source_affiliation}")
 
-    # Add source-level affiliation if not already added from keywords
-    if source_affiliation and source_affiliation not in added_affiliations:
-        if source_affiliation in VALID_TAGS["affiliation"]:
-            tags.append(f"affiliation:{source_affiliation}")
-
-    # 6. Format (optional, zero or more)
+    # 5. Format (zero or more)
     format_keywords = {
-        "team": ["team", "team event"],
+        "team": ["team"],
         "in-hand": ["in hand", "in-hand"],
         "clinic": ["clinic", "clinics"],
         "workshop": ["workshop", "workshops"],
     }
     for fmt, keywords in format_keywords.items():
-        if any(kw in combined for kw in keywords):
+        if _matches(combined, keywords):
             tags.append(f"format:{fmt}")
 
-    # 7. Scope (optional, at most one - only obvious ones)
-    scope_keywords = {
-        "championship": ["championship", "national final", "area final"],
-        "national": ["national", "national event"],
-        "international": ["international", "cic", "ccio"],
-    }
-    for scope, keywords in scope_keywords.items():
-        if any(kw in combined for kw in keywords):
-            tags.append(f"scope:{scope}")
-            break
+    # 6. Scope (at most one; geographic). International before national, and
+    # 'national' requires a qualifying phrase so "National Trust" doesn't match.
+    if _matches(combined, ["international", "cic", "ccio"]):
+        tags.append("scope:international")
+    elif _matches(combined, [
+        "national championship", "national championships",
+        "national final", "national finals", "national series",
+        "national event", "national events", "area final", "area finals",
+    ]):
+        tags.append("scope:national")
 
-    # 8. Age Group (optional, zero or more)
-    age_keywords = {
-        "junior": ["junior", "u21", "under 21"],
-        "young-rider": ["young rider"],
-        "senior": ["senior"],
-        "adult": ["adult"],
-    }
-    for age, keywords in age_keywords.items():
-        if any(kw in combined for kw in keywords):
-            tags.append(f"age:{age}")
+    # 7. Age group (zero or more). 'senior' must not be "senior citizen(s)".
+    if re.search(r"\bseniors?\b(?!\s+citizens?)", combined):
+        tags.append("age:senior")
+    if _matches(combined, ["junior", "u21", "under 21"]):
+        tags.append("age:junior")
+    if _matches(combined, ["young rider", "young riders"]):
+        tags.append("age:young-rider")
+    if _matches(combined, ["adult"]):
+        tags.append("age:adult")
 
-    # 9. Special (optional, zero or more)
-    special_keywords = {
-        "qualifier": ["qualifier", "area qualifier"],
-        "invitational": ["invitational", "by invitation"],
-        "breed-specific": ["breed", "mountain and moorland", "native breed"],
-        "long-format": ["endurance", "100km"],
-    }
-    for special, keywords in special_keywords.items():
-        if any(kw in combined for kw in keywords):
-            tags.append(f"special:{special}")
+    # 8. Special (zero or more)
+    if _matches(combined, ["qualifier", "area qualifier"]):
+        tags.append("special:qualifier")
+    if _matches(combined, ["invitational", "by invitation"]):
+        tags.append("special:invitational")
+    mm = _matches(combined, ["mountain and moorland", "m and m"])
+    nb = _matches(combined, ["native breed", "native breeds", "native pony", "native ponies"])
+    if mm:
+        tags.append("special:mountain-and-moorland")
+    if nb:
+        tags.append("special:native-breed")
+    if not (mm or nb) and _matches(combined, ["breed"]):
+        tags.append("special:breed-specific")
+    if _matches(combined, ["100km", "160km", "long format", "multi-day", "multi day"]):
+        tags.append("special:long-format")
 
-    # Validate all extracted tags
-    validated_tags = [tag for tag in tags if validate_tag(tag)]
+    # Drop anything not in the vocabulary (defensive; drift is caught by tests).
+    return [tag for tag in tags if validate_tag(tag)]
 
-    return validated_tags
+
+# Human-readable overrides for values that don't title-case cleanly.
+_DISPLAY_OVERRIDES = {
+    "british-dressage": "British Dressage",
+    "british-showjumping": "British Showjumping",
+    "british-eventing": "British Eventing",
+    "british-horseball": "British Horseball",
+    "pony-club": "Pony Club",
+    "endurance-gb": "Endurance GB",
+    "hpa-polo": "HPA Polo",
+    "bsps": "BSPS",
+    "bsha": "BSHA",
+    "nsea": "NSEA",
+}
 
 
 def get_tag_display_name(tag: str) -> str:
-    """Convert tag to human-readable format.
+    """Convert a tag to a human-readable label.
 
-    Examples:
-        "discipline:dressage" → "Dressage"
-        "level:intermediate" → "Intermediate"
-        "affiliation:british-dressage" → "British Dressage"
+    Examples: "discipline:dressage" -> "Dressage";
+    "affiliation:bsps" -> "BSPS"; "affiliation:endurance-gb" -> "Endurance GB".
     """
     if ":" not in tag:
         return tag
-
-    category, value = tag.split(":", 1)
-
-    # Title case with special handling
-    display = value.replace("-", " ").title()
-
-    # Capitalize acronyms
-    display = display.replace("Bd", "BD").replace("Bs", "BS")
-    display = display.replace("Bsps", "BSPS").replace("Bsha", "BSHA")
-    display = display.replace("Nsea", "NSEA")
-    display = display.replace("Hpa", "HPA")
-
-    return display
+    _, value = tag.split(":", 1)
+    if value in _DISPLAY_OVERRIDES:
+        return _DISPLAY_OVERRIDES[value]
+    return value.replace("-", " ").title()
 
 
 def filter_by_tag(competitions: list, tag: str) -> list:
     """Filter competitions by a specific tag."""
-    return [
-        c for c in competitions
-        if tag in deserialize_tags(c.tags)
-    ]
+    return [c for c in competitions if tag in deserialize_tags(c.tags)]
 
 
 def get_all_tags_by_category(competitions: list, category: str) -> set[str]:
-    """Get all unique tags in a category from a list of competitions.
-
-    Example:
-        get_all_tags_by_category(comps, "level") → {"level:novice", "level:advanced"}
-    """
+    """Get all unique tags in a category from a list of competitions."""
     tags = set()
     for c in competitions:
         for tag in deserialize_tags(c.tags):
