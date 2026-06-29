@@ -11,9 +11,9 @@ struct FavouritesView: View {
             Group {
                 if favourites.isEmpty {
                     ContentUnavailableView {
-                        Label("No favourites yet", systemImage: "star")
+                        Label("Nothing planned yet", systemImage: "checklist")
                     } description: {
-                        Text("Tap the star on an event to save it here for offline access.")
+                        Text("Tap the star on an event to add it to your plan — saved for offline access.")
                     }
                 } else {
                     List {
@@ -28,7 +28,7 @@ struct FavouritesView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("Favourites")
+            .navigationTitle("Plan")
         }
     }
 

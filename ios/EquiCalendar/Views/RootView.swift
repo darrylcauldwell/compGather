@@ -13,7 +13,7 @@ struct RootView: View {
             Tab("Explore", systemImage: "map") {
                 VenuesView()
             }
-            Tab("Favourites", systemImage: "star") {
+            Tab("Plan", systemImage: "checklist") {
                 FavouritesView()
             }
         }
