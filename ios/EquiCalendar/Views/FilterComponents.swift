@@ -15,8 +15,7 @@ struct FilterBar: View {
                 HStack(spacing: 8) {
                     disciplineMenu
                     dateMenu
-                    locationControl
-                    if model.activePostcode != nil { radiusMenu }
+                    distanceMenu
                 }
                 .padding(.horizontal)
             }
@@ -70,40 +69,28 @@ struct FilterBar: View {
         return model.dateScope.title
     }
 
-    @ViewBuilder
-    private var locationControl: some View {
-        if let postcode = model.activePostcode {
-            Menu {
-                Button("Clear location", systemImage: "xmark", role: .destructive) {
-                    Task { await model.clearLocation() }
-                }
-            } label: {
-                pill("Near \(postcode)", icon: "location.fill", active: true)
-            }
-        } else {
-            Button {
-                Task { await model.useMyLocation() }
-            } label: {
-                pill("Near me", icon: "location", active: false, showsChevron: false)
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var radiusMenu: some View {
+    /// Distance dropdown (like the website): auto-uses the device location and
+    /// defaults to 30 mi; pick another radius or "Any distance".
+    private var distanceMenu: some View {
         Menu {
             menuItem("Any distance", selected: model.radiusMiles == nil) {
                 Task { await model.setRadius(nil) }
             }
             ForEach(radiusOptions, id: \.self) { miles in
-                menuItem("\(Int(miles)) miles", selected: model.radiusMiles == miles) {
+                menuItem("Within \(Int(miles)) miles", selected: model.radiusMiles == miles) {
                     Task { await model.setRadius(miles) }
                 }
             }
         } label: {
-            pill(model.radiusMiles.map { "\(Int($0)) mi" } ?? "Any distance",
-                 icon: "ruler", active: model.radiusMiles != nil)
+            pill(distanceLabel, icon: "location.fill",
+                 active: model.radiusMiles != nil && model.activePostcode != nil)
         }
+    }
+
+    private var distanceLabel: String {
+        guard let miles = model.radiusMiles else { return "Any distance" }
+        if let postcode = model.activePostcode { return "\(Int(miles)) mi · \(postcode)" }
+        return model.locationDenied ? "Location off" : "Within \(Int(miles)) mi"
     }
 
     @ViewBuilder

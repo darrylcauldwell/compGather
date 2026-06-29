@@ -40,7 +40,7 @@ struct EventsView: View {
             }
             .navigationTitle("Events")
             .navigationBarTitleDisplayMode(.inline)
-            .task { if model.events.isEmpty { await model.load() } }
+            .task { await model.start() }
         }
     }
 

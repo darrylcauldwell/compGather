@@ -44,8 +44,8 @@ enum DateScope: String, CaseIterable, Identifiable {
     }
 }
 
-/// Distance radius options (miles) for "near me". `nil` == any distance.
-let radiusOptions: [Double] = [10, 25, 50, 100]
+/// Distance radius options (miles). `nil` == any distance.
+let radiusOptions: [Double] = [10, 25, 30, 50, 100]
 
 /// Drives the events list: holds the current filter, loads from the API, and
 /// resolves "near me" via the device location + server reverse-geocode.
@@ -61,11 +61,16 @@ final class EventsViewModel {
     var dateScope: DateScope = .upcoming
     /// A specific chosen day; when set it overrides `dateScope`.
     var customDate: Date?
-    /// Selected radius in miles; nil == any distance.
-    var radiusMiles: Double?
+    /// Selected radius in miles; nil == any distance. Defaults to 30 on launch.
+    var radiusMiles: Double? = defaultRadiusMiles
+    /// True if the device location was requested but unavailable/denied.
+    var locationDenied = false
+
+    static let defaultRadiusMiles: Double = 30
 
     private let api: APIClient
     private let location: LocationManager
+    private var didStart = false
 
     init(api: APIClient = APIClient(), location: LocationManager = LocationManager()) {
         self.api = api
@@ -119,33 +124,39 @@ final class EventsViewModel {
     /// True if any non-default date filter is active.
     var dateFilterActive: Bool { customDate != nil || dateScope != .upcoming }
 
-    func setRadius(_ miles: Double?) async {
-        radiusMiles = miles
-        filter.maxDistance = miles
+    /// First appearance: auto-acquire location, apply the default radius, load.
+    func start() async {
+        if !didStart {
+            didStart = true
+            filter.maxDistance = radiusMiles
+            await acquireLocation()
+        }
         await load()
     }
 
-    /// Use the device location: resolve a postcode, sort by distance, reload.
-    func useMyLocation() async {
-        isLoading = true
-        errorMessage = nil
+    /// Change the distance radius (nil == any). Acquires location on demand.
+    func setRadius(_ miles: Double?) async {
+        radiusMiles = miles
+        filter.maxDistance = miles
+        if miles != nil && activePostcode == nil {
+            await acquireLocation()
+        }
+        await load()
+    }
+
+    /// Best-effort device location → postcode (server-side reverse geocode).
+    private func acquireLocation() async {
         do {
             let coord = try await location.currentCoordinate()
             let postcode = try await api.reverseGeocode(latitude: coord.latitude, longitude: coord.longitude)
             filter.postcode = postcode
             activePostcode = postcode
-            await load()
+            locationDenied = false
         } catch {
-            isLoading = false
-            errorMessage = "Couldn't use your location. Check location permission in Settings."
+            // No location: the distance filter is inert without a postcode, so
+            // all events still show. Flag it for the UI.
+            activePostcode = nil
+            locationDenied = true
         }
-    }
-
-    func clearLocation() async {
-        filter.postcode = nil
-        filter.maxDistance = nil
-        activePostcode = nil
-        radiusMiles = nil
-        await load()
     }
 }
