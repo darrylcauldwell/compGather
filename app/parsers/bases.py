@@ -214,8 +214,7 @@ class TribeEventsParser(SingleVenueParser):
             if self.USE_START_DATE:
                 params["start_date"] = date.today().isoformat()
 
-            resp = await client.get(api_url, params=params)
-            resp.raise_for_status()
+            resp = await self._fetch_with_retry(client, api_url, params=params)
             data = resp.json()
 
             for ev in data.get("events", []):
@@ -235,8 +234,7 @@ class TribeEventsParser(SingleVenueParser):
                 next_url = data.get("next_rest_url")
                 if not next_url:
                     break
-                resp = await client.get(next_url)
-                resp.raise_for_status()
+                resp = await self._fetch_with_retry(client, next_url)
                 data = resp.json()
                 for ev in data.get("events", []):
                     comp = self._parse_tribe_event(ev)
