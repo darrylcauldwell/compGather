@@ -8,9 +8,9 @@ struct EventsView: View {
     @State private var model: EventsViewModel
     @Query private var favourites: [Favourite]
 
-    init(title: String = "Events", eventType: String? = nil) {
+    init(title: String = "Events", eventType: String? = nil, spectator: Bool? = nil) {
         self.title = title
-        _model = State(initialValue: EventsViewModel(baseEventType: eventType))
+        _model = State(initialValue: EventsViewModel(baseEventType: eventType, baseSpectator: spectator))
     }
 
     private var favouriteIDs: Set<Int> { Set(favourites.map(\.competitionId)) }

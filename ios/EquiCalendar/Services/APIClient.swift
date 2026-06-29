@@ -4,6 +4,7 @@ import Foundation
 struct EventFilter: Equatable, Sendable {
     var discipline: String?
     var eventType: String?
+    var spectator: Bool?
     var postcode: String?
     var maxDistance: Double?
     var dateFrom: Date?
@@ -13,6 +14,7 @@ struct EventFilter: Equatable, Sendable {
         var items: [URLQueryItem] = []
         if let d = discipline, !d.isEmpty { items.append(.init(name: "discipline", value: d)) }
         if let t = eventType, !t.isEmpty { items.append(.init(name: "event_type", value: t)) }
+        if let s = spectator { items.append(.init(name: "spectator", value: s ? "true" : "false")) }
         if let p = postcode, !p.isEmpty { items.append(.init(name: "postcode", value: p)) }
         if let m = maxDistance { items.append(.init(name: "max_distance", value: String(m))) }
         if let f = dateFrom { items.append(.init(name: "date_from", value: Self.day.string(from: f))) }

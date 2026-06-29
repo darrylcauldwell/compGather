@@ -8,7 +8,7 @@ struct RootView: View {
                 EventsView(title: "Compete", eventType: nil)
             }
             Tab("Watch", systemImage: "binoculars") {
-                EventsView(title: "Watch", eventType: "show")
+                EventsView(title: "Watch", spectator: true)
             }
             Tab("Explore", systemImage: "map") {
                 VenuesView()
