@@ -1,24 +1,27 @@
 import SwiftUI
 
-/// Formats an event's date range for display, e.g. "15 Mar" or "15–18 Mar 2026".
+/// Formats an event's date range for display: "18 Jun 2026" (single day),
+/// "16–18 Jun 2026" (same month) or "28 Jun – 2 Jul 2026" (spanning months).
 enum EventFormatting {
     private static let display: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = .current
-        f.setLocalizedDateFormatFromTemplate("d MMM yyyy")
-        return f
+        let f = DateFormatter(); f.locale = .current
+        f.setLocalizedDateFormatFromTemplate("d MMM yyyy"); return f
     }()
-
     private static let dayMonth: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = .current
-        f.setLocalizedDateFormatFromTemplate("d MMM")
-        return f
+        let f = DateFormatter(); f.locale = .current
+        f.setLocalizedDateFormatFromTemplate("d MMM"); return f
+    }()
+    private static let dayOnly: DateFormatter = {
+        let f = DateFormatter(); f.locale = .current
+        f.setLocalizedDateFormatFromTemplate("d"); return f
     }()
 
     static func dateText(start: Date?, end: Date?) -> String {
         guard let start else { return "" }
         guard let end, end != start else { return display.string(from: start) }
+        if Calendar.current.isDate(start, equalTo: end, toGranularity: .month) {
+            return "\(dayOnly.string(from: start))–\(display.string(from: end))"
+        }
         return "\(dayMonth.string(from: start)) – \(display.string(from: end))"
     }
 }
@@ -44,12 +47,15 @@ struct TagBadge: View {
 }
 
 /// A single event rendered as a floating Liquid Glass card.
+///
+/// Meta is laid out on separate rows (venue + distance share a row) so long
+/// names, date ranges, and disciplines never wrap awkwardly.
 struct EventCard: View {
     let competition: Competition
     var isFavourite: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .top) {
                 Text(competition.name)
                     .font(AppTypography.cardTitle)
@@ -61,24 +67,38 @@ struct EventCard: View {
                         .font(AppTypography.cardMeta)
                 }
             }
+            .padding(.bottom, 2)
 
-            Label(competition.venueName, systemImage: "mappin.and.ellipse")
-                .font(AppTypography.cardBody)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-
+            // Venue (left, truncates) + distance (right) on one row.
             HStack(spacing: 8) {
-                TagBadge(
-                    text: EventFormatting.dateText(start: competition.startDate, end: competition.endDate),
-                    systemImage: "calendar",
-                    tint: .primary
-                )
-                if let discipline = competition.discipline {
-                    TagBadge(text: discipline, systemImage: "figure.equestrian.sports", tint: .accentColor)
-                }
+                Label(competition.venueName, systemImage: "mappin.and.ellipse")
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 if let distance = competition.distanceMiles {
-                    TagBadge(text: "\(Int(distance.rounded())) mi", systemImage: "location.fill", tint: .secondary)
+                    Spacer(minLength: 8)
+                    Label("\(Int(distance.rounded())) mi", systemImage: "location.fill")
+                        .lineLimit(1)
+                        .layoutPriority(1)
                 }
+            }
+            .font(AppTypography.cardMeta)
+            .foregroundStyle(.secondary)
+
+            // Date on its own row.
+            Label(
+                EventFormatting.dateText(start: competition.startDate, end: competition.endDate),
+                systemImage: "calendar"
+            )
+            .font(AppTypography.cardMeta)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+
+            // Discipline on its own row.
+            if let discipline = competition.discipline {
+                Label(discipline, systemImage: "figure.equestrian.sports")
+                    .font(AppTypography.cardMeta)
+                    .foregroundStyle(.tint)
+                    .lineLimit(1)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

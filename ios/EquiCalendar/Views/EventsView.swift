@@ -30,20 +30,8 @@ struct EventsView: View {
                 }
             }
             .safeAreaInset(edge: .top, spacing: 8) {
-                VStack(spacing: 8) {
-                    DisciplineChips(
-                        disciplines: model.availableDisciplines,
-                        selected: model.filter.discipline
-                    ) { discipline in
-                        Task { await model.setDiscipline(discipline) }
-                    }
-                    NearMeBar(
-                        activePostcode: model.activePostcode,
-                        onUseLocation: { Task { await model.useMyLocation() } },
-                        onClear: { Task { await model.clearLocation() } }
-                    )
-                }
-                .padding(.vertical, 8)
+                FilterBar(model: model)
+                    .padding(.vertical, 8)
             }
             .navigationTitle("Events")
             .task { if model.events.isEmpty { await model.load() } }
