@@ -7,5 +7,5 @@ enum AppConfig {
     /// Point this at your production EquiCalendar instance. For local
     /// development against the Docker stack use `http://localhost:8001`
     /// (and allow arbitrary loads in a debug build if needed).
-    static let baseURL = URL(string: "https://equicalendar.darrylcauldwell.com")!
+    static let baseURL = URL(string: "https://equicalendar.dreamfold.dev")!
 }

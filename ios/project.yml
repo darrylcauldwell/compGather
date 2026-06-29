@@ -5,6 +5,9 @@ options:
     iOS: "26.0"
   createIntermediateGroups: true
 
+attributes:
+  LastUpgradeCheck: "2650"
+
 settings:
   base:
     SWIFT_VERSION: "6.2"
@@ -13,7 +16,14 @@ settings:
     VERSIONING_SYSTEM: apple-generic
     GENERATE_INFOPLIST_FILE: YES
     TARGETED_DEVICE_FAMILY: "1"
-    CODE_SIGNING_ALLOWED: NO
+    # Signing (baked in so it survives `xcodegen generate`)
+    DEVELOPMENT_TEAM: N6BK2WX94Z
+    CODE_SIGN_STYLE: Automatic
+    # Xcode 26 "recommended settings"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+    GCC_NO_COMMON_BLOCKS: YES
 
 targets:
   EquiCalendar:
@@ -27,6 +37,7 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UIRequiresFullScreen: YES
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Your location is used to show equestrian events near you and sort them by distance."
         INFOPLIST_KEY_NSCalendarsWriteOnlyAccessUsageDescription: "Lets you add events to your calendar."
 

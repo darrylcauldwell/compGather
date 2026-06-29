@@ -18,11 +18,16 @@ struct Competition: Identifiable, Codable, Sendable, Hashable {
     let longitude: Double?
     let distanceMiles: Double?
     let eventType: String
-    let tags: [String]
     let url: String?
 
+    /// Backed by an optional so the app tolerates a backend that predates the
+    /// `tags` field (decodes to [] when absent).
+    private let tagsField: [String]?
+    var tags: [String] { tagsField ?? [] }
+
     enum CodingKeys: String, CodingKey {
-        case id, name, discipline, latitude, longitude, tags, url
+        case id, name, discipline, latitude, longitude, url
+        case tagsField = "tags"
         case dateStart = "date_start"
         case dateEnd = "date_end"
         case venueName = "venue_name"
