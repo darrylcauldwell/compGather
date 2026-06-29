@@ -4,11 +4,11 @@ import SwiftUI
 struct RootView: View {
     var body: some View {
         TabView {
-            Tab("Events", systemImage: "calendar") {
-                EventsView(title: "Events", eventType: nil)
+            Tab("Compete", systemImage: "flag.checkered") {
+                EventsView(title: "Compete", eventType: nil)
             }
-            Tab("Shows", systemImage: "rosette") {
-                EventsView(title: "Shows", eventType: "show")
+            Tab("Watch", systemImage: "binoculars") {
+                EventsView(title: "Watch", eventType: "show")
             }
             Tab("Venues", systemImage: "map") {
                 VenuesView()
