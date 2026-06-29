@@ -38,7 +38,20 @@ SCAN_TOTAL = Counter(
 
 SCAN_COMPETITIONS_FOUND = Gauge(
     "equicalendar_scan_competitions_found",
-    "Number of competitions found in last scan",
+    "Number of NEW competitions inserted in last scan",
+    ["source_name"],
+)
+
+SCAN_EXTRACTED_EVENTS = Gauge(
+    "equicalendar_scan_extracted_events",
+    "Total events extracted (found, not just new) in the last completed scan",
+    ["source_name"],
+)
+
+SOURCE_CONSECUTIVE_ZERO_SCANS = Gauge(
+    "equicalendar_source_consecutive_zero_scans",
+    "Consecutive completed scans that extracted zero events "
+    "(rising value indicates a likely broken or stale source)",
     ["source_name"],
 )
 

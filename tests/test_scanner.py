@@ -3,15 +3,17 @@
 These tests verify the scan pipeline logic using mocked external services.
 """
 
-from datetime import date
+import logging
+from datetime import date, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import pytest_asyncio
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.database import Base
-from app.models import Competition, Source, Venue
+from app.models import Competition, Scan, Source, Venue
 from app.schemas import ExtractedCompetition
 
 
@@ -85,3 +87,97 @@ async def test_scan_creates_competitions(db_session):
     assert venue.latitude == 51.5
     assert venue.longitude == -0.1
     assert venue.postcode == "SW1A 1AA"
+
+
+@pytest_asyncio.fixture
+async def scan_env():
+    """In-memory DB with the scanner's global session factory patched to it."""
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    with patch("app.services.scanner.async_session", factory):
+        yield factory
+    await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_failed_scan_completes_without_crashing(scan_env):
+    """Regression for the MissingGreenlet crash: the post-scan metrics block read
+    scan.source.name, which lazy-loads after rollback in async context and raised,
+    aborting run_scan (and all failed-scan metrics). It must now complete cleanly
+    using plain locals, persisting the failed status."""
+    from app.services.scanner import run_scan
+
+    async with scan_env() as s:
+        src = Source(name="Breaky", url="https://x.example", enabled=True, parser_key="generic")
+        s.add(src)
+        await s.commit()
+        await s.refresh(src)
+        sid = src.id
+
+    mock_parser = MagicMock()
+    mock_parser.fetch_and_parse = AsyncMock(side_effect=RuntimeError("boom"))
+    with patch("app.services.scanner.get_parser", return_value=mock_parser):
+        await run_scan(sid)  # must NOT raise (previously raised MissingGreenlet)
+
+    async with scan_env() as s:
+        scan = (await s.execute(select(Scan).where(Scan.source_id == sid))).scalar_one()
+        assert scan.status == "failed"
+        assert "boom" in (scan.error or "")
+
+
+@pytest.mark.asyncio
+async def test_consecutive_zero_extract_streak(scan_env):
+    from app.services.scanner import _consecutive_zero_extract_streak
+
+    async with scan_env() as s:
+        src = Source(name="Zeroes", url="https://z.example", enabled=True)
+        s.add(src)
+        await s.commit()
+        await s.refresh(src)
+        sid = src.id
+        # Oldest -> newest: 5 found, then three zero-extract scans.
+        for comp in (5, 0, 0, 0):
+            s.add(Scan(
+                source_id=sid, status="completed",
+                started_at=datetime(2026, 1, 1), completed_at=datetime(2026, 1, 1),
+                competitions_found=0, competitions_found_comp=comp,
+                competitions_found_training=0,
+            ))
+        await s.commit()
+
+        streak = await _consecutive_zero_extract_streak(s, sid)
+    assert streak == 3
+
+
+@pytest.mark.asyncio
+async def test_threshold_warns_on_extracted_drop(scan_env, caplog):
+    """A parser that silently stops returning events is now detected — the old
+    new-insert comparison could not catch this once a source was seeded."""
+    from app.services import scanner
+
+    async with scan_env() as s:
+        src = Source(name="Dropper", url="https://d.example", enabled=True)
+        s.add(src)
+        await s.commit()
+        await s.refresh(src)
+        sid = src.id
+        prev = Scan(
+            source_id=sid, status="completed",
+            started_at=datetime(2026, 1, 1), completed_at=datetime(2026, 1, 1),
+            competitions_found=0, competitions_found_comp=50, competitions_found_training=0,
+        )
+        cur = Scan(
+            source_id=sid, status="completed",
+            started_at=datetime(2026, 1, 2), completed_at=datetime(2026, 1, 2),
+            competitions_found=0, competitions_found_comp=0, competitions_found_training=0,
+        )
+        s.add_all([prev, cur])
+        await s.commit()
+        await s.refresh(cur)
+
+        with caplog.at_level(logging.WARNING, logger="app.services.scanner"):
+            await scanner._check_scan_threshold(s, sid, cur, "Dropper", 0)
+
+    assert any("Dropper" in r.message for r in caplog.records)

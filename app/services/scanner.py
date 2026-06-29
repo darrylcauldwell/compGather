@@ -15,7 +15,9 @@ from app.metrics import (
     PARSER_ERRORS_TOTAL,
     SCAN_COMPETITIONS_FOUND,
     SCAN_DURATION_SECONDS,
+    SCAN_EXTRACTED_EVENTS,
     SCAN_TOTAL,
+    SOURCE_CONSECUTIVE_ZERO_SCANS,
     VENUE_MATCH_TOTAL,
 )
 from app.models import Competition, DisciplineAlias, Scan, Source, Venue, VenueMatchReview
@@ -213,6 +215,13 @@ async def run_scan(source_id: int, scan_id: int | None = None):
             session.add(scan)
             await session.commit()
 
+        # Resolve source identity into plain locals up-front so the metrics
+        # block below never touches scan.source: after a rollback the ORM
+        # instance is expired and a lazy load would raise MissingGreenlet in
+        # async context, silently dropping every failed-scan metric.
+        source_name = f"source_{source_id}"
+        parser_key = "unknown"
+        extracted_total = 0
         try:
             source = (
                 await session.execute(
@@ -225,6 +234,8 @@ async def run_scan(source_id: int, scan_id: int | None = None):
                 scan.error = f"Source {source_id} not found or not enabled"
                 scan.completed_at = datetime.utcnow()
             else:
+                source_name = source.name
+                parser_key = source.parser_key or "generic"
                 count, match_counts, scan_comp_count, scan_training_count = await _scan_source(session, source)
                 scan.status = "completed"
                 scan.competitions_found = count
@@ -232,6 +243,7 @@ async def run_scan(source_id: int, scan_id: int | None = None):
                 scan.competitions_found_training = scan_training_count
                 scan.venue_match_summary = json.dumps(match_counts)
                 scan.completed_at = datetime.utcnow()
+                extracted_total = scan_comp_count + scan_training_count
         except Exception as e:
             logger.exception("Scan failed for source %d", source_id)
             # Roll back any broken transaction (e.g. "database is locked") so
@@ -241,39 +253,65 @@ async def run_scan(source_id: int, scan_id: int | None = None):
             scan.error = str(e)[:2000]
             scan.completed_at = datetime.utcnow()
             PARSER_ERRORS_TOTAL.labels(
-                source_name=f"source_{source_id}",
+                source_name=source_name,
                 error_type=type(e).__name__,
             ).inc()
 
         await session.commit()
         logger.info("Scan %d finished: %s (%d found)", scan.id, scan.status, scan.competitions_found)
 
-        # Record metrics
+        # Record metrics — plain locals only (never scan.source, see above).
         duration = time.monotonic() - start_time
-        SCAN_DURATION_SECONDS.labels(
-            source_name=scan.source.name if scan.source else f"source_{source_id}",
-            parser_key=scan.source.parser_key or "generic" if scan.source else "unknown",
-        ).observe(duration)
-        SCAN_TOTAL.labels(
-            source_name=scan.source.name if scan.source else f"source_{source_id}",
-            status=scan.status,
-        ).inc()
-        SCAN_COMPETITIONS_FOUND.labels(
-            source_name=scan.source.name if scan.source else f"source_{source_id}",
-        ).set(scan.competitions_found)
+        SCAN_DURATION_SECONDS.labels(source_name=source_name, parser_key=parser_key).observe(duration)
+        SCAN_TOTAL.labels(source_name=source_name, status=scan.status).inc()
+        SCAN_COMPETITIONS_FOUND.labels(source_name=source_name).set(scan.competitions_found)
+        if scan.status == "completed":
+            SCAN_EXTRACTED_EVENTS.labels(source_name=source_name).set(extracted_total)
 
-        # Post-scan: check for significant drop in competition count
+        # Post-scan: detect likely parser breakage (drop in extracted events, or
+        # repeated zero-event scans). Best-effort; never fail the scan over it.
         if scan.status == "completed" and source_id:
             try:
-                await _check_scan_threshold(session, source_id, scan)
+                await _check_scan_threshold(session, source_id, scan, source_name, extracted_total)
             except Exception as e:
                 logger.warning("Scan threshold check failed: %s", e)
 
 
+# A completed scan extracting zero events is normal for a genuinely empty
+# source, but this many consecutive zero-extract scans usually means a broken
+# parser or a source that has gone stale.
+ZERO_EXTRACT_ALERT_STREAK = 3
+# Warn when a scan extracts less than this fraction of the previous scan's total.
+SCAN_DROP_FRACTION = 0.5
+
+
 async def _check_scan_threshold(
-    session: AsyncSession, source_id: int, current_scan: Scan
+    session: AsyncSession,
+    source_id: int,
+    current_scan: Scan,
+    source_name: str,
+    current_extracted: int,
 ) -> None:
-    """Warn if this scan found significantly fewer competitions than the previous one."""
+    """Surface likely parser breakage: a drop in extracted events or repeated zeros.
+
+    Compares *total events extracted* (found, not just newly inserted). The
+    new-insert count collapses to ~0 on every rescan once a source is seeded, so
+    the previous comparison could never detect a parser that had silently started
+    returning nothing — the exact failure this guard is meant to catch.
+    """
+    # Repeated zero-extract scans: a rising streak signals a broken/stale source.
+    if current_extracted == 0:
+        streak = await _consecutive_zero_extract_streak(session, source_id)
+        SOURCE_CONSECUTIVE_ZERO_SCANS.labels(source_name=source_name).set(streak)
+        if streak >= ZERO_EXTRACT_ALERT_STREAK:
+            logger.warning(
+                "Source '%s' extracted 0 events for %d consecutive scans — "
+                "likely broken parser or stale source",
+                source_name, streak,
+            )
+    else:
+        SOURCE_CONSECUTIVE_ZERO_SCANS.labels(source_name=source_name).set(0)
+
     prev = (
         await session.execute(
             select(Scan)
@@ -286,20 +324,35 @@ async def _check_scan_threshold(
             .limit(1)
         )
     ).scalar_one_or_none()
-
-    if not prev or prev.competitions_found == 0:
+    if not prev:
         return
 
-    current = current_scan.competitions_found
-    previous = prev.competitions_found
-    if current < previous * 0.5:
-        source = await session.get(Source, source_id)
-        source_name = source.name if source else f"id={source_id}"
+    previous_extracted = (prev.competitions_found_comp or 0) + (prev.competitions_found_training or 0)
+    if previous_extracted > 0 and current_extracted < previous_extracted * SCAN_DROP_FRACTION:
         logger.warning(
-            "Source '%s' returned %d competitions, down from %d (previous scan) — "
+            "Source '%s' extracted %d events, down from %d (previous scan) — "
             "possible parser issue",
-            source_name, current, previous,
+            source_name, current_extracted, previous_extracted,
         )
+
+
+async def _consecutive_zero_extract_streak(session: AsyncSession, source_id: int) -> int:
+    """Count the most-recent run of completed scans that extracted zero events."""
+    rows = (
+        await session.execute(
+            select(Scan.competitions_found_comp, Scan.competitions_found_training)
+            .where(Scan.source_id == source_id, Scan.status == "completed")
+            .order_by(Scan.id.desc())
+            .limit(20)
+        )
+    ).all()
+    streak = 0
+    for comp, training in rows:
+        if (comp or 0) + (training or 0) == 0:
+            streak += 1
+        else:
+            break
+    return streak
 
 
 async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict[str, int], int, int]:
