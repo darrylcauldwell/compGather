@@ -96,6 +96,10 @@ VALID_TAGS = {
     "series": _SERIES_SLUGS,
     # BS class series (zero or more; from series_seeds.json)
     "class": _CLASS_SLUGS,
+    # Tier (at most one) — the affiliation/spectator ladder powering the Compete
+    # "Level" filter (unaffiliated/affiliated/elite) and the Watch "Type" filter
+    # (elite/county-show/national).
+    "tier": ["elite", "county-show", "national", "affiliated", "unaffiliated"],
 }
 
 
@@ -301,6 +305,29 @@ def extract_tags(
         matched_classes = [c for c in matched_classes if c != "foxhunter"]
     for key in matched_classes:
         tags.append(f"class:{key}")
+
+    # 11. Tier (at most one) — affiliation/spectator ladder, most significant
+    # first: elite (FEI international / 3*+) > county show > national show >
+    # affiliated (governing body) > unaffiliated.
+    has_affiliation = any(
+        t.startswith("affiliation:") and t != "affiliation:unaffiliated" for t in tags
+    )
+    if re.search(
+        r"\b(?:csio?|cdio?|ccio?|chio?)\b|[3-5]\s*\*|world cup|nations cup|global champions",
+        combined,
+    ):
+        tags.append("tier:elite")
+    elif _matches(combined, ["county show", "agricultural show", "agricultural", "country fair", "county fair"]):
+        tags.append("tier:county-show")
+    elif _matches(combined, [
+        "national championship", "national final", "national show",
+        "national series", "horse of the year", "hoys",
+    ]):
+        tags.append("tier:national")
+    elif has_affiliation:
+        tags.append("tier:affiliated")
+    elif _matches(combined, ["unaffiliated", "unaff"]):
+        tags.append("tier:unaffiliated")
 
     # Drop anything not in the vocabulary (defensive; drift is caught by tests).
     return [tag for tag in tags if validate_tag(tag)]

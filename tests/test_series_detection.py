@@ -65,3 +65,31 @@ class TestVocabulary:
             "series:blue-chip", "class:foxhunter", "class:junior-foxhunter",
             "class:british-novice", "special:qualifier",
         ])
+
+
+class TestTier:
+    def test_elite_from_international_code_or_star(self):
+        assert "tier:elite" in _tags("CSI3* Grand Prix")
+        assert "tier:elite" in _tags("Longines Global Champions Tour")
+        assert "tier:elite" in _tags("CDIO Nations Cup")
+
+    def test_county_show(self):
+        assert "tier:county-show" in _tags("Nottinghamshire County Show")
+        assert "tier:county-show" in _tags("Great Yorkshire Agricultural Show")
+
+    def test_national(self):
+        assert "tier:national" in _tags("Horse of the Year Show")
+        assert "tier:national" in _tags("Pony Club National Championship")
+
+    def test_affiliated_when_governing_body(self):
+        tags = _tags("British Dressage Winter Show")  # affiliation:british-dressage
+        assert "tier:affiliated" in tags
+
+    def test_unaffiliated(self):
+        assert "tier:unaffiliated" in _tags("Unaffiliated Show Jumping")
+
+    def test_at_most_one_tier_and_elite_wins(self):
+        # Elite outranks affiliated even when a governing body is present.
+        tags = _tags("British Showjumping CSI3* International")
+        tiers = [t for t in tags if t.startswith("tier:")]
+        assert tiers == ["tier:elite"]
