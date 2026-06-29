@@ -120,11 +120,16 @@ struct EventDetailView: View {
             .buttonStyle(.glassProminent)
             .disabled(isAddingToCalendar)
 
-            Button { openInMaps() } label: {
-                Label("Open in Apple Maps", systemImage: "map")
-                    .frame(maxWidth: .infinity)
+            // Only offer "Open in Apple Maps" when we have coordinates to drop a
+            // pin — matching the map preview above. Without a location it would
+            // open Maps to nothing, which is confusing.
+            if coordinate != nil {
+                Button { openInMaps() } label: {
+                    Label("Open in Apple Maps", systemImage: "map")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.glass)
             }
-            .buttonStyle(.glass)
 
             if let urlString = competition.url, let url = URL(string: urlString) {
                 Link(destination: url) {
