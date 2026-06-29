@@ -181,3 +181,38 @@ async def test_threshold_warns_on_extracted_drop(scan_env, caplog):
             await scanner._check_scan_threshold(s, sid, cur, "Dropper", 0)
 
     assert any("Dropper" in r.message for r in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_scheduler_rotates_past_failing_source():
+    """A failing source must not monopolise the rolling queue: the scheduling
+    cursor advances on every attempt, so the next tick picks a different source.
+    Without the fix, an unscanned/failing source stays first forever."""
+    from app.services import scheduler
+
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async with factory() as s:
+        s.add_all([
+            Source(name="AAA", url="https://a.example", enabled=True),
+            Source(name="BBB", url="https://b.example", enabled=True),
+        ])
+        await s.commit()
+
+    picked: list[int] = []
+
+    async def fake_run_scan(source_id, scan_id=None):
+        # Simulate a scan that does NOT succeed (so it never sets last_scanned_at
+        # itself) — the scheduler's attempt-time stamp is what must rotate it out.
+        picked.append(source_id)
+
+    with patch("app.services.scheduler.async_session", factory), \
+         patch("app.services.scheduler.run_scan", fake_run_scan):
+        await scheduler._run_next_scan()
+        await scheduler._run_next_scan()
+
+    await engine.dispose()
+    assert len(picked) == 2
+    assert picked[0] != picked[1]  # rotated to the other source, not stuck on the first

@@ -86,12 +86,18 @@ async def _run_next_scan():
             logger.debug("Source %s already has a pending/running scan, skipping", source.name)
             return
 
+        prev_scanned = source.last_scanned_at
         scan = Scan(source_id=source.id, status="pending")
         session.add(scan)
+        # Advance the scheduling cursor at ATTEMPT time (the scanner also sets it
+        # again on success). Otherwise a permanently-failing source keeps
+        # last_scanned_at NULL/old, stays first in the queue, and is re-picked
+        # every tick — starving every other source.
+        source.last_scanned_at = datetime.utcnow()
         await session.commit()
         scan_id = scan.id
 
-    logger.info("Rolling scan: %s (last scanned %s)", source.name, source.last_scanned_at)
+    logger.info("Rolling scan: %s (last scanned %s)", source.name, prev_scanned)
     await run_scan(source.id, scan_id=scan_id)
 
 
