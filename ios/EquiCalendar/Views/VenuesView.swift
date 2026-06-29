@@ -35,7 +35,7 @@ struct VenuesView: View {
                     map
                 }
             }
-            .navigationTitle("Venues")
+            .navigationTitle("Explore")
             .navigationBarTitleDisplayMode(.inline)
             .task { if venues.isEmpty { await load() } }
         }

@@ -10,7 +10,7 @@ struct RootView: View {
             Tab("Watch", systemImage: "binoculars") {
                 EventsView(title: "Watch", eventType: "show")
             }
-            Tab("Venues", systemImage: "map") {
+            Tab("Explore", systemImage: "map") {
                 VenuesView()
             }
             Tab("Favourites", systemImage: "star") {
