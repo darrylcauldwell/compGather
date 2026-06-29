@@ -83,13 +83,13 @@
   },
 
   "class_series": {
-    "_note": "BS class series live in the CLASS list, not the event title (e.g. 'Class 8: Trailblazers Qualifier', 'Junior Foxhunter'). Detect from competitions.classes; many double as qualifiers — pair with stage_flags.qualifier. Match 'junior/senior foxhunter' before bare 'foxhunter'.",
+    "_note": "BS class series live in the CLASS list, not the event title (e.g. 'Class 8: Trailblazers Qualifier', 'Junior Foxhunter'). Detect from competitions.classes; many double as qualifiers — pair with stage_flags.qualifier. Match 'junior/senior foxhunter' before bare 'foxhunter'. Junior sections run one height (10cm) below the senior/standard class.",
     "british-novice":   { "display": "British Novice",   "keywords": ["british novice"],   "height": "0.90m" },
-    "discovery":        { "display": "Discovery",        "keywords": ["discovery"],        "height": "1.00m" },
-    "newcomers":        { "display": "Newcomers",        "keywords": ["newcomers"],        "height": "1.10m" },
-    "foxhunter":        { "display": "Foxhunter",        "keywords": ["foxhunter"],        "height": "1.20m" },
-    "junior-foxhunter": { "display": "Junior Foxhunter", "keywords": ["junior foxhunter"], "note": "a specific aim for junior riders" },
-    "senior-foxhunter": { "display": "Senior Foxhunter", "keywords": ["senior foxhunter"] }
+    "discovery":        { "display": "Discovery",        "keywords": ["discovery"],        "height": "1.00m", "deferred": true, "note": "bare 'discovery' is a common word — precision risk; enable after audit / class-context rule" },
+    "newcomers":        { "display": "Newcomers",        "keywords": ["newcomers"],        "height": "1.10m", "deferred": true, "note": "ambiguous bare word — precision risk; enable after audit" },
+    "foxhunter":        { "display": "Foxhunter",        "keywords": ["foxhunter"],        "height": "1.20m", "note": "standard/senior height" },
+    "junior-foxhunter": { "display": "Junior Foxhunter", "keywords": ["junior foxhunter"], "height": "1.10m", "note": "10cm below senior" },
+    "senior-foxhunter": { "display": "Senior Foxhunter", "keywords": ["senior foxhunter"], "height": "1.20m" }
   },
 
   "blacklist": {

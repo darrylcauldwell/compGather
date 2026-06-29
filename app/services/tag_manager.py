@@ -13,6 +13,7 @@ the filter never disagree.
 import json
 import re
 from functools import lru_cache
+from pathlib import Path
 from typing import Optional
 
 from app.seed_data import get_discipline_seeds
@@ -26,6 +27,45 @@ def _slug(name: str) -> str:
 # Discipline vocabulary is DERIVED from the seed data (the documented single
 # source of truth) so it can never drift out of sync with the classifier.
 _DISCIPLINE_SLUGS = [_slug(d) for d in get_discipline_seeds()]
+
+
+@lru_cache(maxsize=1)
+def _series_seeds() -> dict:
+    """Load the named-series / class taxonomy from app/series_seeds.json."""
+    path = Path(__file__).resolve().parent.parent / "series_seeds.json"
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _name_series_rules() -> dict:
+    """Series detected from event text (name + description + class list),
+    precision-gated. Excludes source/tag-detected and deferred entries."""
+    return {
+        k: r
+        for k, r in _series_seeds().get("series", {}).items()
+        if not k.startswith("_") and r.get("detect") == "name" and not r.get("deferred")
+    }
+
+
+def _class_series_rules() -> dict:
+    """BS class series detected from text (excludes deferred / ambiguous ones)."""
+    return {
+        k: r
+        for k, r in _series_seeds().get("class_series", {}).items()
+        if not k.startswith("_") and not r.get("deferred")
+    }
+
+
+# Tag vocabularies for the two new namespaces (all non-meta keys are valid even
+# if currently deferred from detection, so a future enable can't be rejected).
+_SERIES_SLUGS = [
+    k for k, r in _series_seeds().get("series", {}).items()
+    if not k.startswith("_") and r.get("detect") == "name"
+]
+_CLASS_SLUGS = [k for k in _series_seeds().get("class_series", {}) if not k.startswith("_")]
 
 # Canonical tag vocabulary
 VALID_TAGS = {
@@ -52,6 +92,10 @@ VALID_TAGS = {
         "qualifier", "invitational", "breed-specific",
         "mountain-and-moorland", "native-breed", "long-format",
     ],
+    # Named series / pathways (zero or more; from series_seeds.json)
+    "series": _SERIES_SLUGS,
+    # BS class series (zero or more; from series_seeds.json)
+    "class": _CLASS_SLUGS,
 }
 
 
@@ -232,6 +276,32 @@ def extract_tags(
     if _matches(combined, ["100km", "160km", "long format", "multi-day", "multi day"]):
         tags.append("special:long-format")
 
+    # 9. Named series (zero or more) — precision-gated from series_seeds.json:
+    # a distinctive keyword must match AND any require/exclude rules must pass
+    # (e.g. "Sunshine Tour" only with "qualifier" and not "csi").
+    for key, rule in _name_series_rules().items():
+        if not _matches(combined, [k.lower() for k in rule.get("keywords", [])]):
+            continue
+        require = rule.get("require_keywords")
+        if require and not _matches(combined, [k.lower() for k in require]):
+            continue
+        exclude = rule.get("exclude_keywords")
+        if exclude and _matches(combined, [k.lower() for k in exclude]):
+            continue
+        tags.append(f"series:{key}")
+
+    # 10. BS class series (zero or more). Junior/Senior take precedence over the
+    # bare "foxhunter" class, whose keyword their names also contain.
+    matched_classes = [
+        key
+        for key, rule in _class_series_rules().items()
+        if _matches(combined, [k.lower() for k in rule.get("keywords", [])])
+    ]
+    if {"junior-foxhunter", "senior-foxhunter"} & set(matched_classes):
+        matched_classes = [c for c in matched_classes if c != "foxhunter"]
+    for key in matched_classes:
+        tags.append(f"class:{key}")
+
     # Drop anything not in the vocabulary (defensive; drift is caught by tests).
     return [tag for tag in tags if validate_tag(tag)]
 
@@ -248,6 +318,13 @@ _DISPLAY_OVERRIDES = {
     "bsps": "BSPS",
     "bsha": "BSHA",
     "nsea": "NSEA",
+    "bs-club": "BS Club",
+    "blue-chip": "Blue Chip",
+    "just-for-schools": "Just for Schools",
+    "sunshine-tour-uk": "Sunshine Tour (UK)",
+    "british-novice": "British Novice",
+    "junior-foxhunter": "Junior Foxhunter",
+    "senior-foxhunter": "Senior Foxhunter",
 }
 
 
