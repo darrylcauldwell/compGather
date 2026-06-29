@@ -42,11 +42,12 @@ logger = logging.getLogger(__name__)
 # Disambiguated venue name pattern: "Brook Farm (TQ12)", "Rectory Farm (GL7)"
 _DISAMBIGUATED_RE = re.compile(r"\([A-Z]{1,2}\d[A-Z\d]?\)$")
 
-# A real competition spans at most a couple of weeks; an over-long span means the
-# entry is a programme / league / badge scheme, not a single datable event. These
-# are hidden from listings (they otherwise dominate the top of date-sorted lists
-# with a stale start date — e.g. a 2024→2030 club "Badges" scheme).
-MAX_EVENT_SPAN_DAYS = 90
+# An over-long span means the entry is a multi-season programme / badge scheme,
+# not a single datable event (or even a months-long league). 120 days keeps
+# legitimate multi-month leagues/tours visible while hiding the junk that
+# otherwise dominates date-sorted lists with a stale start date (e.g. a
+# 2024→2030 club "Badges" scheme).
+MAX_EVENT_SPAN_DAYS = 120
 
 
 # Canonical source definitions — seeded into the sources table at startup.

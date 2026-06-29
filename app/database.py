@@ -201,7 +201,7 @@ async def init_db():
             await conn.execute(text(
                 "UPDATE competitions SET hidden = 1 "
                 "WHERE date_end IS NOT NULL "
-                "AND julianday(date_end) - julianday(date_start) > 90"
+                "AND julianday(date_end) - julianday(date_start) > 120"
             ))
             logger.info("Migration: hid long-span programme entries")
         except Exception:
