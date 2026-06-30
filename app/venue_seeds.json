@@ -5421,8 +5421,6 @@
         "one day event",
         "eventer trial",
         "express eventing",
-        "eventers challenge",
-        "eventer challenge",
         "horse trial",
         "horse trials"
       ],
@@ -5464,6 +5462,13 @@
         "jws"
       ],
       "description": "Style-judged jumping (NSEA) — like arena eventing but scored on style"
+    },
+    "Eventers Challenge": {
+      "aliases": [
+        "eventers challenge",
+        "eventer challenge"
+      ],
+      "description": "Arena eventing-style competition (NSEA), often abbreviated 'EC'"
     },
     "Working Hunter": {
       "aliases": [

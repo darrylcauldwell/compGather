@@ -286,6 +286,22 @@ def _discipline_tags(
     return [f"discipline:{s}" for s in found]
 
 
+def _eventer_challenge_tags(name: str, source_affiliation: Optional[str]) -> list[str]:
+    """NSEA abbreviates Eventers Challenge as 'EC'; elsewhere 'EC' means
+    Equestrian Centre. Trust 'EC' only in NSEA context AND only in the event
+    part of the title (before the '@ venue'), where the venue 'EC's live —
+    so 'EC Qualifiers @ Greenlands' matches but '... @ Bury Farm EC' doesn't.
+    The spelled-out 'eventers challenge' is handled by the normal alias scan.
+    """
+    is_nsea = source_affiliation == "nsea" or bool(re.search(r"\bnsea\b", name, re.IGNORECASE))
+    if not is_nsea:
+        return []
+    head = name.split("@", 1)[0]  # event part, before the venue
+    if re.search(r"\bEC\b", head):
+        return ["discipline:eventers-challenge"]
+    return []
+
+
 def extract_tags(
     name: str,
     description: str = "",
@@ -305,8 +321,13 @@ def extract_tags(
     combined = _normalise(name, description)
 
     # 1. Discipline(s) — the classifier's canonical result, plus any other
-    # disciplines named in the title/classes (NSEA combined events run several).
-    tags.extend(_discipline_tags(name, classes, discipline))
+    # disciplines named in the title/classes (NSEA combined events run several),
+    # plus NSEA's "EC" abbreviation for Eventers Challenge (context-gated).
+    disc_tags = _discipline_tags(name, classes, discipline)
+    for t in _eventer_challenge_tags(name, source_affiliation):
+        if t not in disc_tags:
+            disc_tags.append(t)
+    tags.extend(disc_tags)
 
     # 2. Event type — from the classifier, mapped to tag format.
     tags.append(f"type:{_EVENT_TYPE_TO_TAG.get(event_type, 'competition')}")

@@ -8,8 +8,16 @@ the discipline filter surfaces the event under every discipline it offers.
 from app.services.tag_manager import discipline_tag_slug, extract_tags
 
 
-def _disciplines(name: str, classes: list[str] | None = None, discipline: str | None = None) -> set[str]:
-    tags = extract_tags(name=name, classes=classes, discipline=discipline, event_type="competition")
+def _disciplines(
+    name: str,
+    classes: list[str] | None = None,
+    discipline: str | None = None,
+    source_affiliation: str | None = None,
+) -> set[str]:
+    tags = extract_tags(
+        name=name, classes=classes, discipline=discipline,
+        event_type="competition", source_affiliation=source_affiliation,
+    )
     return {t for t in tags if t.startswith("discipline:")}
 
 
@@ -38,8 +46,20 @@ class TestNamedFormats:
         assert "discipline:jumping-with-style" in _disciplines("JwS CHQ @ South View")
         assert "discipline:show-jumping" not in _disciplines("JwS CHQ @ South View")
 
-    def test_eventer_challenge_singular_is_eventing(self):
-        assert "discipline:eventing" in _disciplines("Mini Eventer Challenge @ Highfields")
+    def test_eventer_challenge_is_own_discipline(self):
+        # Spelled-out form, via the normal alias scan (no NSEA context needed).
+        d = _disciplines("Mini Eventer Challenge @ Highfields")
+        assert "discipline:eventers-challenge" in d
+        assert "discipline:eventing" not in d
+
+    def test_ec_abbreviation_only_in_nsea_context_before_venue(self):
+        # NSEA + "EC" before the @ venue → Eventers Challenge.
+        assert "discipline:eventers-challenge" in _disciplines("EC Qualifiers @ Greenlands", source_affiliation="nsea")
+        assert "discipline:eventers-challenge" in _disciplines("NSEA EC Champs @ Hickstead")
+        # "EC" after the @ is the venue (Equestrian Centre) — must NOT match.
+        assert "discipline:eventers-challenge" not in _disciplines("Grass Roots SJ @ Beechwood EC", source_affiliation="nsea")
+        # Not NSEA → "EC" is always the venue.
+        assert "discipline:eventers-challenge" not in _disciplines("BS Show Jumping @ Bury Farm EC")
 
     def test_combined_challenge_is_combined_training(self):
         assert "discipline:combined-training" in _disciplines("Combined Challenge Qualifier")
