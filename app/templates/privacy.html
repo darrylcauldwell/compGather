@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy - EquiCalendar{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto" style="line-height: 1.7;">
+    <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">Privacy Policy</h1>
+    <p style="color: var(--cg-text-muted); margin-bottom: 1.5rem;">Last updated: 30 June 2026</p>
+
+    <p style="margin-bottom: 1rem;">
+        EquiCalendar is a free calendar of UK equestrian competitions and events,
+        available as a website and as an iOS app. This policy explains what data
+        the app and website use and why. The short version: there is no account,
+        no login, no advertising, and no third-party tracking or analytics SDKs in
+        the iOS app. We collect as little as possible.
+    </p>
+
+    <h2 style="font-size: 1.25rem; margin: 1.5rem 0 0.5rem;">No account, no profile</h2>
+    <p style="margin-bottom: 1rem;">
+        EquiCalendar has no sign-in, no user accounts, and no user profiles. We do
+        not ask for your name, email address, or any other identifying information
+        to use the app. We do not build an advertising or marketing profile about
+        you, and we do not sell or share personal data with third parties.
+    </p>
+
+    <h2 style="font-size: 1.25rem; margin: 1.5rem 0 0.5rem;">Location</h2>
+    <p style="margin-bottom: 1rem;">
+        If you choose to use the "near me" and distance features, the app asks for
+        permission to use your location <strong>while you are using the app</strong>
+        (When In Use). Your location is requested at a coarse, approximately
+        kilometre-level accuracy &mdash; we do not need or use a precise fix.
+    </p>
+    <p style="margin-bottom: 1rem;">
+        When you use a distance feature, your approximate coordinates are sent once
+        to our server, which looks up the nearest UK postcode (using the public
+        postcodes.io service) so that events can be shown and sorted by distance.
+        This lookup is used only to answer that request: your location is
+        <strong>not stored</strong>, not logged against you, and not linked to any
+        identity or profile. If you decline the location permission, the rest of the
+        app works normally &mdash; you simply will not see distance-based sorting.
+    </p>
+
+    <h2 style="font-size: 1.25rem; margin: 1.5rem 0 0.5rem;">Calendar</h2>
+    <p style="margin-bottom: 1rem;">
+        When you tap "Add to Calendar" on an event, the app requests
+        <strong>write-only</strong> calendar access so it can add that event to your
+        calendar. This access only allows the app to add events &mdash; it cannot
+        read your existing calendar entries. We never read, collect, or transmit your
+        calendar data.
+    </p>
+
+    <h2 style="font-size: 1.25rem; margin: 1.5rem 0 0.5rem;">Saved events</h2>
+    <p style="margin-bottom: 1rem;">
+        Events you star to your Plan are stored locally on your device so they are
+        available offline. This data stays on your device and is not sent to us.
+    </p>
+
+    <h2 style="font-size: 1.25rem; margin: 1.5rem 0 0.5rem;">How the app talks to our server</h2>
+    <p style="margin-bottom: 1rem;">
+        To show you events, the app reads from our public events API at
+        <code>equicalendar.dreamfold.dev</code> over a standard encrypted HTTPS
+        connection. These are ordinary requests for public event data. As with any
+        internet service, our server may process basic technical information (such as
+        IP address) transiently to deliver responses and keep the service running and
+        secure; we do not use this to identify or track individuals.
+    </p>
+
+    <h2 style="font-size: 1.25rem; margin: 1.5rem 0 0.5rem;">No advertising or third-party tracking</h2>
+    <p style="margin-bottom: 1rem;">
+        The iOS app contains no advertising and no third-party tracking or analytics
+        SDKs. We do not use the device advertising identifier (IDFA).
+    </p>
+
+    <h2 style="font-size: 1.25rem; margin: 1.5rem 0 0.5rem;">Children</h2>
+    <p style="margin-bottom: 1rem;">
+        EquiCalendar is a general-audience events calendar and is not directed at
+        children. Because it has no account and collects no personal profile, it does
+        not knowingly collect personal information from anyone, including children.
+    </p>
+
+    <h2 style="font-size: 1.25rem; margin: 1.5rem 0 0.5rem;">Changes to this policy</h2>
+    <p style="margin-bottom: 1rem;">
+        If this policy changes, we will update the date at the top of this page.
+    </p>
+
+    <h2 style="font-size: 1.25rem; margin: 1.5rem 0 0.5rem;">Contact</h2>
+    <p style="margin-bottom: 1rem;">
+        Questions about privacy? Email
+        <a href="mailto:darryl.cauldwell@gmail.com" style="color: var(--cg-sky);">darryl.cauldwell@gmail.com</a>.
+    </p>
+</div>
+{% endblock %}

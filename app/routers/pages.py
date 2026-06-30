@@ -645,6 +645,12 @@ async def map_page(request: Request):
     return RedirectResponse(url="/venues?view=map", status_code=302)
 
 
+@router.get("/privacy")
+async def privacy_page(request: Request):
+    """Privacy policy — also used as the App Store privacy URL."""
+    return templates.TemplateResponse("privacy.html", {"request": request})
+
+
 @router.get("/admin")
 async def admin_page(request: Request, session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Source).order_by(Source.name))
