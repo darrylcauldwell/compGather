@@ -752,6 +752,9 @@ async def venues_map_api(
     start = date_from or today
     conditions = [
         Competition.hidden.is_not(True),
+        # Venue-hire listings aren't events to attend — they'd put misleading pins
+        # on the Explore map for venues with nothing else on.
+        Competition.event_type != "venue_hire",
         Venue.latitude != None,
         Venue.longitude != None,
         or_(Competition.date_start >= start, Competition.date_end >= start),

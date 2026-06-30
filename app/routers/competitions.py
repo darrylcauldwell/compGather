@@ -46,8 +46,13 @@ async def list_competitions(
     stmt = stmt.where(Competition.hidden.is_not(True))
 
     # Filter to a single venue (used by the app's map → Compete hand-off).
+    # Exclude venue_hire so the hand-off matches the map (which also drops it) —
+    # tapping a venue lands on its real events, not hall-hire slots.
     if venue_id is not None:
-        stmt = stmt.where(Competition.venue_id == venue_id)
+        stmt = stmt.where(
+            Competition.venue_id == venue_id,
+            Competition.event_type != "venue_hire",
+        )
 
     # Filter by tag token(s) — e.g. affiliation:nsea, series:trailblazers,
     # special:qualifier. Validated to the "<namespace>:<slug>" shape; multiple
