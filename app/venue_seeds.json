@@ -5398,9 +5398,7 @@
         "affiliated show jumping",
         "unaffiliated showjumping",
         "unaffiliated show jumping",
-        "sj",
-        "jumping with style",
-        "jws"
+        "sj"
       ],
       "description": "Jumping over fences and obstacles"
     },
@@ -5459,6 +5457,13 @@
         "arena eventing"
       ],
       "description": "Eventing competitions held in arenas"
+    },
+    "Jumping With Style": {
+      "aliases": [
+        "jumping with style",
+        "jws"
+      ],
+      "description": "Style-judged jumping (NSEA) — like arena eventing but scored on style"
     },
     "Working Hunter": {
       "aliases": [

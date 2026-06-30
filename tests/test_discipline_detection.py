@@ -32,9 +32,11 @@ class TestMultiDiscipline:
 class TestNamedFormats:
     """NSEA / riding-club formats that map to an existing discipline by alias."""
 
-    def test_jumping_with_style_is_show_jumping(self):
-        assert "discipline:show-jumping" in _disciplines("NSEA Jumping With Style Qualifier")
-        assert "discipline:show-jumping" in _disciplines("JwS CHQ @ South View")
+    def test_jumping_with_style_is_own_discipline(self):
+        # JwS is a distinct NSEA discipline (style-judged jumping), NOT show jumping.
+        assert "discipline:jumping-with-style" in _disciplines("NSEA Jumping With Style Qualifier")
+        assert "discipline:jumping-with-style" in _disciplines("JwS CHQ @ South View")
+        assert "discipline:show-jumping" not in _disciplines("JwS CHQ @ South View")
 
     def test_eventer_challenge_singular_is_eventing(self):
         assert "discipline:eventing" in _disciplines("Mini Eventer Challenge @ Highfields")
