@@ -2,6 +2,7 @@ import CloudKit
 import CoreData
 import os
 import SwiftUI
+import UIKit
 
 /// Saved events ("Plan"), stored with Core Data + CloudKit so they sync across
 /// the user's devices and can be shared, read-write, with another person.
@@ -11,8 +12,8 @@ struct FavouritesView: View {
 
     @State private var shareContext: ShareContext?
     @State private var canShare = false
-    @State private var shareError: String?
-    @State private var isPreparingShare = false
+    @State private var isBusy = false
+    @State private var message: String?
 
     private let log = Logger(subsystem: "dev.dreamfold.equicalendar", category: "Share")
 
@@ -42,12 +43,21 @@ struct FavouritesView: View {
             .toolbar {
                 if canShare {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            Task { await startShare() }
+                        Menu {
+                            Button {
+                                Task { await startShare() }
+                            } label: {
+                                Label("Share Plan", systemImage: "square.and.arrow.up")
+                            }
+                            Button {
+                                Task { await joinFromClipboard() }
+                            } label: {
+                                Label("Join a shared Plan", systemImage: "person.badge.plus")
+                            }
                         } label: {
-                            Label("Share Plan", systemImage: "person.crop.circle.badge.plus")
+                            Image(systemName: "person.2")
                         }
-                        .disabled(isPreparingShare)
+                        .disabled(isBusy)
                     }
                 }
             }
@@ -55,13 +65,13 @@ struct FavouritesView: View {
             .sheet(item: $shareContext) { context in
                 CloudShareSheet(context: context)
             }
-            .alert("Couldn't share Plan", isPresented: .init(
-                get: { shareError != nil },
-                set: { if !$0 { shareError = nil } }
+            .alert("Plan sharing", isPresented: .init(
+                get: { message != nil },
+                set: { if !$0 { message = nil } }
             )) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text(shareError ?? "")
+                Text(message ?? "")
             }
         }
     }
@@ -71,15 +81,49 @@ struct FavouritesView: View {
     }
 
     private func startShare() async {
-        isPreparingShare = true
-        defer { isPreparingShare = false }
+        isBusy = true
+        defer { isBusy = false }
         do {
             let (share, container) = try await PlanStore.shared.makeShare()
             shareContext = ShareContext(share: share, container: container)
         } catch {
             log.error("Share prepare failed: \(error.localizedDescription, privacy: .public)")
-            shareError = error.localizedDescription
+            message = "Couldn't prepare the share: \(error.localizedDescription)"
         }
+    }
+
+    /// Accept a Plan invite by reading the share link from the clipboard — the
+    /// reliable fallback for when the system share link won't open the app.
+    private func joinFromClipboard() async {
+        isBusy = true
+        defer { isBusy = false }
+        guard let clip = UIPasteboard.general.string, let url = shareURL(in: clip) else {
+            message = "Copy the invite link first (other phone → Plan → Share Plan → Copy Link), then tap \u{201C}Join a shared Plan\u{201D}."
+            return
+        }
+        do {
+            try await PlanStore.shared.acceptShare(from: url)
+            message = "Joining the shared plan — its events will appear here shortly."
+        } catch {
+            log.error("Join failed: \(error.localizedDescription, privacy: .public)")
+            message = "Couldn't join: \(error.localizedDescription)"
+        }
+    }
+
+    /// Pull an iCloud share URL out of clipboard text (which may be a whole message).
+    private func shareURL(in text: String) -> URL? {
+        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+        let range = NSRange(text.startIndex..., in: text)
+        for match in detector?.matches(in: text, range: range) ?? [] {
+            if let url = match.url, url.absoluteString.contains("icloud.com/share") {
+                return url
+            }
+        }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let url = URL(string: trimmed), url.absoluteString.contains("icloud.com/share") {
+            return url
+        }
+        return nil
     }
 }
 

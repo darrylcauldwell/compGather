@@ -183,11 +183,25 @@ final class PlanStore {
         }
         let (_, share, ckContainer) = try await container.share([plan], to: nil)
         share[CKShare.SystemFieldKey.title] = "EquiCalendar Plan" as CKRecordValue
+        // Read-write to anyone with the link, so the other person can join from a
+        // pasted link (not only a specific invited email). Persist it so the
+        // permission is actually saved to CloudKit, not just set locally.
         share.publicPermission = .readWrite
+        try await persistShare(share)
         return (share, ckContainer)
     }
 
-    /// Accept a share invitation (called from the scene delegate).
+    private func persistShare(_ share: CKShare) async throws {
+        guard let privateStore else { return }
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            container.persistUpdatedShare(share, in: privateStore) { _, error in
+                if let error { continuation.resume(throwing: error) } else { continuation.resume() }
+            }
+        }
+    }
+
+    /// Accept a share invitation (called from the scene delegate when the system
+    /// link-tap routes here).
     func accept(_ metadata: CKShare.Metadata) {
         guard let sharedStore else {
             log.error("Cannot accept share: shared store not loaded")
@@ -200,7 +214,46 @@ final class PlanStore {
         }
     }
 
-    enum PlanError: Error { case noPlan }
+    /// Accept a share from a pasted link — the reliable fallback when the system
+    /// link-tap won't route to the app. Fetches the share metadata for the URL,
+    /// then accepts it the same way.
+    func acceptShare(from url: URL) async throws {
+        let metadata = try await fetchShareMetadata(for: url)
+        accept(metadata)
+    }
+
+    private func fetchShareMetadata(for url: URL) async throws -> CKShare.Metadata {
+        try await withCheckedThrowingContinuation { continuation in
+            let operation = CKFetchShareMetadataOperation(shareURLs: [url])
+            operation.shouldFetchRootRecord = false
+            var fetched: CKShare.Metadata?
+            operation.perShareMetadataResultBlock = { _, result in
+                if case .success(let metadata) = result { fetched = metadata }
+            }
+            operation.fetchShareMetadataResultBlock = { result in
+                switch result {
+                case .success:
+                    if let fetched { continuation.resume(returning: fetched) }
+                    else { continuation.resume(throwing: PlanError.noShareAtURL) }
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+            CKContainer(identifier: Self.containerID).add(operation)
+        }
+    }
+
+    enum PlanError: LocalizedError {
+        case noPlan
+        case noShareAtURL
+
+        var errorDescription: String? {
+            switch self {
+            case .noPlan: "Couldn't find your Plan."
+            case .noShareAtURL: "That link isn't a valid Plan invite."
+            }
+        }
+    }
 
     // MARK: -
 
