@@ -1,0 +1,22 @@
+# fastlane snapshot config — App Store screenshots for EquiCalendar.
+# 6.9" display (iPhone 17 Pro Max) → 1320 x 2868 portrait PNGs.
+
+devices(["iPhone 17 Pro Max"])
+
+languages(["en-GB"])
+
+# Scheme that includes the EquiCalendarUITests target.
+scheme("EquiCalendar")
+
+output_directory("./fastlane/screenshots")
+
+# Start each run from a clean set so stale shots don't linger.
+clear_previous_screenshots(true)
+
+# Only the App Store frame matters; skip the status-bar override (iOS sim
+# already shows a clean clock on a fresh boot).
+override_status_bar(true)
+
+# The capture test handles its own waits; don't let snapshot stop on the first
+# soft failure.
+stop_after_first_error(false)

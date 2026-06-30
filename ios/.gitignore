@@ -13,5 +13,7 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/test_output/
 fastlane/README.md
+# Generated snapshot overview report (the PNGs themselves are committed)
+fastlane/screenshots/screenshots.html
 *.ipa
 *.dSYM.zip

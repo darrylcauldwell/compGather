@@ -71,4 +71,46 @@ platform :ios do
       skip_waiting_for_build_processing: true,
     )
   end
+
+  desc "Submit the existing TestFlight build for App Store review (deliver). " \
+       "Reuses the build already on TestFlight (no new binary), uploads the " \
+       "fastlane/metadata + fastlane/screenshots, and submits for review. " \
+       "Run AFTER the ASC-UI-only gates are done (App Privacy, Age Rating, " \
+       "Pricing & Availability) and the metadata/screenshots are reviewed."
+  lane :promote do
+    key = api_key
+
+    upload_to_app_store(
+      api_key: key,
+      app_identifier: APP_IDENTIFIER,
+      # Reuse the build already processed on TestFlight — don't build/upload one.
+      skip_binary_upload: true,
+      # Submit metadata + screenshots from the fastlane/ tree.
+      skip_metadata: false,
+      skip_screenshots: false,
+      # Don't prompt for the HTML preview before uploading.
+      force: true,
+      submit_for_review: true,
+      # Hold the release for manual publish after Apple approves.
+      automatic_release: false,
+      # No in-app purchases to precheck.
+      precheck_include_in_app_purchases: false,
+      submission_information: {
+        export_compliance_uses_encryption: false,
+        add_id_info_uses_idfa: false,
+        content_rights_contains_third_party_content: false,
+      },
+    )
+  end
+
+  desc "Capture App Store screenshots (6.9\" iPhone 17 Pro Max, en-GB) into " \
+       "fastlane/screenshots via the EquiCalendarUITests UI test."
+  lane :screenshots do
+    # project.yml is the source of truth — regenerate so the UI-test target exists.
+    sh("cd .. && xcodegen generate")
+    capture_screenshots(
+      project: XCODEPROJ,
+      test_without_building: false,
+    )
+  end
 end

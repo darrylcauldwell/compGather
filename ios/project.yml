@@ -16,6 +16,9 @@ settings:
     VERSIONING_SYSTEM: apple-generic
     GENERATE_INFOPLIST_FILE: YES
     TARGETED_DEVICE_FAMILY: "1"
+    # App uses only standard HTTPS (URLSession/TLS) — exempt from export
+    # compliance, so no annual self-classification doc is required.
+    INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
     # Signing (baked in so it survives `xcodegen generate`)
     DEVELOPMENT_TEAM: N6BK2WX94Z
     CODE_SIGN_STYLE: Automatic
@@ -54,3 +57,31 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: dev.dreamfold.equicalendar.tests
+
+  EquiCalendarUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: EquiCalendarUITests
+    dependencies:
+      - target: EquiCalendar
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: dev.dreamfold.equicalendar.uitests
+        TEST_TARGET_NAME: EquiCalendar
+
+schemes:
+  EquiCalendar:
+    build:
+      targets:
+        EquiCalendar: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - EquiCalendarTests
+        - EquiCalendarUITests
+    archive:
+      config: Release

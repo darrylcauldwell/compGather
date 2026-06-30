@@ -1,0 +1,1 @@
+Public, read-only UK equestrian events calendar. No account or sign-in required; the app reads a public events API.
