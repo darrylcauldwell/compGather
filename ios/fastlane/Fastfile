@@ -23,6 +23,18 @@ def api_key
 end
 
 platform :ios do
+  desc "Register the app in App Store Connect (one-time — run before the first beta)"
+  lane :register_app do
+    produce(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      app_name: "EquiCalendar",
+      language: "English (U.K.)",
+      sku: "equicalendar",
+      team_id: "N6BK2WX94Z",
+    )
+  end
+
   desc "Build and upload a new build to TestFlight"
   lane :beta do
     key = api_key
