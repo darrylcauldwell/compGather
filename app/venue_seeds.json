@@ -5408,7 +5408,8 @@
         "british dressage",
         "affiliated dressage",
         "unaffiliated dressage",
-        "bd"
+        "bd",
+        "dr"
       ],
       "description": "Precision flatwork and training"
     },

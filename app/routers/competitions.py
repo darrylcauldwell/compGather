@@ -14,6 +14,7 @@ from app.database import get_session
 from app.models import Competition, Venue
 from app.schemas import CompetitionOut
 from app.services.geocoder import geocode_postcode, reverse_geocode
+from app.services.tag_manager import discipline_tag_slug
 from app.services.user_location import annotate_distances, get_user_coords
 
 router = APIRouter(prefix="/api/competitions", tags=["competitions"])
@@ -60,7 +61,17 @@ async def list_competitions(
     has_discipline = bool(discipline and discipline.strip())
     has_event_type = bool(event_type and event_type.strip())
     if has_discipline:
-        stmt = stmt.where(Competition.discipline == discipline.strip())
+        d = discipline.strip()
+        # Match the discipline column OR the discipline: tag, so a multi-discipline
+        # event (e.g. NSEA "DR, CT and SJ") surfaces under each of its disciplines.
+        dslug = discipline_tag_slug(d)
+        if dslug:
+            stmt = stmt.where(or_(
+                Competition.discipline == d,
+                Competition.tags.like(f'%"discipline:{dslug}"%'),
+            ))
+        else:
+            stmt = stmt.where(Competition.discipline == d)
     if has_event_type:
         stmt = stmt.where(Competition.event_type == event_type.strip())
     if spectator is not None:

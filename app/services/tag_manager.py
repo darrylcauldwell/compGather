@@ -29,6 +29,14 @@ def _slug(name: str) -> str:
 _DISCIPLINE_SLUGS = [_slug(d) for d in get_discipline_seeds()]
 
 
+def discipline_tag_slug(name: str) -> Optional[str]:
+    """The discipline: tag slug for a canonical discipline name, or None if the
+    name isn't a known discipline. Used by the list/map filters to also match
+    the discipline: tag, so multi-discipline events surface under each one."""
+    slug = _slug(name.strip())
+    return slug if slug in _DISCIPLINE_SLUGS else None
+
+
 @lru_cache(maxsize=1)
 def _series_seeds() -> dict:
     """Load the named-series / class taxonomy from app/series_seeds.json."""
@@ -226,6 +234,58 @@ def _bs_class_tags(classes: list[str]) -> list[str]:
     return list(dict.fromkeys(out))
 
 
+# Aliases too ambiguous to scan for inside free-text titles. They remain valid
+# as explicit source-provided discipline values (via normalise_discipline), but
+# in a name they false-match: "Lambs BD Sale" isn't dressage, and a "Triathlon"
+# is a distinct sport from a Tetrathlon.
+_NAME_SCAN_ALIAS_DENY = {"bd", "triathlon"}
+
+
+def _discipline_tags(
+    name: str, classes: Optional[list[str]], primary: Optional[str]
+) -> list[str]:
+    """All disciplines named in the title/classes, plus the classifier's primary.
+
+    NSEA-style fixtures run several disciplines at one event (e.g. "DR, Combined
+    Training and SJ Qualifiers"), so emit a discipline: tag for each — the
+    discipline filter then surfaces the event under every discipline it offers.
+
+    Alias matches are word-boundary anchored and claimed longest-first, so a
+    specific discipline ("arena eventing") consumes its span before a generic
+    alias nested inside it ("eventing") can match the same characters.
+    """
+    text = name.lower().replace("&", " and ")
+    for c in classes or []:
+        text += " | " + (c or "").lower()
+
+    pairs: list[tuple[str, str]] = []  # (slug, alias) for known disciplines only
+    for canonical, data in get_discipline_seeds().items():
+        slug = _slug(canonical)
+        if slug not in _DISCIPLINE_SLUGS:
+            continue
+        aliases = {canonical.lower(), *(a.lower() for a in data.get("aliases", []))}
+        pairs.extend(
+            (slug, alias) for alias in aliases
+            if alias.strip() and alias not in _NAME_SCAN_ALIAS_DENY
+        )
+    pairs.sort(key=lambda p: -len(p[1]))  # longest alias first claims its span
+
+    claimed: list[tuple[int, int]] = []
+    found: list[str] = []
+    for slug, alias in pairs:
+        for m in _pattern(alias).finditer(text):
+            if not any(m.start() >= cs and m.end() <= ce for cs, ce in claimed):
+                claimed.append((m.start(), m.end()))
+                if slug not in found:
+                    found.append(slug)
+
+    if primary:
+        pslug = _slug(primary)
+        if pslug in _DISCIPLINE_SLUGS and pslug not in found:
+            found.insert(0, pslug)  # the column's discipline leads
+    return [f"discipline:{s}" for s in found]
+
+
 def extract_tags(
     name: str,
     description: str = "",
@@ -244,11 +304,9 @@ def extract_tags(
     tags: list[str] = []
     combined = _normalise(name, description)
 
-    # 1. Discipline — single source of truth: the classifier's canonical result.
-    if discipline:
-        slug = _slug(discipline)
-        if slug in VALID_TAGS["discipline"]:
-            tags.append(f"discipline:{slug}")
+    # 1. Discipline(s) — the classifier's canonical result, plus any other
+    # disciplines named in the title/classes (NSEA combined events run several).
+    tags.extend(_discipline_tags(name, classes, discipline))
 
     # 2. Event type — from the classifier, mapped to tag format.
     tags.append(f"type:{_EVENT_TYPE_TO_TAG.get(event_type, 'competition')}")

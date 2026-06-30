@@ -15,7 +15,7 @@ from sqlalchemy.orm import contains_eager, selectinload
 from app.config import settings
 from app.database import get_session
 from app.models import Competition, Scan, Source, Venue, VenueAlias
-from app.services.tag_manager import deserialize_tags, get_tag_display_name
+from app.services.tag_manager import deserialize_tags, discipline_tag_slug, get_tag_display_name
 from app.services.user_location import annotate_distances, get_nearby_venue_ids, get_user_coords
 
 templates = Jinja2Templates(directory="app/templates")
@@ -176,12 +176,16 @@ async def competitions_page(
     ))
     if date_to:
         stmt = stmt.where(Competition.date_start <= date.fromisoformat(date_to))
-    # Filter by discipline(s)
+    # Filter by discipline(s). Match the column OR the discipline: tag so a
+    # multi-discipline event surfaces under each discipline it offers.
     cleaned_disciplines = [d.strip() for d in discipline if d.strip()]
-    if len(cleaned_disciplines) == 1:
-        stmt = stmt.where(Competition.discipline == cleaned_disciplines[0])
-    elif len(cleaned_disciplines) > 1:
-        stmt = stmt.where(Competition.discipline.in_(cleaned_disciplines))
+    if cleaned_disciplines:
+        disc_clauses = [Competition.discipline.in_(cleaned_disciplines)]
+        for d in cleaned_disciplines:
+            slug = discipline_tag_slug(d)
+            if slug:
+                disc_clauses.append(Competition.tags.like(f'%"discipline:{slug}"%'))
+        stmt = stmt.where(or_(*disc_clauses))
     # Filter by tag(s) - tags are stored as JSON strings, so we check if each tag is in the JSON
     cleaned_tags = [t.strip() for t in tag if t.strip()]
     if cleaned_tags:
@@ -748,7 +752,15 @@ async def venues_map_api(
     if date_to is not None:
         conditions.append(Competition.date_start <= date_to)
     if discipline and discipline.strip():
-        conditions.append(Competition.discipline == discipline.strip())
+        d = discipline.strip()
+        slug = discipline_tag_slug(d)
+        if slug:
+            conditions.append(or_(
+                Competition.discipline == d,
+                Competition.tags.like(f'%"discipline:{slug}"%'),
+            ))
+        else:
+            conditions.append(Competition.discipline == d)
     for raw_tag in tag or []:
         token = raw_tag.strip()
         if re.fullmatch(r"[a-z][a-z-]*:[a-z0-9-]+", token):
