@@ -105,7 +105,6 @@ _SOURCE_DEFS: list[dict[str, str | None]] = [
     {"name": "Royal Highland Show", "parser_key": "royal_highland", "url": "https://www.royalhighlandshow.org"},
     {"name": "Royal Welsh Show", "parser_key": "royal_welsh", "url": "https://www.rwas.wales/royal-welsh/"},
     {"name": "Royal Cornwall Show", "parser_key": "royal_cornwall", "url": "https://www.royalcornwallshow.org"},
-    {"name": "LGCT", "parser_key": "lgct", "url": "https://www.gcglobalchampions.com"},
     {"name": "Chatsworth Country Fair", "parser_key": "chatsworth", "url": "https://www.chatsworth.org/events/chatsworth-country-fair/"},
     {"name": "National Equine Show", "parser_key": "national_equine_show", "url": "https://nationalequineshow.com"},
     {"name": "Osberton Horse Trials", "parser_key": "osberton", "url": "https://osbertonhorse.co.uk"},
