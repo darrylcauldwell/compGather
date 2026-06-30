@@ -69,13 +69,10 @@ struct VenuesView: View {
         }
         .overlay(alignment: .bottom) {
             if let venue = selectedVenue {
-                Button {
+                VenueCallout(venue: venue) {
                     router.venueRequest = .init(id: venue.id, name: venue.name)
                     router.selectedTab = .compete
-                } label: {
-                    VenueCallout(venue: venue)
                 }
-                .buttonStyle(.plain)
                 .padding()
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -99,34 +96,40 @@ struct VenuesView: View {
 
 private struct VenueCallout: View {
     let venue: VenueMarker
+    /// Tapped via the prominent button below — opens this venue's events.
+    let onViewEvents: () -> Void
+
+    private var eventsText: String {
+        "View \(venue.eventCount) event\(venue.eventCount == 1 ? "" : "s")"
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(venue.name).font(AppTypography.cardTitle)
             if !venue.postcode.isEmpty {
                 Label(venue.postcode, systemImage: "mappin.and.ellipse")
                     .font(AppTypography.cardMeta)
                     .foregroundStyle(.secondary)
             }
-            Label(
-                "\(venue.eventCount) upcoming event\(venue.eventCount == 1 ? "" : "s")",
-                systemImage: "calendar"
-            )
-            .font(AppTypography.cardMeta)
-            .foregroundStyle(.secondary)
             if !venue.disciplines.isEmpty {
                 Text(venue.disciplines.joined(separator: " · "))
                     .font(AppTypography.cardMeta)
                     .foregroundStyle(.tint)
                     .lineLimit(1)
             }
-            HStack(spacing: 4) {
-                Text("View events")
-                Image(systemName: "chevron.right")
+            // Clear, full-width call-to-action — a large, obvious tap target
+            // instead of the easy-to-miss text link.
+            Button(action: onViewEvents) {
+                HStack(spacing: 6) {
+                    Text(eventsText)
+                    Image(systemName: "arrow.right")
+                }
+                .font(AppTypography.controlLabel)
+                .frame(maxWidth: .infinity)
             }
-            .font(AppTypography.cardMeta)
-            .foregroundStyle(.tint)
-            .padding(.top, 2)
+            .buttonStyle(.glassProminent)
+            .controlSize(.large)
+            .accessibilityLabel("View \(venue.eventCount) events at \(venue.name)")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
