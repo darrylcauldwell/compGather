@@ -196,6 +196,42 @@ class TestListCompetitions:
         assert resp.json() == []
 
     @pytest.mark.asyncio
+    async def test_venue_id_includes_non_competition_events(self):
+        # A map → Compete hand-off should show ALL upcoming events at the venue
+        # (shows/clinics too), not just event_type=competition — otherwise a
+        # show-only venue lands on an empty list despite the map's pin count.
+        app = _get_app()
+        from sqlalchemy import select
+
+        async with TestSession() as session:
+            src = Source(
+                name="S", url="https://e.com", parser_key="t",
+                enabled=True, created_at=datetime.utcnow(),
+            )
+            session.add(src)
+            await session.flush()
+            venue = Venue(name="Showground", postcode=None)
+            session.add(venue)
+            await session.flush()
+            session.add(Competition(
+                source_id=src.id, name="County Show", date_start=date(2026, 7, 1),
+                venue_id=venue.id, discipline="Showing", event_type="show",
+                first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+            ))
+            await session.commit()
+            vid = venue.id
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.get(f"/api/competitions?venue_id={vid}")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["event_type"] == "show"
+
+    @pytest.mark.asyncio
     async def test_empty_list(self):
         app = _get_app()
         # No seeding

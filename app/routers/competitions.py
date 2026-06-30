@@ -66,8 +66,10 @@ async def list_competitions(
     if spectator is not None:
         # "Watch" tab: spectator events of any event_type.
         stmt = stmt.where(Competition.spectator == spectator)
-    elif not has_discipline and not has_event_type:
-        # Default "Compete" view: enterable competitions only.
+    elif not has_discipline and not has_event_type and venue_id is None:
+        # Default "Compete" view: enterable competitions only. A venue hand-off
+        # (venue_id set) shows everything on at that venue — shows/clinics too —
+        # so it matches the map's event count instead of landing on an empty list.
         stmt = stmt.where(Competition.event_type == "competition")
     if date_from:
         # Include multi-day events that started before date_from but haven't ended
