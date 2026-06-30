@@ -267,5 +267,32 @@
       "bs club",
       "and club show"
     ]
+  },
+  "championships": {
+    "_note": "Curated pinnacle national/destination FINALS (NSEA, BS, Trailblazers...). A name matching a 'phrase' (or every term in a 'phrases_all' group) and NOT matching an 'exclude' term gets special:championship-final. Excludes qualifiers/stabling so only the finals themselves are tagged.",
+    "exclude": [
+      "qualifier",
+      "qualifying",
+      "stabling",
+      "stable link",
+      "stablelink",
+      "tickets",
+      "your horse live",
+      "card purchase",
+      "membership"
+    ],
+    "phrases": [
+      "national championship",
+      "national final",
+      "grass roots championship",
+      "grassroots championship",
+      "academy championship",
+      "eventers challenge championship",
+      "seib trailblazers"
+    ],
+    "phrases_all": [
+      ["trailblazers", "championship"],
+      ["nsea", "ec champs"]
+    ]
   }
 }

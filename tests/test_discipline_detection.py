@@ -108,6 +108,32 @@ class TestPrimaryAlwaysIncluded:
         assert "discipline:eventing" in d
 
 
+class TestChampionshipFinal:
+    def _has(self, name: str, **kw) -> bool:
+        return "special:championship-final" in extract_tags(name=name, event_type="competition", **kw)
+
+    def test_pinnacle_finals_tagged(self):
+        assert self._has("NSEA National Championships 2026")
+        assert self._has("British Showjumping National Championship")
+        assert self._has("SEIB Trailblazers Championships 2026")
+        assert self._has("Trailblazers Dressage Championships")
+        assert self._has("NSEA EC Champs, Inter-County DR & SJ @ Hickstead")
+        assert self._has("British Showjumping Academy Championship")
+
+    def test_qualifiers_and_stabling_excluded(self):
+        assert not self._has("NSEA National Championship Qualifier")
+        assert not self._has("Trailblazers Championship Qualifier @ Fleets Farm")
+        assert not self._has("STABLING FOR NSEA Grass Roots Champs")
+
+    def test_local_championships_not_tagged(self):
+        assert not self._has("Bicton College Unaffiliated Dressage Championship")
+        assert not self._has("Foxes Summer Championship")
+
+    def test_international_not_caught_as_national(self):
+        # "national championship" must not match inside "international championship".
+        assert not self._has("Azelhof Lusitano International Championship")
+
+
 class TestDisciplineTagSlug:
     def test_known_discipline(self):
         assert discipline_tag_slug("Combined Training") == "combined-training"

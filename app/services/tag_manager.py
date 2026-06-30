@@ -99,6 +99,7 @@ VALID_TAGS = {
     "special": [
         "qualifier", "invitational", "breed-specific",
         "mountain-and-moorland", "native-breed", "long-format",
+        "championship-final",
     ],
     # Named series / pathways (zero or more; from series_seeds.json)
     "series": _SERIES_SLUGS,
@@ -294,6 +295,32 @@ def _discipline_tags(
     return [f"discipline:{s}" for s in found]
 
 
+def _championship_final_tags(name: str, description: str, classes: Optional[list[str]]) -> list[str]:
+    """Tag the pinnacle national/destination FINALS (special:championship-final),
+    from a curated phrase list in series_seeds.json. Qualifiers and stabling
+    rows are excluded so only the finals themselves are marked — this powers the
+    'Championships' filter for events worth aiming a season at."""
+    cfg = _series_seeds().get("championships", {})
+    if not cfg:
+        return []
+    text = _normalise(name, description)
+    for c in classes or []:
+        text += " | " + (c or "").lower()
+    # Exclude terms: plain substring (catches plurals like "qualifiers").
+    if any(x in text for x in cfg.get("exclude", [])):
+        return []
+    # Phrases: leading word boundary so "national championship" matches plurals
+    # but NOT "international championship", and allows trailing 's'.
+    def hit(phrase: str) -> bool:
+        return re.search(r"\b" + re.escape(phrase), text) is not None
+    if any(hit(p) for p in cfg.get("phrases", [])):
+        return ["special:championship-final"]
+    for group in cfg.get("phrases_all", []):
+        if all(hit(p) for p in group):
+            return ["special:championship-final"]
+    return []
+
+
 def _eventer_challenge_tags(name: str, source_affiliation: Optional[str]) -> list[str]:
     """NSEA abbreviates Eventers Challenge as 'EC'; elsewhere 'EC' means
     Equestrian Centre. Trust 'EC' only in NSEA context AND only in the event
@@ -430,6 +457,7 @@ def extract_tags(
         tags.append("special:breed-specific")
     if _matches(combined, ["100km", "160km", "long format", "multi-day", "multi day"]):
         tags.append("special:long-format")
+    tags.extend(_championship_final_tags(name, description, classes))
 
     # 9. Named series (zero or more) — precision-gated from series_seeds.json:
     # a distinctive keyword must match AND any require/exclude rules must pass

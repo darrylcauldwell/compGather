@@ -419,6 +419,7 @@ async def competitions_page(
             # BS class/audience filter options (token, label) — filter on
             # audience: (who's riding) not category: (show grade).
             "bs_class_options": [
+                ("special:championship-final", "🏆 Championships & Finals"),
                 ("audience:pony", "Pony classes"),
                 ("audience:junior", "Junior classes"),
                 ("class:pony-foxhunter", "Pony Foxhunter"),
