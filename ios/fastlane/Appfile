@@ -1,4 +1,4 @@
-app_identifier("com.darrylcauldwell.equicalendar")
+app_identifier("dev.dreamfold.equicalendar")
 team_id("N6BK2WX94Z")
 
 # Apple ID for `register_app` (produce needs interactive 2FA; the ASC API key

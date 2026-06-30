@@ -1,6 +1,6 @@
 name: EquiCalendar
 options:
-  bundleIdPrefix: com.darrylcauldwell
+  bundleIdPrefix: dev.dreamfold
   deploymentTarget:
     iOS: "26.0"
   createIntermediateGroups: true
@@ -33,7 +33,7 @@ targets:
       - path: EquiCalendar
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.darrylcauldwell.equicalendar
+        PRODUCT_BUNDLE_IDENTIFIER: dev.dreamfold.equicalendar
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
@@ -53,4 +53,4 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: com.darrylcauldwell.equicalendar.tests
+        PRODUCT_BUNDLE_IDENTIFIER: dev.dreamfold.equicalendar.tests

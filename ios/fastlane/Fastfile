@@ -8,7 +8,7 @@
 
 default_platform(:ios)
 
-APP_IDENTIFIER = "com.darrylcauldwell.equicalendar"
+APP_IDENTIFIER = "dev.dreamfold.equicalendar"
 XCODEPROJ = "EquiCalendar.xcodeproj"
 SCHEME = "EquiCalendar"
 MILESTONE = "1.0" # bump manually when starting a new milestone (1.0 -> 1.1)
