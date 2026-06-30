@@ -891,27 +891,15 @@ class TestNormaliseVenueName:
         # Suffix stripping still works (e.g. "Hartpury Equestrian Centre" -> "Hartpury")
         assert self.norm("Hartpury Equestrian Centre") == "Hartpury"
 
-    # --- Event-title-like names rejected (parser mis-supplied an event title) ---
+    # --- Event-title names that carry show keywords are NOT rejected here ---
+    # (Leaked event-titles are remapped to real venues via curated aliases in
+    # venue_seeds.json — see the matcher — not by a heuristic in this function,
+    # which would shadow those aliases.)
 
-    def test_trailing_date_ordinal_rejected(self):
-        # "...Championships 18th" is an event title, not a venue
-        assert self.norm("Arena UK British Showjumping Winter Championships 18th") == "Tbc"
-
-    def test_show_keyword_extravaganza_rejected(self):
-        assert self.norm("Weston Lawns Easter Extravaganza 3rd") == "Tbc"
-
-    def test_show_keyword_spectacular_rejected(self):
-        assert self.norm("Weston Lawns Summer Spectacular") == "Tbc"
-
-    def test_show_keyword_festival_rejected(self):
-        assert self.norm("NAF Hartpury Festival") == "Tbc"
-
-    def test_show_keyword_qualifiers_rejected(self):
-        assert self.norm("Area 10 Winter SJ Qualifiers At Hadlow") == "Tbc"
-
-    def test_plain_venue_not_over_rejected(self):
-        # Guard must not over-reach: an ordinary venue name is unaffected
-        assert self.norm("Weston Lawns") == "Weston Lawns"
+    def test_event_title_name_preserved_for_alias_resolution(self):
+        # normalise_venue_name leaves the name intact so the matcher's alias
+        # lookup can map it to the real venue (e.g. Weston Lawns).
+        assert self.norm("Weston Lawns Summer Spectacular") == "Weston Lawns Summer Spectacular"
 
     # --- Unchanged names ---
 

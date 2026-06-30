@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """One-off script to re-normalise venue names after alias/suffix updates.
 
-Runs inside the Docker container:
-    docker exec equicalendar python scripts/renormalise_venues.py
+Runs inside the Docker container (dry-run by default — prints the rename/merge
+plan and exits; pass --apply to write):
+    docker exec equicalendar python scripts/renormalise_venues.py            # dry-run
+    docker exec equicalendar python scripts/renormalise_venues.py --apply     # apply
 
 What it does (post venue-FK migration):
 1. Re-normalises venue names in the venues table
@@ -44,6 +46,8 @@ def main() -> None:
     if not DB_PATH.exists():
         print(f"Database not found at {DB_PATH}")
         sys.exit(1)
+
+    apply = "--apply" in sys.argv[1:]
 
     conn = sqlite3.connect(str(DB_PATH))
     conn.execute("PRAGMA journal_mode=WAL")
@@ -100,6 +104,20 @@ def main() -> None:
         if (keeper_name != canonical or best_pc != keeper_pc
                 or best_lat != keeper_lat or best_lng != keeper_lng):
             keeper_updates.append((canonical, best_pc, best_lat, best_lng, keeper_id))
+
+    # Dry-run gate: this rewrites/merges EVERY venue, so show the full plan and
+    # exit without writing unless --apply is passed (mirrors hide_booking_payments.py).
+    if not apply:
+        print("\nDry-run (no changes written). Planned changes:")
+        for canonical, group in canonical_groups.items():
+            names = [g[1] for g in group]
+            if len(group) > 1:
+                print(f"  MERGE -> {canonical!r}: " + ", ".join(repr(n) for n in names))
+            elif names[0] != canonical:
+                print(f"  RENAME {names[0]!r} -> {canonical!r}")
+        print("\nRe-run with --apply to write these changes.")
+        conn.close()
+        return
 
     # Remap competition venue_ids that point to deleted venues
     remapped = 0
