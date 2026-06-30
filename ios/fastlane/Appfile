@@ -3,4 +3,4 @@ team_id("N6BK2WX94Z")
 
 # Apple ID for `register_app` (produce needs interactive 2FA; the ASC API key
 # alone can't create the app record). Update if your developer Apple ID differs.
-apple_id("darryl.cauldwell@gmail.com")
+apple_id("darryl_cauldwell@hotmail.com")
