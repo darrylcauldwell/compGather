@@ -103,6 +103,49 @@ platform :ios do
     )
   end
 
+  desc "Read-only: check App Store submission readiness WITHOUT submitting."
+  lane :verify do
+    require "spaceship"
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      filepath: ENV.fetch("ASC_KEY_PATH"),
+    )
+    app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+    aid = app.id
+    UI.header("Submission readiness for #{app.name} (#{aid})")
+
+    show = lambda do |label, ok, detail = nil|
+      mark = ok.nil? ? "⚠️ " : (ok ? "✅" : "❌")
+      UI.message("#{mark} #{label}#{detail ? " — #{detail}" : ''}")
+    end
+    ver = nil
+    begin
+      ver = app.get_edit_app_store_version(includes: "build")
+      show.call("Edit version present", !ver.nil?, ver && "v#{ver.version_string} (#{ver.app_store_state})")
+      show.call("Build attached", !(ver && ver.build).nil?, ver&.build && "build #{ver.build.version}")
+    rescue => e
+      show.call("Version / build", nil, "#{e.class}: #{e.message[0, 80]}")
+    end
+
+    begin
+      info = app.fetch_edit_app_info || app.fetch_latest_app_info
+      ard = Spaceship::ConnectAPI.get_age_rating_declaration(app_info_id: info.id)
+      vals = ard.instance_variables
+        .reject { |v| %i[@id @type @client].include?(v) }
+        .map { |v| ard.instance_variable_get(v) }
+      answered = vals.count { |v| !v.nil? }
+      show.call("Age Rating set", answered > 0, "#{answered} questionnaire attribute(s) answered")
+    rescue => e
+      show.call("Age Rating", nil, "#{e.class}: #{e.message[0, 90]}")
+    end
+
+    show.call("Pricing", nil, "not readable via fastlane 2.234 (Apple's new pricing model) — verify in ASC")
+    show.call("App Privacy", nil, "not readable via fastlane 2.234 — verify in ASC")
+
+    UI.important("Read-only check — nothing was submitted.")
+  end
+
   desc "Capture App Store screenshots (6.9\" iPhone 17 Pro Max, en-GB) into " \
        "fastlane/screenshots via the EquiCalendarUITests UI test."
   lane :screenshots do
