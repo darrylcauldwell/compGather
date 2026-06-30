@@ -93,12 +93,12 @@ struct EventCard: View {
             .foregroundStyle(.secondary)
             .lineLimit(1)
 
-            // Discipline on its own row.
-            if let discipline = competition.discipline {
-                Label(discipline, systemImage: "figure.equestrian.sports")
+            // Discipline(s) on their own row — multi-discipline fixtures list all.
+            if !competition.disciplineNames.isEmpty {
+                Label(competition.disciplineNames.joined(separator: " · "), systemImage: "figure.equestrian.sports")
                     .font(AppTypography.cardMeta)
                     .foregroundStyle(.tint)
-                    .lineLimit(1)
+                    .lineLimit(2)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

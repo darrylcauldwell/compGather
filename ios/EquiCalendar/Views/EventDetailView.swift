@@ -92,9 +92,6 @@ struct EventDetailView: View {
             if let postcode = competition.venuePostcode {
                 detailRow("number", postcode)
             }
-            if let discipline = competition.discipline {
-                detailRow("figure.equestrian.sports", discipline)
-            }
             if let distance = competition.distanceMiles {
                 detailRow("location.fill", "\(Int(distance.rounded())) miles away")
             }
@@ -126,10 +123,15 @@ struct EventDetailView: View {
     }
 
     private var badges: some View {
-        GlassEffectContainer(spacing: 8) {
-            HStack(spacing: 8) {
-                ForEach(competition.affiliationTags, id: \.self) { tag in
-                    TagBadge(text: displayName(for: tag), systemImage: "rosette", tint: .accentColor)
+        ScrollView(.horizontal, showsIndicators: false) {
+            GlassEffectContainer(spacing: 8) {
+                HStack(spacing: 8) {
+                    ForEach(competition.disciplineTags, id: \.self) { tag in
+                        TagBadge(text: displayName(for: tag), systemImage: "figure.equestrian.sports", tint: .accentColor)
+                    }
+                    ForEach(competition.affiliationTags, id: \.self) { tag in
+                        TagBadge(text: displayName(for: tag), systemImage: "rosette", tint: .secondary)
+                    }
                 }
             }
         }

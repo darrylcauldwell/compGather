@@ -48,6 +48,18 @@ struct Competition: Identifiable, Codable, Sendable, Hashable {
     /// Discipline tags only (e.g. ["discipline:dressage"]).
     var disciplineTags: [String] { tags.filter { $0.hasPrefix("discipline:") } }
     var affiliationTags: [String] { tags.filter { $0.hasPrefix("affiliation:") } }
+
+    /// Display names for every discipline this event offers (from discipline:
+    /// tags), falling back to the primary column. Multi-discipline NSEA fixtures
+    /// (e.g. "DR, Combined Training and SJ") list several.
+    var disciplineNames: [String] {
+        let names = disciplineTags.map {
+            $0.replacingOccurrences(of: "discipline:", with: "")
+                .replacingOccurrences(of: "-", with: " ")
+                .capitalized
+        }
+        return names.isEmpty ? (discipline.map { [$0] } ?? []) : names
+    }
 }
 
 /// Parsing + display helpers for the `YYYY-MM-DD` day strings.
