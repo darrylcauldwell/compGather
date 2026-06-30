@@ -1,10 +1,11 @@
-import SwiftData
+import CoreData
 import SwiftUI
 
-/// Saved events, stored locally with SwiftData so they're available offline.
+/// Saved events ("Plan"), stored with Core Data + CloudKit so they sync across
+/// the user's devices (and, in the sharing phase, with another person).
 struct FavouritesView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Favourite.dateStart) private var favourites: [Favourite]
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(key: "dateStart", ascending: true)])
+    private var favourites: FetchedResults<Favourite>
 
     var body: some View {
         NavigationStack {
@@ -17,7 +18,7 @@ struct FavouritesView: View {
                     }
                 } else {
                     List {
-                        ForEach(favourites) { favourite in
+                        ForEach(favourites, id: \.objectID) { favourite in
                             FavouriteCard(favourite: favourite)
                                 .listRowSeparator(.hidden)
                                 .listRowBackground(Color.clear)
@@ -33,19 +34,18 @@ struct FavouritesView: View {
     }
 
     private func delete(at offsets: IndexSet) {
-        for index in offsets { modelContext.delete(favourites[index]) }
-        try? modelContext.save()
+        PlanStore.shared.delete(offsets.map { favourites[$0] })
     }
 }
 
 private struct FavouriteCard: View {
-    let favourite: Favourite
+    @ObservedObject var favourite: Favourite
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(favourite.name)
+            Text(favourite.name ?? "")
                 .font(AppTypography.cardTitle)
-            Label(favourite.venueName, systemImage: "mappin.and.ellipse")
+            Label(favourite.venueName ?? "", systemImage: "mappin.and.ellipse")
                 .font(AppTypography.cardBody)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)

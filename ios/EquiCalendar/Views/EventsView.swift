@@ -1,4 +1,4 @@
-import SwiftData
+import CoreData
 import SwiftUI
 
 /// Browse events with discipline / date / distance filtering. Reused for the
@@ -9,8 +9,7 @@ struct EventsView: View {
     let respondsToVenueRouting: Bool
     @State private var model: EventsViewModel
     @Environment(AppRouter.self) private var router
-    @Environment(\.modelContext) private var modelContext
-    @Query private var favourites: [Favourite]
+    @FetchRequest(sortDescriptors: []) private var favourites: FetchedResults<Favourite>
 
     init(title: String = "Events", eventType: String? = nil, spectator: Bool? = nil, respondsToVenueRouting: Bool = false) {
         self.title = title
@@ -18,7 +17,7 @@ struct EventsView: View {
         _model = State(initialValue: EventsViewModel(baseEventType: eventType, baseSpectator: spectator))
     }
 
-    private var favouriteIDs: Set<Int> { Set(favourites.map(\.competitionId)) }
+    private var favouriteIDs: Set<Int> { Set(favourites.map { Int($0.competitionId) }) }
 
     var body: some View {
         NavigationStack {
@@ -97,11 +96,6 @@ struct EventsView: View {
 
     /// Add/remove the event from Plan straight from the list (mirrors the detail view).
     private func toggleFavourite(_ competition: Competition) {
-        if let existing = favourites.first(where: { $0.competitionId == competition.id }) {
-            modelContext.delete(existing)
-        } else {
-            modelContext.insert(Favourite(competition))
-        }
-        try? modelContext.save()
+        PlanStore.shared.toggle(competition)
     }
 }

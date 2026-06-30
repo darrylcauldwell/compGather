@@ -1,22 +1,20 @@
+import CoreData
 import MapKit
-import SwiftData
 import SwiftUI
 
 /// Event detail: map, key facts, favourite toggle, add-to-calendar, source link.
 struct EventDetailView: View {
     let competition: Competition
 
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.openURL) private var openURL
-    @Query private var favourites: [Favourite]
+    @FetchRequest(sortDescriptors: []) private var favourites: FetchedResults<Favourite>
 
     @State private var calendarMessage: String?
     @State private var isAddingToCalendar = false
 
-    private var favourite: Favourite? {
-        favourites.first { $0.competitionId == competition.id }
+    private var isFavourite: Bool {
+        favourites.contains { Int($0.competitionId) == competition.id }
     }
-    private var isFavourite: Bool { favourite != nil }
 
     var body: some View {
         ScrollView {
@@ -202,12 +200,7 @@ struct EventDetailView: View {
     }
 
     private func toggleFavourite() {
-        if let favourite {
-            modelContext.delete(favourite)
-        } else {
-            modelContext.insert(Favourite(competition))
-        }
-        try? modelContext.save()
+        PlanStore.shared.toggle(competition)
     }
 
     private func addToCalendar() {
