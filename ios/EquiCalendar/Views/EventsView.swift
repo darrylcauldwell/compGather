@@ -5,11 +5,15 @@ import SwiftUI
 /// Events tab (competitions) and the Shows tab (`eventType: "show"`).
 struct EventsView: View {
     let title: String
+    /// Only the Compete tab listens for venue hand-offs from the Explore map.
+    let respondsToVenueRouting: Bool
     @State private var model: EventsViewModel
+    @Environment(AppRouter.self) private var router
     @Query private var favourites: [Favourite]
 
-    init(title: String = "Events", eventType: String? = nil, spectator: Bool? = nil) {
+    init(title: String = "Events", eventType: String? = nil, spectator: Bool? = nil, respondsToVenueRouting: Bool = false) {
         self.title = title
+        self.respondsToVenueRouting = respondsToVenueRouting
         _model = State(initialValue: EventsViewModel(baseEventType: eventType, baseSpectator: spectator))
     }
 
@@ -48,6 +52,13 @@ struct EventsView: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .task { await model.start() }
+            .onChange(of: router.venueRequest) { _, request in
+                guard respondsToVenueRouting, let request else { return }
+                Task {
+                    await model.applyVenue(id: request.id, name: request.name)
+                    router.venueRequest = nil
+                }
+            }
         }
     }
 

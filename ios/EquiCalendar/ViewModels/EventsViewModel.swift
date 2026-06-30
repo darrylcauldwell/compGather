@@ -93,7 +93,7 @@ let watchTypeOptions: [SeriesOption] = [
 /// resolves "near me" via the device location + server reverse-geocode.
 @MainActor
 @Observable
-final class EventsViewModel {
+final class EventsViewModel: FilterDriving {
     var events: [Competition] = []
     var isLoading = false
     var errorMessage: String?
@@ -107,6 +107,8 @@ final class EventsViewModel {
     var radiusMiles: Double? = defaultRadiusMiles
     /// True if the device location was requested but unavailable/denied.
     var locationDenied = false
+    /// Name of the venue this list is pinned to (via a map hand-off), or nil.
+    var venueName: String?
 
     static let defaultRadiusMiles: Double = 30
 
@@ -137,6 +139,12 @@ final class EventsViewModel {
     var availableDisciplines: [String] {
         Set(events.compactMap(\.discipline)).sorted()
     }
+
+    /// Current discipline filter (FilterDriving surface).
+    var discipline: String? { filter.discipline }
+
+    /// Compete/Watch always show the tier pill (Level/Type).
+    var showsTier: Bool { true }
 
     func load() async {
         isLoading = true
@@ -223,6 +231,25 @@ final class EventsViewModel {
     /// Re-attempt location (after the user enables it / taps Try again).
     func retryLocation() async {
         await acquireLocation()
+        await load()
+    }
+
+    /// Pin the list to a single venue (a map pin handed off to Compete). The
+    /// distance radius is cleared so a far-away venue's events aren't filtered
+    /// out — the whole point is to show everything on at that venue.
+    func applyVenue(id: Int, name: String) async {
+        filter.venueID = id
+        venueName = name
+        radiusMiles = nil
+        filter.maxDistance = nil
+        await load()
+    }
+
+    /// Remove the venue pin and return to the normal filtered list.
+    func clearVenue() async {
+        guard filter.venueID != nil else { return }
+        filter.venueID = nil
+        venueName = nil
         await load()
     }
 

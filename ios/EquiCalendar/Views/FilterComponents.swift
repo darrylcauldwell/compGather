@@ -4,8 +4,8 @@ import UIKit
 /// Discoverable filter bar: labelled Liquid Glass pills that open menus for
 /// discipline, date scope, location, and distance radius. Each pill shows the
 /// current selection so the active filters are always visible.
-struct FilterBar: View {
-    let model: EventsViewModel
+struct FilterBar<Model: FilterDriving>: View {
+    let model: Model
 
     @State private var showDatePicker = false
     @State private var pickedDate = Date()
@@ -14,8 +14,13 @@ struct FilterBar: View {
         ScrollView(.horizontal, showsIndicators: false) {
             GlassEffectContainer(spacing: 8) {
                 HStack(spacing: 8) {
+                    if let venue = model.venueName {
+                        venuePill(venue)
+                    }
                     seriesMenu
-                    tierMenu
+                    if model.showsTier {
+                        tierMenu
+                    }
                     disciplineMenu
                     dateMenu
                     distanceMenu
@@ -29,6 +34,24 @@ struct FilterBar: View {
             }
             .presentationDetents([.medium])
         }
+    }
+
+    /// Shown when the list is pinned to a venue (map hand-off); tap to clear.
+    private func venuePill(_ name: String) -> some View {
+        Button {
+            Task { await model.clearVenue() }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "mappin.circle.fill")
+                Text(name).font(AppTypography.controlLabel).lineLimit(1)
+                Image(systemName: "xmark.circle.fill").font(.caption2)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .foregroundStyle(Color.white)
+            .glassEffect(.regular.tint(.accentColor).interactive(), in: .capsule)
+        }
+        .buttonStyle(.plain)
     }
 
     /// Filter to an amateur pathway (NSEA, Pony Club, BSPS…). Composes with the
@@ -76,18 +99,18 @@ struct FilterBar: View {
 
     private var disciplineMenu: some View {
         Menu {
-            menuItem("All disciplines", selected: model.filter.discipline == nil) {
+            menuItem("All disciplines", selected: model.discipline == nil) {
                 Task { await model.setDiscipline(nil) }
             }
             ForEach(model.availableDisciplines, id: \.self) { discipline in
-                menuItem(discipline, selected: model.filter.discipline == discipline) {
+                menuItem(discipline, selected: model.discipline == discipline) {
                     Task { await model.setDiscipline(discipline) }
                 }
             }
         } label: {
-            pill(model.filter.discipline ?? "All disciplines",
+            pill(model.discipline ?? "All disciplines",
                  icon: "figure.equestrian.sports",
-                 active: model.filter.discipline != nil)
+                 active: model.discipline != nil)
         }
     }
 

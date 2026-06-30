@@ -11,6 +11,8 @@ struct EventFilter: Equatable, Sendable {
     var dateTo: Date?
     /// Tag tokens to require, e.g. "affiliation:nsea", "series:trailblazers".
     var tags: [String] = []
+    /// Restrict to a single venue (set when a map pin hands off to Compete).
+    var venueID: Int?
 
     var queryItems: [URLQueryItem] {
         var items: [URLQueryItem] = []
@@ -19,6 +21,7 @@ struct EventFilter: Equatable, Sendable {
         if let t = eventType, !t.isEmpty { items.append(.init(name: "event_type", value: t)) }
         if let s = spectator { items.append(.init(name: "spectator", value: s ? "true" : "false")) }
         if let p = postcode, !p.isEmpty { items.append(.init(name: "postcode", value: p)) }
+        if let v = venueID { items.append(.init(name: "venue_id", value: String(v))) }
         if let m = maxDistance { items.append(.init(name: "max_distance", value: String(m))) }
         if let f = dateFrom { items.append(.init(name: "date_from", value: Self.day.string(from: f))) }
         if let t = dateTo { items.append(.init(name: "date_to", value: Self.day.string(from: t))) }
@@ -64,8 +67,15 @@ struct APIClient: Sendable {
         return try await get(Competition.self, from: url)
     }
 
-    func venues() async throws -> [VenueMarker] {
-        let url = baseURL.appending(path: "api/venues/map")
+    func venues(filter: EventFilter = .init()) async throws -> [VenueMarker] {
+        let base = baseURL.appending(path: "api/venues/map")
+        guard var components = URLComponents(url: base, resolvingAgainstBaseURL: false) else {
+            throw APIError.invalidURL
+        }
+        // The map endpoint ignores params it doesn't declare (event_type,
+        // spectator, venue_id), so the shared EventFilter maps straight on.
+        components.queryItems = filter.queryItems.isEmpty ? nil : filter.queryItems
+        guard let url = components.url else { throw APIError.invalidURL }
         return try await get([VenueMarker].self, from: url)
     }
 

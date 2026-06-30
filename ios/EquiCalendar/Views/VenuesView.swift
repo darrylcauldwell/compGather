@@ -1,71 +1,98 @@
 import MapKit
 import SwiftUI
 
-/// A map of venues that have upcoming events. Tapping a pin shows a glass
-/// callout with the venue's event count and disciplines.
+/// A map of venues that have upcoming events, sharing the events filter bar.
+/// Tapping a pin shows a glass callout; tapping the callout hands the venue to
+/// the Compete tab (switch tab + pre-filter to that venue's events).
 struct VenuesView: View {
-    @State private var venues: [VenueMarker] = []
-    @State private var isLoading = false
-    @State private var errorMessage: String?
+    @State private var model = VenuesViewModel()
+    @Environment(AppRouter.self) private var router
     @State private var selectedID: Int?
     @State private var camera: MapCameraPosition = .automatic
 
-    private let api = APIClient()
-
     private var selectedVenue: VenueMarker? {
-        venues.first { $0.id == selectedID }
+        model.venues.first { $0.id == selectedID }
     }
 
     var body: some View {
         NavigationStack {
-            Group {
-                if isLoading && venues.isEmpty {
-                    ProgressView("Loading venues…")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let errorMessage, venues.isEmpty {
-                    ContentUnavailableView {
-                        Label("Couldn't load venues", systemImage: "map")
-                    } description: {
-                        Text(errorMessage)
-                    } actions: {
-                        Button("Try Again") { Task { await load() } }
-                            .buttonStyle(.glassProminent)
+            VStack(spacing: 0) {
+                FilterBar(model: model)
+                    .padding(.vertical, 8)
+                Divider()
+
+                Group {
+                    if model.isLoading && model.venues.isEmpty {
+                        ProgressView("Loading venues…")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if let errorMessage = model.errorMessage, model.venues.isEmpty {
+                        ContentUnavailableView {
+                            Label("Couldn't load venues", systemImage: "map")
+                        } description: {
+                            Text(errorMessage)
+                        } actions: {
+                            Button("Try Again") { Task { await model.load() } }
+                                .buttonStyle(.glassProminent)
+                        }
+                    } else if model.venues.isEmpty {
+                        ContentUnavailableView("No venues match", systemImage: "map")
+                    } else {
+                        map
                     }
-                } else {
-                    map
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .navigationTitle("Explore")
             .navigationBarTitleDisplayMode(.inline)
-            .task { if venues.isEmpty { await load() } }
+            .task { await model.start() }
         }
     }
 
     private var map: some View {
         Map(position: $camera, selection: $selectedID) {
-            ForEach(venues) { venue in
+            UserAnnotation()
+            ForEach(model.venues) { venue in
                 Marker(venue.name, systemImage: "figure.equestrian.sports", coordinate: venue.coordinate)
                     .tag(venue.id)
             }
         }
+        .overlay(alignment: .topTrailing) {
+            Button {
+                Task { await zoomToUser() }
+            } label: {
+                Image(systemName: "location.fill")
+                    .font(.title3)
+                    .padding(10)
+            }
+            .buttonStyle(.glass)
+            .padding()
+        }
         .overlay(alignment: .bottom) {
             if let venue = selectedVenue {
-                VenueCallout(venue: venue)
-                    .padding()
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                Button {
+                    router.venueRequest = .init(id: venue.id, name: venue.name)
+                    router.selectedTab = .compete
+                } label: {
+                    VenueCallout(venue: venue)
+                }
+                .buttonStyle(.plain)
+                .padding()
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .animation(.snappy, value: selectedID)
     }
 
-    private func load() async {
-        isLoading = true
-        errorMessage = nil
-        defer { isLoading = false }
-        do {
-            venues = try await api.venues()
-        } catch {
-            errorMessage = error.localizedDescription
+    /// Centre the map on the device location at the current radius (default 30 mi).
+    private func zoomToUser() async {
+        guard let coord = try? await model.userCoordinate() else { return }
+        let radiusMeters = (model.radiusMiles ?? VenuesViewModel.zoomDefaultRadiusMiles) * 1609.34
+        withAnimation {
+            camera = .region(MKCoordinateRegion(
+                center: coord,
+                latitudinalMeters: radiusMeters * 2,
+                longitudinalMeters: radiusMeters * 2
+            ))
         }
     }
 }
@@ -93,6 +120,13 @@ private struct VenueCallout: View {
                     .foregroundStyle(.tint)
                     .lineLimit(1)
             }
+            HStack(spacing: 4) {
+                Text("View events")
+                Image(systemName: "chevron.right")
+            }
+            .font(AppTypography.cardMeta)
+            .foregroundStyle(.tint)
+            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
