@@ -208,7 +208,9 @@ async def competitions_page(
     elif len(cleaned_venues) > 1:
         stmt = stmt.where(Venue.name.in_(cleaned_venues))
     if q and q.strip():
-        stmt = stmt.where(Competition.name.ilike(f"%{q.strip()}%"))
+        like = f"%{q.strip()}%"
+        # Search the name AND the class list (so "Foxhunter" finds BS shows).
+        stmt = stmt.where(or_(Competition.name.ilike(like), Competition.classes.ilike(like)))
 
     # Filter by event type
     if event_type == "competitions":
@@ -410,6 +412,19 @@ async def competitions_page(
             "disciplines": disciplines,
             "affiliations_available": affiliations_available,
             "affiliation": cleaned_affiliations,
+            # BS class/audience filter options (token, label) — filter on
+            # audience: (who's riding) not category: (show grade).
+            "bs_class_options": [
+                ("audience:pony", "Pony classes"),
+                ("audience:junior", "Junior classes"),
+                ("class:pony-foxhunter", "Pony Foxhunter"),
+                ("class:pony-newcomers", "Pony Newcomers"),
+                ("class:foxhunter", "Foxhunter"),
+                ("class:newcomers", "Newcomers"),
+                ("class:british-novice", "British Novice"),
+                ("class:discovery", "Discovery"),
+                ("special:qualifier", "Qualifiers"),
+            ],
             "postcode": postcode or "",
             "sort": sort or "date_asc",
             "page": page,
@@ -514,7 +529,9 @@ async def shows_page(
         stmt = stmt.where(Venue.name != "Online")
 
     if q and q.strip():
-        stmt = stmt.where(Competition.name.ilike(f"%{q.strip()}%"))
+        like = f"%{q.strip()}%"
+        # Search the name AND the class list (so "Foxhunter" finds BS shows).
+        stmt = stmt.where(or_(Competition.name.ilike(like), Competition.classes.ilike(like)))
 
     if distance_in_python and user_coords:
         bbox_miles = max_dist_float if max_dist_float is not None else 500.0
