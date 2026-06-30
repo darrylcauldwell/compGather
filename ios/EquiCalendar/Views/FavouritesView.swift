@@ -1,11 +1,20 @@
+import CloudKit
 import CoreData
+import os
 import SwiftUI
 
 /// Saved events ("Plan"), stored with Core Data + CloudKit so they sync across
-/// the user's devices (and, in the sharing phase, with another person).
+/// the user's devices and can be shared, read-write, with another person.
 struct FavouritesView: View {
     @FetchRequest(sortDescriptors: [NSSortDescriptor(key: "dateStart", ascending: true)])
     private var favourites: FetchedResults<Favourite>
+
+    @State private var shareContext: ShareContext?
+    @State private var canShare = false
+    @State private var shareError: String?
+    @State private var isPreparingShare = false
+
+    private let log = Logger(subsystem: "dev.dreamfold.equicalendar", category: "Share")
 
     var body: some View {
         NavigationStack {
@@ -30,11 +39,47 @@ struct FavouritesView: View {
                 }
             }
             .navigationTitle("Plan")
+            .toolbar {
+                if canShare {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            Task { await startShare() }
+                        } label: {
+                            Label("Share Plan", systemImage: "person.crop.circle.badge.plus")
+                        }
+                        .disabled(isPreparingShare)
+                    }
+                }
+            }
+            .task { canShare = await PlanStore.shared.iCloudAvailable() }
+            .sheet(item: $shareContext) { context in
+                CloudShareSheet(context: context)
+            }
+            .alert("Couldn't share Plan", isPresented: .init(
+                get: { shareError != nil },
+                set: { if !$0 { shareError = nil } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(shareError ?? "")
+            }
         }
     }
 
     private func delete(at offsets: IndexSet) {
         PlanStore.shared.delete(offsets.map { favourites[$0] })
+    }
+
+    private func startShare() async {
+        isPreparingShare = true
+        defer { isPreparingShare = false }
+        do {
+            let (share, container) = try await PlanStore.shared.makeShare()
+            shareContext = ShareContext(share: share, container: container)
+        } catch {
+            log.error("Share prepare failed: \(error.localizedDescription, privacy: .public)")
+            shareError = error.localizedDescription
+        }
     }
 }
 
