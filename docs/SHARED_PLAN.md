@@ -4,10 +4,12 @@
 
 ## Goal
 Let two people on **separate iPhones with different Apple IDs** share one Plan,
-**both fully maintaining it** (collaborative read-write — either can add, remove,
-and edit; it is NOT owner-writes / viewer-reads), synced live between both
-devices. Each plan item also carries **notes** (and similar annotations) that
-both can edit.
+**both fully maintaining it** (collaborative read-write — either can add or
+remove events; it is NOT owner-writes / viewer-reads), synced live between both
+devices.
+
+Keep the first version **simple: just the shared list of events.** Notes and
+other per-item annotations are deliberately deferred (see Future).
 
 ## Decision
 Approach chosen (2026-06-30): **CloudKit sharing via `CKShare`** — native, free,
@@ -33,17 +35,11 @@ Option A is cleaner long-term (one store, real sharing); Option B avoids a
 SwiftData→Core Data migration. Decide before phase 2.
 
 ## Data model (shared plan item)
-The shared record is more than a bookmark — both participants annotate it:
-- the event reference (competition id + denormalised name/venue/date so it
-  survives even if the source event changes),
-- **`notes`** — free text, editable by both (e.g. "aiming for the 90cm", travel
-  plans, stabling booked),
-- extensible annotations to add as needed: target **class/height**, a **status**
-  (considering / entered / done), and optionally a **result**.
-
-All fields are shared and last-write-wins via CloudKit (fine for two trusted
-family members; no field-level merge needed). The current local-only `Favourite`
-gains these fields too, so the model is consistent whether shared or not.
+Keep it minimal — just the event reference: competition id + denormalised
+name/venue/date (so the item survives even if the source event changes). No
+extra fields in this version. Shared and last-write-wins via CloudKit (fine for
+two trusted family members; no field-level merge needed). Mirrors the existing
+local `Favourite` so the model is consistent shared or not.
 
 ## Prerequisites
 - Add **iCloud** capability + a CloudKit container
@@ -58,9 +54,8 @@ gains these fields too, so the model is consistent whether shared or not.
   / link. Share permission is **read-write** (`.readWrite`) so both maintain it.
 - Recipient opens the link → accepts the `CKShare` → the shared plan appears in
   their Plan tab.
-- **Both** participants can add/remove events **and edit notes/annotations**;
-  changes sync (seconds in foreground, next launch in background).
-- Per-item **notes editor** in the Plan detail (and a notes preview on the card).
+- **Both** participants can add/remove events; changes sync (seconds in
+  foreground, next launch in background).
 - Distinguish shared vs personal items (a "shared" badge or a separate section).
 - Handle: stop sharing (owner), leave share (participant), offline edits (let
   CloudKit merge), and the not-on-iCloud case (Plan silently stays local).
@@ -75,15 +70,21 @@ gains these fields too, so the model is consistent whether shared or not.
 
 ## Acceptance criteria
 - One shares Plan; the other accepts; both see the same events.
-- **Either** participant add/remove/edits-notes on one device → reflected on the
-  other (seconds foreground / next launch background). Both genuinely maintain it.
-- Notes/annotations are editable by both and sync.
+- **Either** participant adds/removes on one device → reflected on the other
+  (seconds foreground / next launch background). Both genuinely maintain it.
 - No regression to the local-only Plan for users who never share.
 - Graceful when a user isn't on iCloud (Plan stays local, no errors).
 
 ## Out of scope (this version)
+- **Notes and per-item annotations** — deferred; see Future.
 - Backend-stored plans or user accounts.
 - More than two participants (CKShare allows it; scope to parent↔child first).
+
+## Future (add later, once the simple version is solid)
+- **Notes** per item (free text), and annotations like target class/height,
+  status (considering / entered / done), result — all editable by both and
+  synced. The model + a per-item editor get added then; nothing in the simple
+  version blocks it.
 
 ## Interim workaround (available now, no build)
 Add planned events to a **shared Apple/Google calendar** both subscribe to, via
