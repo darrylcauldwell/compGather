@@ -585,7 +585,8 @@
       "lng": -1.6115,
       "aliases": [
         "Chatsworth",
-        "Chatsworth Country Fair"
+        "Chatsworth Country Fair",
+        "Chatsworth Park"
       ]
     },
     "Chard": {
@@ -1340,14 +1341,6 @@
       "postcode": "BT24 8JQ",
       "lat": 54.405942,
       "lng": -5.928084
-    },
-    "Heath Farm - Munstead": {
-      "postcode": "GU7 1UN",
-      "lat": 51.176355,
-      "lng": -0.596043,
-      "aliases": [
-        "Munstead Heath Farm"
-      ]
     },
     "Heathlands Livery Yard": {
       "postcode": "BH21 6RX",
@@ -2295,11 +2288,6 @@
       "postcode": "SO32 2AR",
       "lat": 50.947175,
       "lng": -1.276858
-    },
-    "Rac Saddle Club": {
-      "postcode": "BH20 6JA",
-      "lat": 50.699212,
-      "lng": -2.237341
     },
     "Rascals": {
       "postcode": "YO12 4RJ",
@@ -3757,12 +3745,6 @@
       "lat": 52.671837,
       "lng": -3.342433
     },
-    "Chatsworth Park": {
-      "postcode": "DE45 1PP",
-      "aliases": [],
-      "lat": 53.227588,
-      "lng": -1.611411
-    },
     "Kelsall Hill Equestrian Centre": {
       "postcode": "CW6 0SR",
       "aliases": [
@@ -5085,7 +5067,8 @@
       "lng": -2.237341,
       "aliases": [
         "Bovington Camp",
-        "Allenby Barracks Bovington"
+        "Allenby Barracks Bovington",
+        "Rac Saddle Club"
       ]
     },
     "Upton House": {
@@ -5100,7 +5083,9 @@
       "lng": -0.596043,
       "aliases": [
         "Munstead Horse Trials",
-        "Heath Farm Munstead"
+        "Heath Farm Munstead",
+        "Heath Farm - Munstead",
+        "Munstead Heath Farm"
       ]
     },
     "Portman": {
