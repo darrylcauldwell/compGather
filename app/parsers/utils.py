@@ -601,6 +601,19 @@ def normalise_venue_name(name: str) -> str:
     if len(cleaned) > 100:
         return "Tbc"
 
+    # Reject event titles mis-supplied as venues. A trailing date ordinal
+    # ("...Championships 18th") or show-name keyword ("Extravaganza", "Spectacular",
+    # "Festival", "Qualifiers") marks an event name, not a venue — real venues
+    # don't carry these. Better an honest "Tbc" than a fake event-title venue.
+    if re.search(r"\b\d{1,2}(?:st|nd|rd|th)\b", cleaned, re.IGNORECASE):
+        return "Tbc"
+    if re.search(
+        r"\b(?:championships?|extravaganza|spectacular|festival|qualifiers?)\b",
+        cleaned,
+        re.IGNORECASE,
+    ):
+        return "Tbc"
+
     # Address truncation: strip trailing address parts after commas.
     # "Ardenrun Showground, Tandridge Lane, Lingfield" → "Ardenrun Showground"
     # Preserves short qualified names like "Higher Farm, Cheshire" (1 comma, <40 chars).
