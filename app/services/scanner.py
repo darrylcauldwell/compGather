@@ -542,6 +542,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 event_type=event_type,
                 source_affiliation=source_affiliation,
                 classes=comp_data.classes,
+                venue_name=venue_name_cleaned,
             )
             existing.tags = serialize_tags(tags) if tags else None
         else:
@@ -553,6 +554,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 event_type=event_type,
                 source_affiliation=source_affiliation,
                 classes=comp_data.classes,
+                venue_name=venue_name_cleaned,
             )
             tags_json = serialize_tags(tags) if tags else None
 

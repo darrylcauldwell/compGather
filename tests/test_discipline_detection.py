@@ -5,6 +5,7 @@ Training and SJ Qualifiers"). extract_tags emits a discipline: tag for each so
 the discipline filter surfaces the event under every discipline it offers.
 """
 
+from app.services.event_classifier import EventClassifier
 from app.services.tag_manager import discipline_tag_slug, extract_tags
 
 
@@ -13,12 +14,32 @@ def _disciplines(
     classes: list[str] | None = None,
     discipline: str | None = None,
     source_affiliation: str | None = None,
+    venue_name: str | None = None,
 ) -> set[str]:
     tags = extract_tags(
         name=name, classes=classes, discipline=discipline,
         event_type="competition", source_affiliation=source_affiliation,
+        venue_name=venue_name,
     )
     return {t for t in tags if t.startswith("discipline:")}
+
+
+class TestVenueLeakage:
+    def test_discipline_word_in_venue_not_tagged(self):
+        # "Polo" is in the venue, not the competition — must not become a discipline.
+        d = _disciplines(
+            "BS Senior Show Jumping - Dallas Burston Polo Club",
+            discipline="Show Jumping", venue_name="Dallas Burston Polo Club",
+        )
+        assert "discipline:polo" not in d
+        assert "discipline:show-jumping" in d
+
+
+class TestClassifierPrimary:
+    def test_arena_eventing_beats_eventing(self):
+        # Longest matching alias wins: "arena eventing" over "eventing".
+        disc, _ = EventClassifier.classify("Inside and out Arena Eventing")
+        assert disc == "Arena Eventing"
 
 
 class TestMultiDiscipline:

@@ -80,11 +80,15 @@ class EventClassifier:
         if discipline_hint:
             discipline = normalise_discipline(discipline_hint)
 
-        # Step 3: If no discipline from hint, try to infer from name + description
+        # Step 3: If no discipline from hint, infer from name + description.
+        # Pick the LONGEST matching alias so a specific discipline beats a generic
+        # parent ("arena eventing" wins over "eventing"), rather than seed order.
         if not discipline:
+            best_len = 0
             for disc, pattern in get_discipline_patterns():
-                if pattern.search(combined):
+                m = pattern.search(combined)
+                if m and len(m.group(0)) > best_len:
                     discipline = disc
-                    break
+                    best_len = len(m.group(0))
 
         return (discipline, event_type)

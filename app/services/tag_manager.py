@@ -242,7 +242,8 @@ _NAME_SCAN_ALIAS_DENY = {"bd", "triathlon"}
 
 
 def _discipline_tags(
-    name: str, classes: Optional[list[str]], primary: Optional[str]
+    name: str, classes: Optional[list[str]], primary: Optional[str],
+    venue_name: Optional[str] = None,
 ) -> list[str]:
     """All disciplines named in the title/classes, plus the classifier's primary.
 
@@ -253,8 +254,15 @@ def _discipline_tags(
     Alias matches are word-boundary anchored and claimed longest-first, so a
     specific discipline ("arena eventing") consumes its span before a generic
     alias nested inside it ("eventing") can match the same characters.
+
+    The venue name is stripped from the scan text first, so a discipline word
+    in a venue ("... - Dallas Burston Polo Club") can't be read as a discipline.
+    The classifier's primary is always kept, so a discipline-named venue hosting
+    that discipline still tags correctly.
     """
     text = name.lower().replace("&", " and ")
+    if venue_name:
+        text = text.replace(venue_name.lower().replace("&", " and "), " ")
     for c in classes or []:
         text += " | " + (c or "").lower()
 
@@ -309,13 +317,15 @@ def extract_tags(
     event_type: str = "competition",
     source_affiliation: Optional[str] = None,
     classes: Optional[list[str]] = None,
+    venue_name: Optional[str] = None,
 ) -> list[str]:
     """Extract tags from an event.
 
     Discipline and type are authoritative inputs from EventClassifier (not
     re-derived from text here — that previously diverged from the stored column).
     Level/scope/affiliation/format/age/special are inferred from the event text
-    using word-boundary matching.
+    using word-boundary matching. The venue name (when known) is excluded from
+    discipline scanning so a discipline word in a venue isn't read as a discipline.
     """
     tags: list[str] = []
     combined = _normalise(name, description)
@@ -323,7 +333,7 @@ def extract_tags(
     # 1. Discipline(s) — the classifier's canonical result, plus any other
     # disciplines named in the title/classes (NSEA combined events run several),
     # plus NSEA's "EC" abbreviation for Eventers Challenge (context-gated).
-    disc_tags = _discipline_tags(name, classes, discipline)
+    disc_tags = _discipline_tags(name, classes, discipline, venue_name)
     for t in _eventer_challenge_tags(name, source_affiliation):
         if t not in disc_tags:
             disc_tags.append(t)

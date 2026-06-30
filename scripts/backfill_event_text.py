@@ -45,8 +45,9 @@ def main() -> None:
     }
 
     rows = conn.execute(
-        "SELECT id, source_id, name, discipline, event_type, tags, description, classes, raw_extract "
-        "FROM competitions"
+        "SELECT c.id, c.source_id, c.name, c.discipline, c.event_type, c.tags, "
+        "c.description, c.classes, c.raw_extract, v.name AS venue_name "
+        "FROM competitions c LEFT JOIN venues v ON c.venue_id = v.id"
     ).fetchall()
 
     scanned = desc_set = classes_set = tags_changed = 0
@@ -73,6 +74,7 @@ def main() -> None:
             event_type=r["event_type"] or "competition",
             source_affiliation=source_aff,
             classes=classes,
+            venue_name=r["venue_name"],
         )
         new_tags = serialize_tags(tags) if tags else None
 
