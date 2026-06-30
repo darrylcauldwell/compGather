@@ -1,0 +1,25 @@
+# SwiftLint config for EquiCalendar — tuned to the existing SwiftUI codebase.
+# Target: 0 errors. Warnings acceptable.
+
+disabled_rules:
+  - trailing_comma            # SwiftUI multi-line literals read better with them
+  - todo
+  - cyclomatic_complexity
+  - function_body_length
+  - type_body_length
+  - file_length
+
+line_length:
+  warning: 200
+  error: 350
+
+identifier_name:
+  min_length: 1               # single-char locals (c, d, f) are idiomatic here
+  max_length: 60
+
+type_name:
+  allowed_symbols: ["_"]      # Xcode-generated test classes use underscores
+
+excluded:
+  - EquiCalendar.xcodeproj
+  - build

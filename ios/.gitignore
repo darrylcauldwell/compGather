@@ -7,3 +7,11 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 .DS_Store
+
+# fastlane runtime artifacts
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
+fastlane/README.md
+*.ipa
+*.dSYM.zip
