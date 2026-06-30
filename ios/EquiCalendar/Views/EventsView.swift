@@ -52,13 +52,15 @@ struct EventsView: View {
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            .task { await model.start() }
+            .task {
+                await model.start()
+                // Consume any venue hand-off queued while this tab was backgrounded
+                // (onChange below only fires when the tab is already foreground).
+                await applyPendingVenue()
+            }
             .onChange(of: router.venueRequest) { _, request in
-                guard respondsToVenueRouting, let request else { return }
-                Task {
-                    await model.applyVenue(id: request.id, name: request.name)
-                    router.venueRequest = nil
-                }
+                guard request != nil else { return }
+                Task { await applyPendingVenue() }
             }
         }
     }
@@ -81,6 +83,16 @@ struct EventsView: View {
             EventDetailView(competition: competition)
         }
         .refreshable { await model.load() }
+    }
+
+    /// Apply a venue hand-off from the Explore map, if one is pending. Runs both
+    /// on appear (covers a hand-off that arrived while this tab was backgrounded)
+    /// and on change (covers the foreground case). Runs after start() so its
+    /// venue-filtered load isn't overwritten by the default load.
+    private func applyPendingVenue() async {
+        guard respondsToVenueRouting, let request = router.venueRequest else { return }
+        await model.applyVenue(id: request.id, name: request.name)
+        router.venueRequest = nil
     }
 
     /// Add/remove the event from Plan straight from the list (mirrors the detail view).
