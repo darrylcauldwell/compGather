@@ -719,13 +719,41 @@ async def admin_page(request: Request, session: AsyncSession = Depends(get_sessi
 @router.get("/api/venues/map")
 async def venues_map_api(
     postcode: str | None = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    max_distance: float | None = Query(None),
+    discipline: str | None = Query(None),
+    tag: list[str] | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
-    """Return venue map markers as JSON (lazy-loaded by the map view)."""
+    """Return venue map markers as JSON (lazy-loaded by the map view).
+
+    Accepts the same filters as the events list so the app's Explore map can
+    share one filter bar with Compete/Watch: date window, discipline, series
+    tags, and a distance radius (applied per-venue against the user location).
+    """
     from fastapi.responses import JSONResponse
 
     user_coords = await get_user_coords(postcode)
     today = date.today()
+    # An event counts toward a venue if it falls in the requested window
+    # (default: from today onward, so the map shows venues with upcoming events).
+    start = date_from or today
+    conditions = [
+        Competition.hidden.is_not(True),
+        Venue.latitude != None,
+        Venue.longitude != None,
+        or_(Competition.date_start >= start, Competition.date_end >= start),
+    ]
+    if date_to is not None:
+        conditions.append(Competition.date_start <= date_to)
+    if discipline and discipline.strip():
+        conditions.append(Competition.discipline == discipline.strip())
+    for raw_tag in tag or []:
+        token = raw_tag.strip()
+        if re.fullmatch(r"[a-z][a-z-]*:[a-z0-9-]+", token):
+            conditions.append(Competition.tags.like(f'%"{token}"%'))
+
     map_stmt = (
         select(
             Venue.id,
@@ -738,12 +766,7 @@ async def venues_map_api(
         )
         .select_from(Venue)
         .join(Competition, Competition.venue_id == Venue.id)
-        .where(
-            Competition.date_start >= today,
-            Competition.hidden.is_not(True),
-            Venue.latitude != None,
-            Venue.longitude != None,
-        )
+        .where(*conditions)
         .group_by(Venue.id)
     )
     map_rows = (await session.execute(map_stmt)).all()
@@ -757,6 +780,9 @@ async def venues_map_api(
         if user_coords and row.latitude is not None and row.longitude is not None:
             from app.services.geocoder import haversine
             dist = round(haversine(user_coords[0], user_coords[1], row.latitude, row.longitude), 1)
+        # Distance radius filter (only when we have a user location to measure from).
+        if max_distance is not None and user_coords and (dist is None or dist > max_distance):
+            continue
         venues_json.append({
             "id": row.id,
             "name": row.name,

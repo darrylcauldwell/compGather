@@ -29,6 +29,7 @@ async def list_competitions(
     spectator: bool | None = Query(None),
     postcode: str | None = Query(None),
     tag: list[str] | None = Query(None),
+    venue_id: int | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
     user_coords = await get_user_coords(postcode)
@@ -42,6 +43,10 @@ async def list_competitions(
 
     # Exclude hidden entries (programmes/leagues/badge schemes, placeholder junk).
     stmt = stmt.where(Competition.hidden.is_not(True))
+
+    # Filter to a single venue (used by the app's map → Compete hand-off).
+    if venue_id is not None:
+        stmt = stmt.where(Competition.venue_id == venue_id)
 
     # Filter by tag token(s) — e.g. affiliation:nsea, series:trailblazers,
     # special:qualifier. Validated to the "<namespace>:<slug>" shape; multiple

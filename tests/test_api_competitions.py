@@ -160,6 +160,42 @@ class TestListCompetitions:
         assert data[0]["date_start"] == "2026-03-15"
 
     @pytest.mark.asyncio
+    async def test_filter_by_venue_id(self):
+        app = _get_app()
+        await _seed(3)
+        # Resolve a real venue id (the map → Compete hand-off filters by it).
+        from sqlalchemy import select
+
+        async with TestSession() as session:
+            venue_ids = (
+                await session.execute(select(Venue.id).order_by(Venue.id))
+            ).scalars().all()
+        target = venue_ids[1]
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.get(f"/api/competitions?venue_id={target}")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["venue_name"] == "Venue 2"
+
+    @pytest.mark.asyncio
+    async def test_filter_by_unknown_venue_id_empty(self):
+        app = _get_app()
+        await _seed(3)
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.get("/api/competitions?venue_id=999999")
+
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    @pytest.mark.asyncio
     async def test_empty_list(self):
         app = _get_app()
         # No seeding
