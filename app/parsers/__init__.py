@@ -17,6 +17,7 @@ from app.parsers import bsps  # noqa: F401
 from app.parsers import dean_valley  # noqa: F401
 from app.parsers import derby_college  # noqa: F401
 from app.parsers import endurance_gb  # noqa: F401
+from app.parsers import equus_organiser  # noqa: F401  (registers Equus Organiser venues)
 from app.parsers import entry_master  # noqa: F401
 from app.parsers import epworth  # noqa: F401
 from app.parsers import equilive  # noqa: F401

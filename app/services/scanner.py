@@ -21,6 +21,7 @@ from app.metrics import (
     VENUE_MATCH_TOTAL,
 )
 from app.models import Competition, DisciplineAlias, Scan, Source, Venue, VenueMatchReview
+from app.parsers.equus_organiser import EQUUS_VENUES
 from app.parsers.registry import get_parser
 from app.parsers.utils import (
     disambiguate_venue,
@@ -193,6 +194,17 @@ _SOURCE_DEFS: list[dict[str, str | None]] = [
     {"name": "Global Dressage Festival", "parser_key": "global_dressage_festival", "url": "https://www.globaldressagefestival.com/"},
     {"name": "Desert International Horse Park", "parser_key": "desert_international", "url": "https://deserthorsepark.com/"},
     {"name": "Traverse City Horse Shows", "parser_key": "traverse_city", "url": "https://traversecityhorseshows.com/"},
+]
+
+# Grassroots venues on the Equus Organiser platform — data-driven from the parser
+# config so the source list never drifts from the registered parsers.
+_SOURCE_DEFS += [
+    {
+        "name": _c["venue_name"],
+        "parser_key": _c["key"],
+        "url": f"https://{_c['subdomain']}.equusorganiser.com/",
+    }
+    for _c in EQUUS_VENUES
 ]
 
 
