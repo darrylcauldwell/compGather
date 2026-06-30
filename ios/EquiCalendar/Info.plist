@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Lets iOS recognise the installed app as the handler for CloudKit share
+	     links. Without it, tapping a share link searches the App Store. The rest
+	     of Info.plist is still generated (GENERATE_INFOPLIST_FILE merges on top). -->
+	<key>CKSharingSupported</key>
+	<true/>
+</dict>
+</plist>

@@ -36,10 +36,13 @@ targets:
       - path: EquiCalendar
         excludes:
           - "EquiCalendar.entitlements"
+          - "Info.plist"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.dreamfold.equicalendar
         CODE_SIGN_ENTITLEMENTS: EquiCalendar/EquiCalendar.entitlements
+        # Base Info.plist (carries CKSharingSupported); generated keys merge on top.
+        INFOPLIST_FILE: EquiCalendar/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
