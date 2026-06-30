@@ -50,6 +50,15 @@ _DISAMBIGUATED_RE = re.compile(r"\([A-Z]{1,2}\d[A-Z\d]?\)$")
 # 2024→2030 club "Badges" scheme).
 MAX_EVENT_SPAN_DAYS = 120
 
+# Camp/clinic booking-payment listings to hide — deposits and instalments, which
+# some sources (e.g. Horse Events) list as a separate row per payment, exploding
+# one camp into many. Word-boundary anchored so "payt"/"instalment"/"payment"
+# match the booking-admin phrasing without catching ordinary event names.
+_BOOKING_PAYMENT_RE = re.compile(
+    r"\b(?:deposits?|instal?ments?|payments?|payt|balance due)\b",
+    re.IGNORECASE,
+)
+
 
 # Canonical source definitions — seeded into the sources table at startup.
 # parser_key must match @register_parser("key") in app/parsers/*.py
@@ -484,6 +493,12 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
         # Hide programme/league/badge-scheme entries: an implausibly long span
         # means this isn't a single datable competition.
         hidden = bool(date_end and (date_end - date_start).days > MAX_EVENT_SPAN_DAYS)
+        # Hide camp/clinic booking-payment listings (deposit / "1st payment" /
+        # "final instalment"). Sources like Horse Events list each instalment as a
+        # separate row, exploding one camp into many — and a payment slot isn't an
+        # event to browse anyway.
+        if _BOOKING_PAYMENT_RE.search(comp_data.name):
+            hidden = True
 
         # Track competition vs training counts for scan metrics
         if event_type == "competition":

@@ -263,6 +263,55 @@ async def test_long_span_events_are_hidden(db_session):
 
 
 @pytest.mark.asyncio
+async def test_booking_payment_listings_are_hidden(db_session):
+    """Camp/clinic booking-payment rows (deposit / instalment / Nth payment) are
+    hidden — they explode one camp into many rows and aren't events to browse."""
+    source = Source(name="Test Source", url="https://example.com", enabled=True)
+    db_session.add(source)
+    await db_session.commit()
+    await db_session.refresh(source)
+
+    mock_extracted = [
+        ExtractedCompetition(  # deposit listing → hidden
+            name="Brocklesby Pony Club Summer Camp - DEPOSIT",
+            date_start="2026-07-26", date_end="2026-07-26",
+            venue_name="Brocklesby", venue_postcode="DN37 7AB",
+        ),
+        ExtractedCompetition(  # instalment listing → hidden
+            name="AVHPC Area 15 - Final instalment for 4 days - Summer Camp",
+            date_start="2026-08-17", date_end="2026-08-17",
+            venue_name="Brocklesby", venue_postcode="DN37 7AB",
+        ),
+        ExtractedCompetition(  # "1st payment" listing → hidden
+            name="Berwickshire Summer Camp 2026 1st payment",
+            date_start="2026-07-12", date_end="2026-07-12",
+            venue_name="Brocklesby", venue_postcode="DN37 7AB",
+        ),
+        ExtractedCompetition(  # ordinary show → visible (no payment wording)
+            name="Brocklesby Unaffiliated Show Jumping",
+            date_start="2026-07-15", date_end="2026-07-15",
+            venue_name="Brocklesby", venue_postcode="DN37 7AB",
+        ),
+    ]
+    mock_parser = MagicMock()
+    mock_parser.fetch_and_parse = AsyncMock(return_value=mock_extracted)
+
+    with (
+        patch("app.services.scanner.get_parser", return_value=mock_parser),
+        patch("app.services.scanner.geocode_postcode", new_callable=AsyncMock, return_value=(53.5, -0.2)),
+    ):
+        from app.services.scanner import _scan_source
+        await _scan_source(db_session, source)
+
+    result = await db_session.execute(select(Competition))
+    by_name = {c.name: c for c in result.scalars().all()}
+    assert by_name["Brocklesby Pony Club Summer Camp - DEPOSIT"].hidden is True
+    assert by_name["AVHPC Area 15 - Final instalment for 4 days - Summer Camp"].hidden is True
+    assert by_name["Berwickshire Summer Camp 2026 1st payment"].hidden is True
+    assert by_name["Brocklesby Unaffiliated Show Jumping"].hidden is False
+
+
+@pytest.mark.asyncio
 async def test_tags_and_classes_from_class_list(db_session):
     """Class lists are stored structurally, and affiliation signals that appear
     only in class names (not the event title) are still tagged."""
