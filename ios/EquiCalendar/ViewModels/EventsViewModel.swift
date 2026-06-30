@@ -57,6 +57,8 @@ struct SeriesOption: Identifiable, Sendable {
 }
 
 let seriesOptions: [SeriesOption] = [
+    // Pinnacle finals to aim a season at (curated)
+    .init(id: "special:championship-final", name: "🏆 Championships & Finals"),
     // Affiliation pathways (source-tagged)
     .init(id: "affiliation:nsea", name: "NSEA"),
     .init(id: "affiliation:pony-club", name: "Pony Club"),
