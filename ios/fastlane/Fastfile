@@ -140,8 +140,10 @@ platform :ios do
       show.call("Age Rating", nil, "#{e.class}: #{e.message[0, 90]}")
     end
 
-    show.call("Pricing", nil, "not readable via fastlane 2.234 (Apple's new pricing model) — verify in ASC")
-    show.call("App Privacy", nil, "not readable via fastlane 2.234 — verify in ASC")
+    # Pricing & App Privacy aren't exposed by fastlane/spaceship even at 2.236.1
+    # (Apple's newest ASC models): confirm those two in the ASC web UI.
+    show.call("Pricing", nil, "not exposed by fastlane — confirm in ASC")
+    show.call("App Privacy", nil, "not exposed by fastlane — confirm in ASC")
 
     UI.important("Read-only check — nothing was submitted.")
   end
