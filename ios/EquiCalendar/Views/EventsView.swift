@@ -9,6 +9,7 @@ struct EventsView: View {
     let respondsToVenueRouting: Bool
     @State private var model: EventsViewModel
     @Environment(AppRouter.self) private var router
+    @Environment(\.modelContext) private var modelContext
     @Query private var favourites: [Favourite]
 
     init(title: String = "Events", eventType: String? = nil, spectator: Bool? = nil, respondsToVenueRouting: Bool = false) {
@@ -65,7 +66,11 @@ struct EventsView: View {
     private var eventList: some View {
         List(model.events) { competition in
             NavigationLink(value: competition) {
-                EventCard(competition: competition, isFavourite: favouriteIDs.contains(competition.id))
+                EventCard(
+                    competition: competition,
+                    isFavourite: favouriteIDs.contains(competition.id),
+                    onToggleFavourite: { toggleFavourite(competition) }
+                )
             }
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
@@ -76,5 +81,15 @@ struct EventsView: View {
             EventDetailView(competition: competition)
         }
         .refreshable { await model.load() }
+    }
+
+    /// Add/remove the event from Plan straight from the list (mirrors the detail view).
+    private func toggleFavourite(_ competition: Competition) {
+        if let existing = favourites.first(where: { $0.competitionId == competition.id }) {
+            modelContext.delete(existing)
+        } else {
+            modelContext.insert(Favourite(competition))
+        }
+        try? modelContext.save()
     }
 }

@@ -53,6 +53,9 @@ struct TagBadge: View {
 struct EventCard: View {
     let competition: Competition
     var isFavourite: Bool = false
+    /// When provided, the star becomes a tappable toggle (add/remove from Plan)
+    /// right in the list. When nil it's just a read-only indicator.
+    var onToggleFavourite: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -61,7 +64,18 @@ struct EventCard: View {
                     .font(AppTypography.cardTitle)
                     .foregroundStyle(.primary)
                 Spacer(minLength: 8)
-                if isFavourite {
+                if let onToggleFavourite {
+                    Button(action: onToggleFavourite) {
+                        Image(systemName: isFavourite ? "star.fill" : "star")
+                            .font(AppTypography.cardTitle)
+                            .foregroundStyle(isFavourite ? .yellow : .secondary)
+                            .padding(.vertical, 4)
+                            .padding(.leading, 10)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(isFavourite ? "Remove from plan" : "Add to plan")
+                } else if isFavourite {
                     Image(systemName: "star.fill")
                         .foregroundStyle(.yellow)
                         .font(AppTypography.cardMeta)
