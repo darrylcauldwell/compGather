@@ -72,6 +72,7 @@ def main() -> None:
             discipline=r["discipline"],
             event_type=r["event_type"] or "competition",
             source_affiliation=source_aff,
+            classes=classes,
         )
         new_tags = serialize_tags(tags) if tags else None
 

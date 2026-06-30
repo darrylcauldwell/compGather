@@ -17,89 +17,255 @@
     ],
     "counts": "from the live prod data scan, 2026-06-29"
   },
-
   "series": {
     "nsea": {
-      "display": "NSEA", "level": "schools", "scope": "cross-venue",
-      "detect": "tag", "tag": "affiliation:nsea", "count": 97,
+      "display": "NSEA",
+      "level": "schools",
+      "scope": "cross-venue",
+      "detect": "tag",
+      "tag": "affiliation:nsea",
+      "count": 97,
       "note": "Name-only would miss ~77% (only 22/97 say 'NSEA') — MUST use the tag."
     },
     "pony-club": {
-      "display": "Pony Club", "level": "youth", "scope": "cross-venue",
-      "detect": "tag", "tag": "affiliation:pony-club", "count": 214
+      "display": "Pony Club",
+      "level": "youth",
+      "scope": "cross-venue",
+      "detect": "tag",
+      "tag": "affiliation:pony-club",
+      "count": 214
     },
     "bsps": {
-      "display": "BSPS (ponies)", "level": "affiliated", "scope": "cross-venue",
-      "detect": "tag", "tag": "affiliation:bsps", "count": 113
+      "display": "BSPS (ponies)",
+      "level": "affiliated",
+      "scope": "cross-venue",
+      "detect": "tag",
+      "tag": "affiliation:bsps",
+      "count": 113
     },
-
     "trailblazers": {
-      "display": "Trailblazers", "level": "unaffiliated", "scope": "cross-venue",
-      "detect": "name", "keywords": ["trailblazers", "trailblazer"],
-      "source_hint": "trailblazers", "count": 164,
+      "display": "Trailblazers",
+      "level": "unaffiliated",
+      "scope": "cross-venue",
+      "detect": "name",
+      "keywords": [
+        "trailblazers",
+        "trailblazer"
+      ],
+      "source_hint": "trailblazers",
+      "count": 164,
       "note": "Clean distinctive token; also has its own source for name-less rows."
     },
     "cricklands": {
-      "display": "Cricklands", "level": "unaffiliated", "scope": "championship + cross-venue qualifiers",
-      "detect": "name", "keywords": ["cricklands", "crickland"],
-      "exclude_keywords": ["south view"], "count": 37,
+      "display": "Cricklands",
+      "level": "unaffiliated",
+      "scope": "championship + cross-venue qualifiers",
+      "detect": "name",
+      "keywords": [
+        "cricklands",
+        "crickland"
+      ],
+      "exclude_keywords": [
+        "south view"
+      ],
+      "count": 37,
       "note": "Cricklands is a CHAMPIONSHIP grassroots venues run qualifiers for (e.g. NVEC 'inc Cricklands qualifiers'). South View (49) is a different VENUE — exclude it."
     },
     "bs-club": {
-      "display": "BS Club", "level": "bs-club", "scope": "cross-venue",
-      "detect": "name", "keywords": ["bs club"], "count": 217,
+      "display": "BS Club",
+      "level": "bs-club",
+      "scope": "cross-venue",
+      "detect": "name",
+      "keywords": [
+        "bs club"
+      ],
+      "count": 217,
       "note": "Literal 'BS Club' only — a loose club+showjumping regex explodes to 1106 false hits."
     },
     "blue-chip": {
-      "display": "Blue Chip", "level": "unaffiliated", "scope": "cross-venue",
-      "detect": "name", "keywords": ["blue chip"], "count": 14
+      "display": "Blue Chip",
+      "level": "unaffiliated",
+      "scope": "cross-venue",
+      "detect": "name",
+      "keywords": [
+        "blue chip"
+      ],
+      "count": 14
     },
     "just-for-schools": {
-      "display": "Just for Schools", "level": "schools", "scope": "cross-venue",
-      "detect": "name", "keywords": ["just for schools"], "count": 19
+      "display": "Just for Schools",
+      "level": "schools",
+      "scope": "cross-venue",
+      "detect": "name",
+      "keywords": [
+        "just for schools"
+      ],
+      "count": 19
     },
-
     "sunshine-tour-uk": {
-      "display": "Sunshine Tour (UK grassroots)", "level": "unaffiliated", "scope": "Hickstead + qualifiers",
-      "detect": "name", "keywords": ["sunshine tour"],
-      "require_keywords": ["qualifier"], "exclude_keywords": ["csi"],
+      "display": "Sunshine Tour (UK grassroots)",
+      "level": "unaffiliated",
+      "scope": "Hickstead + qualifiers",
+      "detect": "name",
+      "keywords": [
+        "sunshine tour"
+      ],
+      "require_keywords": [
+        "qualifier"
+      ],
+      "exclude_keywords": [
+        "csi"
+      ],
       "count": "subset of 121",
       "note": "Same name as the ELITE Spanish CSI Sunshine Tour — disambiguate: must say 'Qualifier', must NOT say 'CSI'."
     },
     "brc": {
-      "display": "British Riding Clubs", "level": "affiliated", "scope": "cross-venue",
-      "detect": "name", "keywords": ["british riding clubs", "brc", "area festival"],
-      "count": "~65", "deferred": true,
+      "display": "British Riding Clubs",
+      "level": "affiliated",
+      "scope": "cross-venue",
+      "detect": "name",
+      "keywords": [
+        "british riding clubs",
+        "brc",
+        "area festival"
+      ],
+      "count": "~65",
+      "deferred": true,
       "note": "Do NOT match bare 'riding club' (240 hits, only ~65 real BRC). Deferred until anchored rules are verified."
     }
   },
-
   "stage_flags": {
     "_note": "Orthogonal stepping-stone markers, layered onto a series — NOT series themselves. 'Qualifier within 50mi' alone already surfaces 'things to aim for'.",
-    "qualifier":      { "keywords": ["qualifier"], "tag": "special:qualifier", "count": 408, "note": "Cleanest flag in the data (name+tag agree on 391)." },
-    "championship":   { "keywords": ["championship", "champs"], "count": 237 },
-    "league":         { "keywords": ["league"], "count": 228 },
-    "season-series":  { "keywords": ["summer series", "winter series", "summer league", "winter league"], "count": 177 }
+    "qualifier": {
+      "keywords": [
+        "qualifier"
+      ],
+      "tag": "special:qualifier",
+      "count": 408,
+      "note": "Cleanest flag in the data (name+tag agree on 391)."
+    },
+    "championship": {
+      "keywords": [
+        "championship",
+        "champs"
+      ],
+      "count": 237
+    },
+    "league": {
+      "keywords": [
+        "league"
+      ],
+      "count": 228
+    },
+    "season-series": {
+      "keywords": [
+        "summer series",
+        "winter series",
+        "summer league",
+        "winter league"
+      ],
+      "count": 177
+    }
   },
-
   "class_series": {
-    "_note": "BS class series live in the CLASS list, not the event title (e.g. 'Class 8: Trailblazers Qualifier', 'Junior Foxhunter'). Detect from competitions.classes; many double as qualifiers — pair with stage_flags.qualifier. Match 'junior/senior foxhunter' before bare 'foxhunter'. Junior sections run one height (10cm) below the senior/standard class.",
-    "british-novice":   { "display": "British Novice",   "keywords": ["british novice"],   "height": "0.90m" },
-    "discovery":        { "display": "Discovery",        "keywords": ["discovery"],        "height": "1.00m", "deferred": true, "note": "bare 'discovery' is a common word — precision risk; enable after audit / class-context rule" },
-    "newcomers":        { "display": "Newcomers",        "keywords": ["newcomers"],        "height": "1.10m", "deferred": true, "note": "ambiguous bare word — precision risk; enable after audit" },
-    "foxhunter":        { "display": "Foxhunter",        "keywords": ["foxhunter"],        "height": "1.20m", "note": "standard/senior height" },
-    "junior-foxhunter": { "display": "Junior Foxhunter", "keywords": ["junior foxhunter"], "height": "1.10m", "note": "10cm below senior" },
-    "senior-foxhunter": { "display": "Senior Foxhunter", "keywords": ["senior foxhunter"], "height": "1.20m" }
+    "_note": "BS graded class ladder — BS's REAL vocabulary, detected PER CLASS from competitions.classes. Pony sections run ~10cm below senior. Match pony variants before the bare/senior class (longest keyword wins). 'Senior Foxhunter' -> class:foxhunter + audience:senior; 'Pony Foxhunter' -> class:pony-foxhunter + audience:pony. BS does NOT use 'Junior Foxhunter' (retired). height_cm = canonical graded fence height.",
+    "british-novice": {
+      "display": "British Novice",
+      "keywords": [
+        "british novice"
+      ],
+      "height_cm": 90,
+      "audience": "senior"
+    },
+    "discovery": {
+      "display": "Discovery",
+      "keywords": [
+        "discovery"
+      ],
+      "height_cm": 100,
+      "audience": "senior"
+    },
+    "newcomers": {
+      "display": "Newcomers",
+      "keywords": [
+        "newcomers"
+      ],
+      "height_cm": 110,
+      "audience": "senior"
+    },
+    "foxhunter": {
+      "display": "Foxhunter",
+      "keywords": [
+        "foxhunter"
+      ],
+      "height_cm": 120,
+      "audience": "senior"
+    },
+    "pony-british-novice": {
+      "display": "Pony British Novice",
+      "keywords": [
+        "pony british novice"
+      ],
+      "height_cm": 80,
+      "audience": "pony"
+    },
+    "pony-discovery": {
+      "display": "Pony Discovery",
+      "keywords": [
+        "pony discovery"
+      ],
+      "height_cm": 90,
+      "audience": "pony"
+    },
+    "pony-newcomers": {
+      "display": "Pony Newcomers",
+      "keywords": [
+        "pony newcomers"
+      ],
+      "height_cm": 100,
+      "audience": "pony"
+    },
+    "pony-foxhunter": {
+      "display": "Pony Foxhunter",
+      "keywords": [
+        "pony foxhunter"
+      ],
+      "height_cm": 110,
+      "audience": "pony"
+    },
+    "senior-foxhunter": {
+      "display": "Senior Foxhunter",
+      "deferred": true,
+      "note": "folded into class:foxhunter + audience:senior; slug kept valid for back-compat"
+    },
+    "junior-foxhunter": {
+      "display": "Junior Foxhunter",
+      "deferred": true,
+      "note": "BS uses 'Pony Foxhunter'; retired (0 events)"
+    }
   },
-
   "blacklist": {
     "_note": "Never treat these as a series — venue names or class formats.",
     "south-view": "venue that hosts Cricklands, not the series",
     "pyo": "'Pick Your Own' is a class format (646 hits), not a pathway"
   },
-
   "absent_needs_sources": {
     "_note": "Wanted, but barely present until grassroots sources are added (e.g. the 63 Equus Organiser venues).",
-    "trec": 1, "equifest": 7, "naf-five-star": 8
+    "trec": 1,
+    "equifest": 7,
+    "naf-five-star": 8
+  },
+  "bs_categories": {
+    "_note": "BS show grade from the event NAME ('BS Junior Show Jumping ...'). FILTER on audience: (class rollup), NOT category: — a Senior-graded show still runs Pony classes.",
+    "junior": [
+      "bs junior"
+    ],
+    "senior": [
+      "bs senior"
+    ],
+    "club": [
+      "bs club",
+      "and club show"
+    ]
   }
 }

@@ -66,9 +66,12 @@ let seriesOptions: [SeriesOption] = [
     .init(id: "series:cricklands", name: "Cricklands"),
     .init(id: "series:bs-club", name: "BS Club"),
     .init(id: "series:blue-chip", name: "Blue Chip"),
-    // BS class series
-    .init(id: "class:junior-foxhunter", name: "Junior Foxhunter"),
+    // BS classes (BS vocabulary; "Pony" = the junior tier)
+    .init(id: "audience:pony", name: "Pony classes"),
+    .init(id: "class:pony-foxhunter", name: "Pony Foxhunter"),
+    .init(id: "class:pony-newcomers", name: "Pony Newcomers"),
     .init(id: "class:foxhunter", name: "Foxhunter"),
+    .init(id: "class:newcomers", name: "Newcomers"),
     .init(id: "class:british-novice", name: "British Novice"),
 ]
 

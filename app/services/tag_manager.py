@@ -100,6 +100,12 @@ VALID_TAGS = {
     # "Level" filter (unaffiliated/affiliated/elite) and the Watch "Type" filter
     # (elite/county-show/national).
     "tier": ["elite", "county-show", "national", "affiliated", "unaffiliated"],
+    # BS audience tier, per class (zero or more) — the "who's riding" filter.
+    "audience": ["pony", "junior", "senior", "adult"],
+    # BS show grade, from the show name (zero or more).
+    "category": ["junior", "senior", "club", "mixed"],
+    # Fence height band in cm (zero or more), floored to 10cm.
+    "height": ["80", "90", "100", "110", "120", "130", "140"],
 }
 
 
@@ -165,12 +171,68 @@ def _normalise(name: str, description: str) -> str:
     return re.sub(r"\s+", " ", combined).strip()
 
 
+_HEIGHT_M_RE = re.compile(r"\b(\d)\.(\d\d)\s*m\b")
+_HEIGHT_CM_RE = re.compile(r"\b(\d{2,3})\s*cm\b")
+
+
+def _height_band(cm: int) -> int:
+    """Floor a fence height (cm) to a 10cm band, clamped 80-140."""
+    return max(80, min(140, (cm // 10) * 10))
+
+
+def _class_height_cm(text: str) -> Optional[int]:
+    m = _HEIGHT_M_RE.search(text)
+    if m:
+        return int(m.group(1)) * 100 + int(m.group(2))
+    m = _HEIGHT_CM_RE.search(text)
+    return int(m.group(1)) if m else None
+
+
+def _bs_class_tags(classes: list[str]) -> list[str]:
+    """Per-class BS-ladder + audience + height tags (BS's real vocabulary).
+
+    Each class string yields at most one ``class:`` (most specific wins — pony
+    variants before the bare/senior class), an ``audience:`` (pony/junior/
+    senior/adult), and a ``height:`` band (from the class name, else the graded
+    class's canonical height).
+    """
+    rules = _class_series_rules()  # excludes deferred (senior/junior-foxhunter)
+    ordered = sorted(
+        rules.items(),
+        key=lambda kv: -max((len(k) for k in kv[1].get("keywords", [])), default=0),
+    )
+    out: list[str] = []
+    for raw in classes:
+        text = (raw or "").lower()
+        canonical_cm = None
+        for slug, rule in ordered:
+            if _matches(text, [k.lower() for k in rule.get("keywords", [])]):
+                out.append(f"class:{slug}")
+                canonical_cm = rule.get("height_cm")
+                break
+        if re.search(r"\bpony\b", text):
+            out.append("audience:pony")
+        elif re.search(r"\bjunior\b", text):
+            out.append("audience:junior")
+        elif re.search(r"\bseniors?\b", text):
+            out.append("audience:senior")
+        elif re.search(r"\b(?:amateur|veteran|adult)\b", text):
+            out.append("audience:adult")
+        # Graded classes use their canonical height (an embedded sub-qualifier
+        # height shouldn't override it); non-graded classes use the parsed height.
+        cm = canonical_cm or _class_height_cm(text)
+        if cm:
+            out.append(f"height:{_height_band(cm)}")
+    return list(dict.fromkeys(out))
+
+
 def extract_tags(
     name: str,
     description: str = "",
     discipline: Optional[str] = None,
     event_type: str = "competition",
     source_affiliation: Optional[str] = None,
+    classes: Optional[list[str]] = None,
 ) -> list[str]:
     """Extract tags from an event.
 
@@ -294,17 +356,16 @@ def extract_tags(
             continue
         tags.append(f"series:{key}")
 
-    # 10. BS class series (zero or more). Junior/Senior take precedence over the
-    # bare "foxhunter" class, whose keyword their names also contain.
-    matched_classes = [
-        key
-        for key, rule in _class_series_rules().items()
-        if _matches(combined, [k.lower() for k in rule.get("keywords", [])])
-    ]
-    if {"junior-foxhunter", "senior-foxhunter"} & set(matched_classes):
-        matched_classes = [c for c in matched_classes if c != "foxhunter"]
-    for key in matched_classes:
-        tags.append(f"class:{key}")
+    # 10. BS classes — per-class BS ladder + audience + height (BS's vocabulary).
+    if classes:
+        tags.extend(_bs_class_tags(classes))
+
+    # 10b. BS show grade (category) from the show name — e.g. "BS Junior ...".
+    for category, keywords in _series_seeds().get("bs_categories", {}).items():
+        if category.startswith("_"):
+            continue
+        if any(kw in combined for kw in keywords):
+            tags.append(f"category:{category}")
 
     # 11. Tier (at most one) — affiliation/spectator ladder, most significant
     # first: elite (FEI international / 3*+) > county show > national show >
