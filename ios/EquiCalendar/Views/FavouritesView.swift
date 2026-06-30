@@ -19,48 +19,16 @@ struct FavouritesView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if favourites.isEmpty {
-                    ContentUnavailableView {
-                        Label("Nothing planned yet", systemImage: "checklist")
-                    } description: {
-                        Text("Tap the star on an event to add it to your plan — saved for offline access.")
-                    }
-                } else {
-                    List {
-                        ForEach(favourites, id: \.objectID) { favourite in
-                            FavouriteCard(favourite: favourite)
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                                .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
-                        }
-                        .onDelete(perform: delete)
-                    }
-                    .listStyle(.plain)
+            VStack(spacing: 0) {
+                if canShare {
+                    sharingCard
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, 4)
                 }
+                content
             }
             .navigationTitle("Plan")
-            .toolbar {
-                if canShare {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
-                            Button {
-                                Task { await startShare() }
-                            } label: {
-                                Label("Share Plan", systemImage: "square.and.arrow.up")
-                            }
-                            Button {
-                                Task { await joinFromClipboard() }
-                            } label: {
-                                Label("Join a shared Plan", systemImage: "person.badge.plus")
-                            }
-                        } label: {
-                            Image(systemName: "person.2")
-                        }
-                        .disabled(isBusy)
-                    }
-                }
-            }
             .task { canShare = await PlanStore.shared.iCloudAvailable() }
             .sheet(item: $shareContext) { context in
                 CloudShareSheet(context: context)
@@ -74,6 +42,64 @@ struct FavouritesView: View {
                 Text(message ?? "")
             }
         }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if favourites.isEmpty {
+            ContentUnavailableView {
+                Label("Nothing planned yet", systemImage: "checklist")
+            } description: {
+                Text("Tap the star on an event to add it to your plan — saved for offline access.")
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            List {
+                ForEach(favourites, id: \.objectID) { favourite in
+                    FavouriteCard(favourite: favourite)
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
+                }
+                .onDelete(perform: delete)
+            }
+            .listStyle(.plain)
+        }
+    }
+
+    /// Liquid-Glass card for Plan sharing — matches the event cards' styling.
+    private var sharingCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Share your Plan", systemImage: "person.2.fill")
+                .font(AppTypography.cardTitle)
+                .foregroundStyle(.primary)
+            Text("Plan together — both of you can add and remove events, kept in sync across your iPhones.")
+                .font(AppTypography.cardMeta)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 8) {
+                Button {
+                    Task { await startShare() }
+                } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                        .font(AppTypography.controlLabel)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.glassProminent)
+                Button {
+                    Task { await joinFromClipboard() }
+                } label: {
+                    Label("Join", systemImage: "person.badge.plus")
+                        .font(AppTypography.controlLabel)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.glass)
+            }
+            .disabled(isBusy)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .glassEffect(.regular, in: .rect(cornerRadius: 20))
     }
 
     private func delete(at offsets: IndexSet) {
