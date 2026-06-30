@@ -7,5 +7,12 @@
 	     of Info.plist is still generated (GENERATE_INFOPLIST_FILE merges on top). -->
 	<key>CKSharingSupported</key>
 	<true/>
+	<!-- Wake the app for silent CloudKit pushes so NSPersistentCloudKitContainer
+	     imports Plan changes promptly in the background (paired with the
+	     aps-environment entitlement). -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

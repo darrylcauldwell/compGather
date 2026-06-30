@@ -10,5 +10,11 @@
 	<array>
 		<string>CloudKit</string>
 	</array>
+	<!-- Lets NSPersistentCloudKitContainer receive silent CloudKit pushes so Plan
+	     edits sync promptly between devices (both directions), not just on
+	     foreground. Automatic signing rewrites this to "production" when archiving
+	     for TestFlight/App Store. -->
+	<key>aps-environment</key>
+	<string>development</string>
 </dict>
 </plist>
