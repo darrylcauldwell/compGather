@@ -292,6 +292,16 @@ async def test_booking_payment_listings_are_hidden(db_session):
             date_start="2026-07-15", date_end="2026-07-15",
             venue_name="Brocklesby", venue_postcode="DN37 7AB",
         ),
+        ExtractedCompetition(  # legit camp that mentions a payment plan → visible
+            name="Brocklesby Summer Camp 2026 - Payment Plan Available",
+            date_start="2026-07-20", date_end="2026-07-20",
+            venue_name="Brocklesby", venue_postcode="DN37 7AB",
+        ),
+        ExtractedCompetition(  # clinic whose title mentions a deposit → visible
+            name="Pole Work Clinic - £20 Deposit Secures Your Place",
+            date_start="2026-07-21", date_end="2026-07-21",
+            venue_name="Brocklesby", venue_postcode="DN37 7AB",
+        ),
     ]
     mock_parser = MagicMock()
     mock_parser.fetch_and_parse = AsyncMock(return_value=mock_extracted)
@@ -305,10 +315,14 @@ async def test_booking_payment_listings_are_hidden(db_session):
 
     result = await db_session.execute(select(Competition))
     by_name = {c.name: c for c in result.scalars().all()}
+    # Booking-payment rows are hidden …
     assert by_name["Brocklesby Pony Club Summer Camp - DEPOSIT"].hidden is True
     assert by_name["AVHPC Area 15 - Final instalment for 4 days - Summer Camp"].hidden is True
     assert by_name["Berwickshire Summer Camp 2026 1st payment"].hidden is True
+    # … but legit events that merely mention payment terms stay visible.
     assert by_name["Brocklesby Unaffiliated Show Jumping"].hidden is False
+    assert by_name["Brocklesby Summer Camp 2026 - Payment Plan Available"].hidden is False
+    assert by_name["Pole Work Clinic - £20 Deposit Secures Your Place"].hidden is False
 
 
 @pytest.mark.asyncio

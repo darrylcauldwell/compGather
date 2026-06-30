@@ -52,11 +52,22 @@ MAX_EVENT_SPAN_DAYS = 120
 
 # Camp/clinic booking-payment listings to hide — deposits and instalments, which
 # some sources (e.g. Horse Events) list as a separate row per payment, exploding
-# one camp into many. Word-boundary anchored so "payt"/"instalment"/"payment"
-# match the booking-admin phrasing without catching ordinary event names.
+# one camp into many. Matched on the booking-row *shape*, not on any occurrence of
+# a payment word, so legitimate titles that merely mention payment terms stay
+# visible: "Summer Camp - Payment Plan Available", "Clinic (instalments
+# available)", "£20 Deposit Secures Your Place", "The Next Instalment - Series".
+# Still catches the real rows: DEPOSIT / DEPOSITS / "Booking deposit" / "1st payt"
+# / "1st payment" / "Final instalment" / "6 payments" / "balance due".
 _BOOKING_PAYMENT_RE = re.compile(
-    r"\b(?:deposits?|instal?ments?|payments?|payt|balance due)\b",
-    re.IGNORECASE,
+    r"""
+      \bpayt\b                                         # 'payt' booking abbreviation
+    | \bbalance\s+due\b                                 # explicit balance-due
+    | \bdeposits\b                                      # plural deposits -> booking
+    | (?:[-–(/:]\s*|\b(?:camp|booking)\s+)deposit\b     # deposit as a booking marker
+    | \b(?:final|first|second|third|fourth|fifth|sixth|\d{1,2}(?:st|nd|rd|th)?)
+        \s+(?:payments?|install?ments?)\b               # 'Nth/Final payment|instalment'
+    """,
+    re.IGNORECASE | re.VERBOSE,
 )
 
 
