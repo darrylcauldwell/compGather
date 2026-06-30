@@ -5398,7 +5398,9 @@
         "affiliated show jumping",
         "unaffiliated showjumping",
         "unaffiliated show jumping",
-        "sj"
+        "sj",
+        "jumping with style",
+        "jws"
       ],
       "description": "Jumping over fences and obstacles"
     },
@@ -5422,6 +5424,7 @@
         "eventer trial",
         "express eventing",
         "eventers challenge",
+        "eventer challenge",
         "horse trial",
         "horse trials"
       ],
@@ -5439,6 +5442,7 @@
     "Combined Training": {
       "aliases": [
         "combined training",
+        "combined challenge",
         "ct"
       ],
       "description": "Dressage and show jumping combined"
