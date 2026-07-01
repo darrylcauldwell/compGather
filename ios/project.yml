@@ -40,6 +40,10 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.dreamfold.equicalendar
+        # iPhone-only. Must be set at the TARGET level — the project-level value
+        # was overridden to "1,2" (universal) in generation, which made App Store
+        # Connect demand iPad screenshots.
+        TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_ENTITLEMENTS: EquiCalendar/EquiCalendar.entitlements
         # Base Info.plist (carries CKSharingSupported); generated keys merge on top.
         INFOPLIST_FILE: EquiCalendar/Info.plist
