@@ -101,8 +101,8 @@ platform :ios do
       # Don't prompt for the HTML preview before uploading.
       force: true,
       submit_for_review: true,
-      # Hold the release for manual publish after Apple approves.
-      automatic_release: false,
+      # Auto-release as soon as Apple approves — no manual publish step.
+      automatic_release: true,
       # No in-app purchases to precheck.
       precheck_include_in_app_purchases: false,
       submission_information: {
