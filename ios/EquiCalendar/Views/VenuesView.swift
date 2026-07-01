@@ -1,3 +1,4 @@
+import CoreLocation
 import MapKit
 import SwiftUI
 
@@ -27,10 +28,7 @@ struct VenuesView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
-                .padding(.top, 8)
-
-                FilterBar(model: model)
-                    .padding(.vertical, 8)
+                .padding(.vertical, 8)
                 Divider()
 
                 Group {
@@ -59,7 +57,10 @@ struct VenuesView: View {
             }
             .navigationTitle("Explore")
             .navigationBarTitleDisplayMode(.inline)
-            .task { await model.start() }
+            .task {
+                await model.start()
+                await frameInitialRegion()
+            }
         }
     }
 
@@ -70,6 +71,10 @@ struct VenuesView: View {
                 Marker(venue.name, systemImage: "figure.equestrian.sports", coordinate: venue.coordinate)
                     .tag(venue.id)
             }
+        }
+        // The visible region is the filter: refetch venues when the map settles.
+        .onMapCameraChange(frequency: .onEnd) { context in
+            Task { await model.loadRegion(context.region) }
         }
         .overlay(alignment: .topTrailing) {
             Button {
@@ -104,6 +109,23 @@ struct VenuesView: View {
                 center: coord,
                 latitudinalMeters: radiusMeters * 2,
                 longitudinalMeters: radiusMeters * 2
+            ))
+        }
+    }
+
+    /// On first appearance, frame the user's area (or a UK-wide default). Setting
+    /// the camera triggers onMapCameraChange, which fetches the visible venues.
+    private func frameInitialRegion() async {
+        if let coord = try? await model.userCoordinate() {
+            camera = .region(MKCoordinateRegion(
+                center: coord,
+                latitudinalMeters: 96_000,   // ~60 mi across
+                longitudinalMeters: 96_000
+            ))
+        } else {
+            camera = .region(MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 54.0, longitude: -2.5),
+                span: MKCoordinateSpan(latitudeDelta: 10, longitudeDelta: 10)
             ))
         }
     }

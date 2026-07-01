@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import MapKit
 import Observation
 
 /// Drives the Explore venue map. Shares the `FilterDriving` surface with the
@@ -34,6 +35,8 @@ final class VenuesViewModel: FilterDriving {
     private let api: APIClient
     private let location: LocationManager
     private var didStart = false
+    /// Last visible map region, so a mode switch re-queries the same viewport.
+    private var lastRegion: MKCoordinateRegion?
 
     init(api: APIClient = APIClient(), location: LocationManager = LocationManager()) {
         self.api = api
@@ -62,11 +65,24 @@ final class VenuesViewModel: FilterDriving {
     var showsDate: Bool { false }
 
     /// First appearance: acquire location (for distance) then load markers.
+    /// Acquire location for centring/zoom-to-me. Fetching is driven by the map
+    /// viewport (`loadRegion`), so we don't load here.
     func start() async {
         if !didStart {
             didStart = true
             await acquireLocation()
         }
+    }
+
+    /// Fetch venues inside the visible map region — Explore's viewport filter.
+    func loadRegion(_ region: MKCoordinateRegion) async {
+        lastRegion = region
+        let c = region.center
+        let s = region.span
+        filter.minLat = c.latitude - s.latitudeDelta / 2
+        filter.maxLat = c.latitude + s.latitudeDelta / 2
+        filter.minLng = c.longitude - s.longitudeDelta / 2
+        filter.maxLng = c.longitude + s.longitudeDelta / 2
         await load()
     }
 
@@ -90,7 +106,11 @@ final class VenuesViewModel: FilterDriving {
         guard newMode != mode else { return }
         mode = newMode
         venues = []
-        await load()
+        if let region = lastRegion {
+            await loadRegion(region)
+        } else {
+            await load()
+        }
     }
 
     func setDiscipline(_ discipline: String?) async {

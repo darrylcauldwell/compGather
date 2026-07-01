@@ -13,6 +13,11 @@ struct EventFilter: Equatable, Sendable {
     var tags: [String] = []
     /// Restrict to a single venue (set when a map pin hands off to Compete).
     var venueID: Int?
+    /// Map viewport bounds (Explore) — the visible region, so zoom is the filter.
+    var minLat: Double?
+    var maxLat: Double?
+    var minLng: Double?
+    var maxLng: Double?
 
     var queryItems: [URLQueryItem] {
         var items: [URLQueryItem] = []
@@ -25,6 +30,10 @@ struct EventFilter: Equatable, Sendable {
         if let m = maxDistance { items.append(.init(name: "max_distance", value: String(m))) }
         if let f = dateFrom { items.append(.init(name: "date_from", value: Self.day.string(from: f))) }
         if let t = dateTo { items.append(.init(name: "date_to", value: Self.day.string(from: t))) }
+        if let v = minLat { items.append(.init(name: "min_lat", value: String(v))) }
+        if let v = maxLat { items.append(.init(name: "max_lat", value: String(v))) }
+        if let v = minLng { items.append(.init(name: "min_lng", value: String(v))) }
+        if let v = maxLng { items.append(.init(name: "max_lng", value: String(v))) }
         return items
     }
 
