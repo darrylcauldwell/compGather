@@ -769,6 +769,7 @@ async def seed_venue_postcodes() -> None:
                 continue  # alias-only entry (e.g. "Tbc")
             lat = data.get("lat")
             lng = data.get("lng")
+            hire_url = data.get("hire_url")
 
             venue = (
                 await session.execute(
@@ -784,10 +785,13 @@ async def seed_venue_postcodes() -> None:
                     venue.latitude = lat
                     venue.longitude = lng
                     coords_set += 1
+                if hire_url and not venue.hire_url:
+                    venue.hire_url = hire_url
             else:
                 session.add(Venue(
                     name=name, postcode=postcode,
                     latitude=lat, longitude=lng,
+                    hire_url=hire_url,
                 ))
                 seeded += 1
                 if lat is not None:

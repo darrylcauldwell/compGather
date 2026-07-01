@@ -133,6 +133,12 @@ async def init_db():
         except Exception as e:
             logger.debug(f"confidence column: {e}")
 
+        try:
+            await conn.execute(text("ALTER TABLE venues ADD COLUMN hire_url TEXT"))
+            logger.info("Migration: added hire_url column to venues")
+        except Exception as e:
+            logger.debug(f"hire_url column: {e}")
+
     # VenueAlias tracking column
     async with engine.begin() as conn:
         try:

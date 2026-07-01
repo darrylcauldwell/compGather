@@ -32,6 +32,10 @@ class Venue(Base):
     validation_source: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # e.g., "website", "postcode_api", "nominatim"
     confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # 1.0 for validated, None for dynamic
 
+    # Arena/venue hire — a booking/enquiry link for venues that offer hire.
+    # Its presence marks the venue as a hire provider (Explore's "Arena hire" mode).
+    hire_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
 
 class Source(Base):
     __tablename__ = "sources"

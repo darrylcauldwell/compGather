@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import asc, case, desc, distinct, func, literal, or_, select
+from sqlalchemy import and_, asc, case, desc, distinct, func, literal, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager, selectinload
 
@@ -818,6 +818,74 @@ async def venues_map_api(
             "distance_miles": dist,
             "event_count": row.event_count,
             "disciplines": disciplines,
+        })
+
+    return JSONResponse(
+        content=venues_json,
+        headers={"Cache-Control": "public, max-age=300, s-maxage=3600"},
+    )
+
+
+@router.get("/api/venues/hire")
+async def venues_hire_api(
+    postcode: str | None = Query(None),
+    max_distance: float | None = Query(None),
+    session: AsyncSession = Depends(get_session),
+):
+    """Venues that offer arena/venue hire — for Explore's "Arena hire" mode.
+
+    A venue qualifies if it's seed-flagged with a hire_url, or it lists upcoming
+    venue_hire sessions (from which we surface a representative booking link). We
+    don't track availability; each pin links out so the user enquires directly.
+    """
+    from fastapi.responses import JSONResponse
+
+    user_coords = await get_user_coords(postcode)
+    today = date.today()
+    stmt = (
+        select(
+            Venue.id,
+            Venue.name,
+            Venue.postcode,
+            Venue.latitude,
+            Venue.longitude,
+            Venue.hire_url,
+            func.count(Competition.id).label("slot_count"),
+            func.max(Competition.url).label("slot_url"),
+        )
+        .select_from(Venue)
+        .outerjoin(
+            Competition,
+            and_(
+                Competition.venue_id == Venue.id,
+                Competition.event_type == "venue_hire",
+                Competition.hidden.is_not(True),
+                or_(Competition.date_start >= today, Competition.date_end >= today),
+            ),
+        )
+        .where(Venue.latitude != None, Venue.longitude != None)
+        .group_by(Venue.id)
+        .having(or_(Venue.hire_url.is_not(None), func.count(Competition.id) > 0))
+    )
+    rows = (await session.execute(stmt)).all()
+
+    venues_json = []
+    for row in rows:
+        dist = None
+        if user_coords and row.latitude is not None and row.longitude is not None:
+            from app.services.geocoder import haversine
+            dist = round(haversine(user_coords[0], user_coords[1], row.latitude, row.longitude), 1)
+        if max_distance is not None and user_coords and (dist is None or dist > max_distance):
+            continue
+        venues_json.append({
+            "id": row.id,
+            "name": row.name,
+            "postcode": row.postcode or "",
+            "lat": row.latitude,
+            "lng": row.longitude,
+            "distance_miles": dist,
+            "hire_url": row.hire_url or row.slot_url or "",
+            "has_slots": row.slot_count > 0,
         })
 
     return JSONResponse(
