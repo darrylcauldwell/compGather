@@ -24,9 +24,12 @@ Every event has its own page with the date, venue, distance, class list and a ma
 • Visit the organiser's website to enter or find schedules
 
 PLAN YOUR SEASON
-Star any event to save it to your Plan. Saved events are stored on your device so they're available offline — handy at the yard when signal is patchy.
+Star any event to save it to your Plan. Your Plan syncs across your own devices through iCloud and works offline too — handy at the yard when signal is patchy.
+
+SHARE YOUR PLAN WITH FAMILY
+Planning a season together? Share your Plan with the people who help — a parent and rider, or the whole family. Send one invite link and everyone sees and edits the same list, with changes kept in sync for each person automatically. One shared Plan, always up to date for everyone on it.
 
 PRIVATE BY DESIGN
-There's no account and no login. EquiCalendar doesn't show adverts and includes no third-party tracking. Your location is used only to show and sort nearby events and is never stored against you; calendar access is write-only, purely to add events you choose.
+There's no EquiCalendar account to create and no login to browse. Your Plan syncs privately through your own iCloud — shared Plans stay within Apple's iCloud, never on our servers. EquiCalendar shows no adverts and includes no third-party tracking. Your location is used only to show and sort nearby events and is never stored against you; calendar access is write-only, purely to add events you choose.
 
 EquiCalendar pulls together fixtures from many UK organisers and venues into one place, so you can spend less time hunting across websites and more time riding.

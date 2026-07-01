@@ -1,1 +1,1 @@
-Initial release.
+Welcome to EquiCalendar — a free calendar of UK equestrian events. Find what's on near you, filter by discipline, series and distance, explore venues on a map, and build a Plan you can share with family and keep in sync across your devices.
