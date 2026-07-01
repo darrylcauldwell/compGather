@@ -113,21 +113,29 @@ struct VenuesView: View {
         }
     }
 
-    /// On first appearance, frame the user's area (or a UK-wide default). Setting
-    /// the camera triggers onMapCameraChange, which fetches the visible venues.
+    /// On first appearance, frame the user's area (or a UK-wide default) and
+    /// load that region's venues. The `Map` only renders once venues exist, so
+    /// `onMapCameraChange` can't fire the first fetch — we must kick it off here.
+    /// Under snapshot we force the UK-wide frame so the App Store shot is
+    /// populated regardless of the simulator's (missing) location.
     private func frameInitialRegion() async {
-        if let coord = try? await model.userCoordinate() {
-            camera = .region(MKCoordinateRegion(
+        let ukWide = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 54.0, longitude: -2.5),
+            span: MKCoordinateSpan(latitudeDelta: 10, longitudeDelta: 10)
+        )
+        let isSnapshot = UserDefaults.standard.bool(forKey: "FASTLANE_SNAPSHOT")
+        let region: MKCoordinateRegion
+        if !isSnapshot, let coord = try? await model.userCoordinate() {
+            region = MKCoordinateRegion(
                 center: coord,
                 latitudinalMeters: 96_000,   // ~60 mi across
                 longitudinalMeters: 96_000
-            ))
+            )
         } else {
-            camera = .region(MKCoordinateRegion(
-                center: CLLocationCoordinate2D(latitude: 54.0, longitude: -2.5),
-                span: MKCoordinateSpan(latitudeDelta: 10, longitudeDelta: 10)
-            ))
+            region = ukWide
         }
+        camera = .region(region)
+        await model.loadRegion(region)
     }
 }
 
