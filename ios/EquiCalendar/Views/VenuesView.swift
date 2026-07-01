@@ -17,6 +17,18 @@ struct VenuesView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                Picker("Mode", selection: Binding(
+                    get: { model.mode },
+                    set: { newMode in Task { await model.setMode(newMode) } }
+                )) {
+                    ForEach(VenuesViewModel.ExploreMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.top, 8)
+
                 FilterBar(model: model)
                     .padding(.vertical, 8)
                 Divider()
@@ -35,7 +47,10 @@ struct VenuesView: View {
                                 .buttonStyle(.glassProminent)
                         }
                     } else if model.venues.isEmpty {
-                        ContentUnavailableView("No venues match", systemImage: "map")
+                        ContentUnavailableView(
+                            model.mode == .hire ? "No hire venues nearby" : "No venues match",
+                            systemImage: model.mode == .hire ? "sportscourt" : "map"
+                        )
                     } else {
                         map
                     }
@@ -111,25 +126,44 @@ private struct VenueCallout: View {
                     .font(AppTypography.cardMeta)
                     .foregroundStyle(.secondary)
             }
-            if !venue.disciplines.isEmpty {
-                Text(venue.disciplines.joined(separator: " · "))
+            if let hire = venue.hireURL, let url = URL(string: hire) {
+                // Arena hire mode: we don't track availability — link out to enquire.
+                Text("Offers arena hire — check availability with the venue.")
                     .font(AppTypography.cardMeta)
-                    .foregroundStyle(.tint)
-                    .lineLimit(1)
-            }
-            // Clear, full-width call-to-action — a large, obvious tap target
-            // instead of the easy-to-miss text link.
-            Button(action: onViewEvents) {
-                HStack(spacing: 6) {
-                    Text(eventsText)
-                    Image(systemName: "arrow.right")
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Link(destination: url) {
+                    HStack(spacing: 6) {
+                        Text("Check availability")
+                        Image(systemName: "arrow.up.right.square")
+                    }
+                    .font(AppTypography.controlLabel)
+                    .frame(maxWidth: .infinity)
                 }
-                .font(AppTypography.controlLabel)
-                .frame(maxWidth: .infinity)
+                .buttonStyle(.glassProminent)
+                .controlSize(.large)
+                .accessibilityLabel("Check arena hire availability at \(venue.name)")
+            } else {
+                if !venue.disciplines.isEmpty {
+                    Text(venue.disciplines.joined(separator: " · "))
+                        .font(AppTypography.cardMeta)
+                        .foregroundStyle(.tint)
+                        .lineLimit(1)
+                }
+                // Clear, full-width call-to-action — a large, obvious tap target
+                // instead of the easy-to-miss text link.
+                Button(action: onViewEvents) {
+                    HStack(spacing: 6) {
+                        Text(eventsText)
+                        Image(systemName: "arrow.right")
+                    }
+                    .font(AppTypography.controlLabel)
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.glassProminent)
+                .controlSize(.large)
+                .accessibilityLabel("View \(venue.eventCount) events at \(venue.name)")
             }
-            .buttonStyle(.glassProminent)
-            .controlSize(.large)
-            .accessibilityLabel("View \(venue.eventCount) events at \(venue.name)")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)

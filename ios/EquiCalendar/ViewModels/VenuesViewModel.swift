@@ -10,6 +10,13 @@ import Observation
 @Observable
 final class VenuesViewModel: FilterDriving {
     var venues: [VenueMarker] = []
+    /// Explore mode: events (venues with upcoming events) or arena hire.
+    enum ExploreMode: String, CaseIterable, Identifiable {
+        case events, hire
+        var id: String { rawValue }
+        var title: String { self == .events ? "Events" : "Arena hire" }
+    }
+    var mode: ExploreMode = .events
     var isLoading = false
     var errorMessage: String?
     var filter = EventFilter()
@@ -49,6 +56,10 @@ final class VenuesViewModel: FilterDriving {
     var venueName: String? { nil }
     var discipline: String? { filter.discipline }
     var dateFilterActive: Bool { customDate != nil || dateScope != .upcoming }
+    // Explore's bar is just Mode + Distance — it drops series/discipline/date.
+    var showsSeries: Bool { false }
+    var showsDiscipline: Bool { false }
+    var showsDate: Bool { false }
 
     /// First appearance: acquire location (for distance) then load markers.
     func start() async {
@@ -64,12 +75,22 @@ final class VenuesViewModel: FilterDriving {
         errorMessage = nil
         defer { isLoading = false }
         do {
-            venues = try await api.venues(filter: filter)
+            venues = mode == .hire
+                ? try await api.hireVenues(filter: filter)
+                : try await api.venues(filter: filter)
         } catch is CancellationError {
             // ignore
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    /// Switch between the events map and the arena-hire directory.
+    func setMode(_ newMode: ExploreMode) async {
+        guard newMode != mode else { return }
+        mode = newMode
+        venues = []
+        await load()
     }
 
     func setDiscipline(_ discipline: String?) async {

@@ -17,12 +17,18 @@ struct FilterBar<Model: FilterDriving>: View {
                     if let venue = model.venueName {
                         venuePill(venue)
                     }
-                    seriesMenu
+                    if model.showsSeries {
+                        seriesMenu
+                    }
                     if model.showsTier {
                         tierMenu
                     }
-                    disciplineMenu
-                    dateMenu
+                    if model.showsDiscipline {
+                        disciplineMenu
+                    }
+                    if model.showsDate {
+                        dateMenu
+                    }
                     distanceMenu
                 }
                 .padding(.horizontal)

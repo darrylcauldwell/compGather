@@ -79,6 +79,18 @@ struct APIClient: Sendable {
         return try await get([VenueMarker].self, from: url)
     }
 
+    /// Venues that offer arena/venue hire (Explore's "Arena hire" mode). Uses only
+    /// postcode + max_distance from the filter; other params are ignored server-side.
+    func hireVenues(filter: EventFilter = .init()) async throws -> [VenueMarker] {
+        let base = baseURL.appending(path: "api/venues/hire")
+        guard var components = URLComponents(url: base, resolvingAgainstBaseURL: false) else {
+            throw APIError.invalidURL
+        }
+        components.queryItems = filter.queryItems.isEmpty ? nil : filter.queryItems
+        guard let url = components.url else { throw APIError.invalidURL }
+        return try await get([VenueMarker].self, from: url)
+    }
+
     /// Resolve a device coordinate to a UK postcode via the backend.
     func reverseGeocode(latitude: Double, longitude: Double) async throws -> String {
         let url = baseURL.appending(path: "api/geocode/reverse")

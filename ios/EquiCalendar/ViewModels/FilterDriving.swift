@@ -40,4 +40,17 @@ protocol FilterDriving: AnyObject, Observable {
     // Venue hand-off (only the Compete list sets one; map/Watch report nil)
     var venueName: String? { get }
     func clearVenue() async
+
+    // Per-view pill visibility — which filter pills this view shows. Defaults
+    // (see extension) keep the full set on Compete/Watch; Explore overrides them
+    // to show only Mode + Distance.
+    var showsSeries: Bool { get }
+    var showsDiscipline: Bool { get }
+    var showsDate: Bool { get }
+}
+
+extension FilterDriving {
+    var showsSeries: Bool { true }
+    var showsDiscipline: Bool { true }
+    var showsDate: Bool { true }
 }
