@@ -37,7 +37,9 @@ final class PlanStore {
         priv.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
 
         // Shared store — Plans others have shared with this user (CKShare accept).
-        let shared = priv.copy() as! NSPersistentStoreDescription
+        guard let shared = priv.copy() as? NSPersistentStoreDescription else {
+            fatalError("NSPersistentStoreDescription.copy() must return NSPersistentStoreDescription")
+        }
         shared.url = base.appendingPathComponent("shared.sqlite")
         shared.cloudKitContainerOptions = Self.options(scope: .shared)
         container.persistentStoreDescriptions.append(shared)
