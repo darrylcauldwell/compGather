@@ -2,6 +2,18 @@ import CloudKit
 import CoreData
 import os
 
+#if DEBUG
+/// One demo saved-event row used to populate the Plan tab for App Store
+/// screenshots (see `PlanStore.seedSnapshotDemoIfNeeded`).
+private struct SnapshotFavourite {
+    let id: Int64
+    let name: String
+    let venue: String
+    let discipline: String
+    let day: String
+}
+#endif
+
 /// The Plan persistence stack: Core Data backed by CloudKit
 /// (`NSPersistentCloudKitContainer`), with a **private** store (the user's own
 /// Plan, synced across their devices) and a **shared** store (a Plan shared with
@@ -73,6 +85,7 @@ final class PlanStore {
 
         #if DEBUG
         initializeSchemaForDevelopmentIfNeeded()
+        seedSnapshotDemoIfNeeded()
         #endif
     }
 
@@ -99,6 +112,37 @@ final class PlanStore {
             log.error("initializeCloudKitSchema failed: \(error.localizedDescription, privacy: .public)")
         }
         #endif
+    }
+
+    /// Seed a few demo favourites so the Plan tab renders a populated list for
+    /// App Store screenshots. No-op unless the FASTLANE_SNAPSHOT launch argument
+    /// is set (only the screenshot UI test sets it) and the Plan is empty.
+    private func seedSnapshotDemoIfNeeded() {
+        guard UserDefaults.standard.bool(forKey: "FASTLANE_SNAPSHOT"),
+              ((try? viewContext.count(for: Favourite.fetchRequest())) ?? 0) == 0,
+              let plan = ensurePrivatePlan() else { return }
+        let store = plan.objectID.persistentStore
+        let demo = [
+            SnapshotFavourite(id: 9001, name: "Quob Stables Premier League",
+                              venue: "Quob Stables", discipline: "Dressage", day: "2026-07-11"),
+            SnapshotFavourite(id: 9002, name: "Keysoe International CSI2*",
+                              venue: "The College EC, Keysoe", discipline: "Show Jumping", day: "2026-07-18"),
+            SnapshotFavourite(id: 9003, name: "Aston-le-Walls ODE",
+                              venue: "Aston-le-Walls", discipline: "Eventing", day: "2026-08-02"),
+        ]
+        for row in demo {
+            let fav = Favourite(context: viewContext)
+            fav.competitionId = row.id
+            fav.name = row.name
+            fav.venueName = row.venue
+            fav.discipline = row.discipline
+            fav.dateStart = row.day
+            fav.url = "https://equicalendar.dreamfold.dev"
+            fav.addedAt = .now
+            fav.plan = plan
+            if let store { viewContext.assign(fav, to: store) }
+        }
+        save()
     }
     #endif
 
