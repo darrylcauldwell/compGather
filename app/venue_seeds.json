@@ -96,7 +96,8 @@
         "Arena Uk (Small Pony Premier) Sat 7Th",
         "Arena Uk Tuesday",
         "Arena Uk British Showjumping Winter Championships 18Th"
-      ]
+      ],
+      "hire_url": "https://www.arenauk.com/arena-hire"
     },
     "Arley Moss": {
       "postcode": "CW9 6LZ",
@@ -167,7 +168,8 @@
       "lng": -2.855282,
       "aliases": [
         "Badgworth Arena Equestrian Centre(Bs262Qu"
-      ]
+      ],
+      "hire_url": "https://badgwortharena.co.uk/facility/"
     },
     "Ballavartyn": {
       "postcode": "IM4 1HT",
@@ -307,7 +309,8 @@
       "lng": 0.539933,
       "aliases": [
         "Bodiam International Arena Court Lodge Farm Bodiam East Sussex"
-      ]
+      ],
+      "hire_url": "https://www.bodiaminternationalarena.com/hire-charges"
     },
     "Bold Heath": {
       "postcode": "WA8 3XT",
@@ -959,7 +962,8 @@
     "Edenwell Equestrian Centre": {
       "postcode": "TS27 4TF",
       "lat": 54.739965,
-      "lng": -1.367875
+      "lng": -1.367875,
+      "hire_url": "https://edenwell-ec.ecpro.co.uk/book/facility"
     },
     "Edgmond Village Hall": {
       "postcode": "TF10 8HU",
@@ -1001,7 +1005,8 @@
       "lng": -1.39267,
       "aliases": [
         "Enborne"
-      ]
+      ],
+      "hire_url": "https://www.enborneequestrian.co.uk/riding-school-near-newbury-berkshire-enborne-equestrian-centre/"
     },
     "Epworth": {
       "postcode": "DN9 1LQ",
@@ -1325,7 +1330,8 @@
         "Craven Arena"
       ],
       "lat": 53.962443,
-      "lng": -2.041471
+      "lng": -2.041471,
+      "hire_url": "https://hargateequestriancentre.ecpro.co.uk/book/facility"
     },
     "Harrogate": {
       "postcode": "HG3 1PW",
@@ -1429,7 +1435,8 @@
     "Hillview Arena": {
       "postcode": "WR13 6NN",
       "lat": 52.07531,
-      "lng": -2.298809
+      "lng": -2.298809,
+      "hire_url": "http://www.hillview.myzen.co.uk/page2/"
     },
     "Hollisters": {
       "postcode": "BS37 6JY",
@@ -1669,7 +1676,8 @@
       "lng": -0.584133,
       "aliases": [
         "Leadenham Polo Club"
-      ]
+      ],
+      "hire_url": "http://www.leadenhampoloclub.com/poloarena"
     },
     "Ledbury": {
       "postcode": "HR8 2LN",
@@ -1888,7 +1896,8 @@
       "lng": -4.960251,
       "aliases": [
         "Moor Farm Equestrian Centre"
-      ]
+      ],
+      "hire_url": "http://www.moorfarmequestriancentre.co.uk/"
     },
     "Moorhouse": {
       "postcode": "DN6 7HA",
@@ -2330,7 +2339,8 @@
       "lng": -2.076593,
       "aliases": [
         "The Rhino Arena"
-      ]
+      ],
+      "hire_url": "https://www.rhinoarenacolwell.co.uk/private-hire"
     },
     "Ripley Castle": {
       "postcode": "HG3 3EA",
@@ -2699,12 +2709,14 @@
     "Sykehouse Arena": {
       "postcode": "DN14 9AX",
       "lat": 53.642653,
-      "lng": -1.052041
+      "lng": -1.052041,
+      "hire_url": "https://www.sykehousearena.com/online-entries/arena-course-hire/"
     },
     "Tall Trees Arena": {
       "postcode": "PL32 9XR",
       "lat": 50.652628,
-      "lng": -4.628713
+      "lng": -4.628713,
+      "hire_url": "https://www.talltreesarena.co.uk/arena-hire/"
     },
     "Taunton School": {
       "postcode": "TA2 6AD",
@@ -2912,7 +2924,8 @@
       "lng": -2.706263,
       "aliases": [
         "Tushingham"
-      ]
+      ],
+      "hire_url": "https://tushinghamarena.co.uk/arena-hire"
     },
     "Twemlows Hall": {
       "postcode": "SY13 2EZ",
@@ -3291,7 +3304,8 @@
       "lng": -1.564089,
       "aliases": [
         "Yorkshire"
-      ]
+      ],
+      "hire_url": "https://www.yrc.co.uk/facilities.html"
     },
     "Field Farm Cross Country": {
       "postcode": "LE12 6ST",
@@ -3395,7 +3409,8 @@
       "validation_source": "website",
       "confidence": 1.0,
       "lat": 57.288337,
-      "lng": -2.320896
+      "lng": -2.320896,
+      "hire_url": "https://www.cabinequestrian.co.uk/facilities"
     },
     "Moor Farm": {
       "postcode": "CV7 8AP",
@@ -3736,7 +3751,8 @@
         "Ashwood"
       ],
       "lat": 52.821172,
-      "lng": -2.273234
+      "lng": -2.273234,
+      "hire_url": "https://ashwoodequestrian.com/hire/"
     },
     "Barton Stud": {
       "postcode": "IP31 2SH",
@@ -3757,7 +3773,8 @@
         "Kelsall Hill British Dressage Youth Inter Regional Cham"
       ],
       "lat": 53.210236,
-      "lng": -2.679073
+      "lng": -2.679073,
+      "hire_url": "https://kelsallhill.co.uk/arenas/"
     },
     "Stoneleigh Village Hall": {
       "postcode": "CV8 3DG",
@@ -3787,7 +3804,8 @@
         "Prestige Equestrian"
       ],
       "lat": 51.805832,
-      "lng": -2.288439
+      "lng": -2.288439,
+      "hire_url": "https://prestige.training/arena-venue-hire/"
     },
     "Lower Stocklands Farm": {
       "postcode": "CF5 6DR",
@@ -3814,7 +3832,8 @@
         "Cheston"
       ],
       "lat": 50.412384,
-      "lng": -3.857387
+      "lng": -3.857387,
+      "hire_url": "https://www.chestonfarm.co.uk/venue-facilities/"
     },
     "Eldwick Riding Club": {
       "postcode": "BD16 3EU",
@@ -3826,7 +3845,8 @@
       "postcode": "LN1 2ZR",
       "aliases": [],
       "lat": 53.290711,
-      "lng": -0.546858
+      "lng": -0.546858,
+      "hire_url": "https://www.riseholme.ac.uk/campus-and-facilities/equine-centre/arena-hire"
     },
     "Equitex Arena": {
       "postcode": "LU6 2NW",
@@ -3957,7 +3977,8 @@
         "Benridge"
       ],
       "lat": 55.184833,
-      "lng": -1.738975
+      "lng": -1.738975,
+      "hire_url": "https://www.benridgeridingcentre.co.uk/facilities.php"
     },
     "Bogenraith Equestrian": {
       "postcode": "AB31 6DS",
@@ -3965,7 +3986,8 @@
       "lng": -2.32852,
       "aliases": [
         "Bogenraith"
-      ]
+      ],
+      "hire_url": "https://equestrian.bogenraith.com/services-and-bookings/"
     },
     "Addington Manor": {
       "postcode": "MK18 2JR",
@@ -4047,7 +4069,8 @@
       "aliases": [
         "Croft Top",
         "The Croft"
-      ]
+      ],
+      "hire_url": "https://www.crofttop.co.uk/facilities"
     },
     "Hascombe Farm": {
       "postcode": "BN5 9SA",
@@ -4077,7 +4100,8 @@
       "aliases": [
         "Essendon @ Radley Green",
         "Radley Green"
-      ]
+      ],
+      "hire_url": "https://www.rgequestrian.uk/book-1"
     },
     "Stoneleigh Park": {
       "postcode": "CV8 2LZ",
@@ -4156,7 +4180,8 @@
         "Scottish National Equestrian Centre (Snec)",
         "Scottish National",
         "The Scottish National"
-      ]
+      ],
+      "hire_url": "https://www.snec.co.uk/arena-hire/"
     },
     "Hartpury College": {
       "postcode": "GL19 3BE",
@@ -4178,7 +4203,8 @@
       "aliases": [
         "Gloucestershire",
         "Moores Farm"
-      ]
+      ],
+      "hire_url": "https://www.mooresfarmequestrian.co.uk/facilities/"
     },
     "The Unicorn Equestrian Centre": {
       "postcode": "GL54 1JZ",
@@ -4188,7 +4214,8 @@
         "The Unicorn",
         "The Unicorn Equestrian Centre",
         "The Unicorn Trust"
-      ]
+      ],
+      "hire_url": "https://unicornequestrian.co.uk/availability"
     },
     "Breach Barn (GL54)": {
       "postcode": "GL54 5TF",
@@ -4261,7 +4288,8 @@
       "aliases": [
         "Grange Farm",
         "Grange Farm Chester Road"
-      ]
+      ],
+      "hire_url": "http://www.grangefarmequestriancentre.co.uk/facilities.aspx"
     },
     "The Brook": {
       "postcode": "PL21 0HG",
@@ -4306,7 +4334,8 @@
       "aliases": [
         "Wood Farm",
         "Wood Farm Norfolk"
-      ]
+      ],
+      "hire_url": "https://www.woodfarm-equestrian.co.uk/arena-booking"
     },
     "Radfords Equestrian Centre": {
       "postcode": "SY22 6LG",
@@ -4318,7 +4347,8 @@
         "Radfords Equestrian Centre Sy226Lg",
         "Radfords Equestrian Sy226Lg",
         "Radfords Lower House Farm, Llanymynech"
-      ]
+      ],
+      "hire_url": "https://www.radfords-equestrian.co.uk/"
     },
     "Port Royal Equestrian": {
       "postcode": "YO43 4AZ",
@@ -4329,7 +4359,8 @@
         "Port Royal Equestrian & Exhibition Centre",
         "Port Royal Showground",
         "Portroyal"
-      ]
+      ],
+      "hire_url": "https://www.portroyaleec.co.uk/calender/showcross-arena-hire/"
     },
     "The Paddocks": {
       "postcode": "YO7 4EL",
@@ -4905,7 +4936,8 @@
       "postcode": "NG23 7NZ",
       "lat": 53.147872,
       "lng": -0.729154,
-      "aliases": []
+      "aliases": [],
+      "hire_url": "http://www.oakridgearena.co.uk/venue.html"
     },
     "Thurleigh": {
       "postcode": "MK44 2DP",
@@ -5041,7 +5073,8 @@
       "lng": -6.268646,
       "aliases": [
         "00:00:00Rally For All Levels - Connellhill - Penny Sangsterrally For All Levels"
-      ]
+      ],
+      "hire_url": "https://www.connellhillequestriancentre.com/service-page/indoor-arena-hire"
     },
     "Rectory Farm": {
       "postcode": "GL7 7JW",
@@ -5199,7 +5232,8 @@
     "Blidworth Equestrian Centre": {
       "postcode": "NG15 9AH",
       "lat": 53.080268,
-      "lng": -1.144897
+      "lng": -1.144897,
+      "hire_url": "https://www.blidworthequestriansc.com/arena-hire"
     },
     "Caverswall & District RC at Lodge Farm": {
       "postcode": "ST9 0BN",
@@ -5247,7 +5281,8 @@
     "Ivesley Equestrian": {
       "postcode": "DH7 9HB",
       "lat": 54.768967,
-      "lng": -1.725048
+      "lng": -1.725048,
+      "hire_url": "https://www.ivesleyequestrian.co.uk/hire"
     },
     "Long Eaton Riding Club": {
       "postcode": "DE72 3TT",
@@ -5272,12 +5307,14 @@
     "Speetley Equestrian Centre Ltd": {
       "postcode": "S43 4TQ",
       "lat": 53.298355,
-      "lng": -1.269604
+      "lng": -1.269604,
+      "hire_url": "https://www.speetleyec.com/hire-facilities"
     },
     "Stourport Riding Centre": {
       "postcode": "DY13 9SD",
       "lat": 52.318686,
-      "lng": -2.246266
+      "lng": -2.246266,
+      "hire_url": "https://www.stourportridingcentre.co.uk/facilities/venue-hire/"
     },
     "Underwood Events": {
       "postcode": "HU15 1RF",
@@ -5287,7 +5324,8 @@
     "White House Farm Equestrian": {
       "postcode": "LN6 9DP",
       "lat": 53.205167,
-      "lng": -0.670189
+      "lng": -0.670189,
+      "hire_url": "https://white-house-farm.co.uk/"
     },
     "Wing Dressage and Jumping Centre": {
       "postcode": "LU7 0LB",
@@ -5297,12 +5335,14 @@
     "Yorkshire Equestrian Centre": {
       "postcode": "LS25 6JX",
       "lat": 53.798682,
-      "lng": -1.291604
+      "lng": -1.291604,
+      "hire_url": "https://www.yorkshireec.co.uk/arenahire"
     },
     "Blidworth Equestrian Show Centre": {
       "postcode": "NG15 9AL",
       "lat": 53.075,
-      "lng": -1.135
+      "lng": -1.135,
+      "hire_url": "https://www.blidworthequestriansc.com/arena-hire"
     },
     "Byley International Show Centre": {
       "postcode": "CW10 9LN",
@@ -5312,7 +5352,8 @@
     "Castle Farm Livery & Cross Country Equestrian": {
       "postcode": "GL12 8NS",
       "lat": 51.591,
-      "lng": -2.401
+      "lng": -2.401,
+      "hire_url": "https://www.castlefarmliverycrosscountry.com/facility-hire-2/"
     },
     "Cockermouth & District Agricultural Show": {
       "postcode": "CA13 0HH",
@@ -5327,7 +5368,8 @@
     "Fenland Equestrian Centre": {
       "postcode": "PE14 0RN",
       "lat": 52.641913,
-      "lng": 0.143428
+      "lng": 0.143428,
+      "hire_url": "https://www.fenlandec.co.uk/facilities"
     },
     "Greenhill Eventing": {
       "postcode": "B93 0AU",
@@ -5377,7 +5419,8 @@
     "Winters Equestrian Cross Country": {
       "postcode": "LN7 6JD",
       "lat": 53.452043,
-      "lng": -0.418592
+      "lng": -0.418592,
+      "hire_url": "https://wexc.co.uk/"
     }
   },
   "ambiguous_names": [
