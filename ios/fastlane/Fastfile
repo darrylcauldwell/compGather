@@ -11,7 +11,10 @@ default_platform(:ios)
 APP_IDENTIFIER = "dev.dreamfold.equicalendar"
 XCODEPROJ = "EquiCalendar.xcodeproj"
 SCHEME = "EquiCalendar"
-MILESTONE = "1.0" # bump manually when starting a new milestone (1.0 -> 1.1)
+# SemVer marketing version — bump BY HAND per release, decoupled from the build
+# number: patch=fix (1.0 -> 1.0.1), minor=feature (1.0 -> 1.1), major=rewrite (-> 2.0).
+# The build number below is the monotonic TestFlight counter (agvtool), not part of this.
+MARKETING_VERSION = "1.0"
 
 # App Store Connect API key from team-level env vars (no fallbacks — required).
 def api_key
@@ -49,9 +52,10 @@ platform :ios do
       initial_build_number: 0,
     ) + 1
 
-    # Version via agvtool (apple-generic) — build number + <milestone>.<build>.
+    # Version via agvtool (apple-generic): monotonic build number, plus the
+    # hand-managed SemVer marketing version (a build bump is NOT a version bump).
     sh("cd .. && xcrun agvtool new-version -all #{build}")
-    sh("cd .. && xcrun agvtool new-marketing-version #{MILESTONE}.#{build}")
+    sh("cd .. && xcrun agvtool new-marketing-version #{MARKETING_VERSION}")
 
     build_app(
       project: XCODEPROJ,
