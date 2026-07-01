@@ -29,33 +29,28 @@ final class PlanStore {
         )
         let base = NSPersistentContainer.defaultDirectoryURL()
 
-        // CloudKit mirroring setup (PFCloudKitContainerProvider) hard-traps on the
-        // Simulator — there's no iCloud/CloudKit container there — which crashes the
-        // app on launch during UI tests/screenshots. So on the Simulator, run the
-        // Plan as plain local Core Data (no cloudKitContainerOptions). Full CloudKit
-        // sync + sharing stays on device.
-        let cloudKit: Bool = {
-            #if targetEnvironment(simulator)
-            return false
-            #else
-            return true
-            #endif
-        }()
-
         // Private store — the user's own Plan.
         let priv = container.persistentStoreDescriptions.first!
         priv.url = base.appendingPathComponent("private.sqlite")
-        if cloudKit { priv.cloudKitContainerOptions = Self.options(scope: .private) }
         priv.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
         priv.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+
+        // CloudKit-backed stores exist on device only. NSPersistentCloudKitContainer's
+        // CloudKit setup traps on the Simulator (no iCloud/CloudKit container) AND it
+        // throws from setPersistentStoreDescriptions if a second store has no options.
+        // So on the Simulator the Plan is a single plain local store (no shared store)
+        // for UI tests/screenshots; full CloudKit sync + sharing is unchanged on device.
+        #if !targetEnvironment(simulator)
+        priv.cloudKitContainerOptions = Self.options(scope: .private)
 
         // Shared store — Plans others have shared with this user (CKShare accept).
         guard let shared = priv.copy() as? NSPersistentStoreDescription else {
             fatalError("NSPersistentStoreDescription.copy() must return NSPersistentStoreDescription")
         }
         shared.url = base.appendingPathComponent("shared.sqlite")
-        if cloudKit { shared.cloudKitContainerOptions = Self.options(scope: .shared) }
+        shared.cloudKitContainerOptions = Self.options(scope: .shared)
         container.persistentStoreDescriptions.append(shared)
+        #endif
 
         container.loadPersistentStores { [weak self] description, error in
             guard let self else { return }
