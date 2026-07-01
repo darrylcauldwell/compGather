@@ -48,6 +48,7 @@ struct SharePlanSheet: View {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
             }
             .task {
+                if Self.isSnapshot { loadSnapshotDemo(); return }
                 canShare = await PlanStore.shared.iCloudAvailable()
                 reload()
             }
@@ -300,6 +301,23 @@ struct SharePlanSheet: View {
         people = store.participants()
         url = store.shareURL
         ownerName = store.ownerName
+    }
+
+    /// Screenshot-only: render a representative "shared with family" owner state
+    /// (fake link + names) so `fastlane snapshot` captures the sharing UI without a
+    /// live iCloud account or real participant data. Never runs in production —
+    /// FASTLANE_SNAPSHOT is only set by the screenshot UI test.
+    static var isSnapshot: Bool { UserDefaults.standard.bool(forKey: "FASTLANE_SNAPSHOT") }
+
+    private func loadSnapshotDemo() {
+        canShare = true
+        role = .owner
+        url = URL(string: "https://www.icloud.com/share/0EquiCalendarFamilyPlan")
+        people = [
+            .init(name: "You", handle: nil, isOwner: true, isCurrentUser: true, status: .owner, removeKey: nil),
+            .init(name: "Mum", handle: nil, isOwner: false, isCurrentUser: false, status: .joined, removeKey: "d1"),
+            .init(name: "Daughter", handle: nil, isOwner: false, isCurrentUser: false, status: .invited, removeKey: "d2"),
+        ]
     }
 
     private func startShare() async {

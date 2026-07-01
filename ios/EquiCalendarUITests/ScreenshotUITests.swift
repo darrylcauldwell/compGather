@@ -56,6 +56,16 @@ final class ScreenshotUITests: XCTestCase {
         tapTab(app, "Plan")
         sleep(2)
         snapshot("05Plan")
+
+        // 06 — Plan Sharing: share your Plan with family. The sheet renders a
+        // demo owner state under FASTLANE_SNAPSHOT (fake link + names), so no
+        // iCloud account or real share is needed.
+        let cog = app.buttons["Plan sharing"]
+        if cog.waitForExistence(timeout: 10) {
+            cog.tap()
+            sleep(2)
+            snapshot("06Share")
+        }
     }
 
     // MARK: - Helpers
