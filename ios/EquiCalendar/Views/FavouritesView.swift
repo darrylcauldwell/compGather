@@ -6,41 +6,31 @@ import UIKit
 
 /// Saved events ("Plan"), stored with Core Data + CloudKit so they sync across
 /// the user's devices and can be shared, read-write, with another person.
+///
+/// The list of events is the focus. Sharing mechanics live behind the toolbar
+/// cog (`PlanSettingsView`) so the tab reads as a plan, not a share screen.
 struct FavouritesView: View {
     @FetchRequest(sortDescriptors: [NSSortDescriptor(key: "dateStart", ascending: true)])
     private var favourites: FetchedResults<Favourite>
 
-    @State private var shareContext: ShareContext?
-    @State private var canShare = false
-    @State private var isBusy = false
-    @State private var message: String?
-
-    private let log = Logger(subsystem: "dev.dreamfold.equicalendar", category: "Share")
+    @State private var showingSettings = false
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                if canShare {
-                    sharingCard
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                        .padding(.bottom, 4)
+            content
+                .navigationTitle("Plan")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Label("Plan sharing", systemImage: "gearshape")
+                        }
+                    }
                 }
-                content
-            }
-            .navigationTitle("Plan")
-            .task { canShare = await PlanStore.shared.iCloudAvailable() }
-            .sheet(item: $shareContext) { context in
-                CloudShareSheet(context: context)
-            }
-            .alert("Plan sharing", isPresented: .init(
-                get: { message != nil },
-                set: { if !$0 { message = nil } }
-            )) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(message ?? "")
-            }
+                .sheet(isPresented: $showingSettings) {
+                    PlanSettingsView()
+                }
         }
     }
 
@@ -67,8 +57,63 @@ struct FavouritesView: View {
         }
     }
 
-    /// Liquid-Glass card for Plan sharing — matches the event cards' styling.
-    private var sharingCard: some View {
+    private func delete(at offsets: IndexSet) {
+        PlanStore.shared.delete(offsets.map { favourites[$0] })
+    }
+}
+
+/// Plan sharing, presented from the Plan tab's toolbar cog. Two Liquid-Glass
+/// cards — share your Plan, or join someone else's — kept off the main view.
+private struct PlanSettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var shareContext: ShareContext?
+    @State private var canShare = false
+    @State private var isBusy = false
+    @State private var message: String?
+
+    private let log = Logger(subsystem: "dev.dreamfold.equicalendar", category: "Share")
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    shareCard
+                    joinCard
+                    if !canShare {
+                        Text("Sign in to iCloud on this device to share your Plan.")
+                            .font(AppTypography.cardMeta)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 4)
+                    }
+                }
+                .padding(16)
+            }
+            .navigationTitle("Plan Sharing")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .task { canShare = await PlanStore.shared.iCloudAvailable() }
+            .sheet(item: $shareContext) { context in
+                CloudShareSheet(context: context)
+            }
+            .alert("Plan sharing", isPresented: .init(
+                get: { message != nil },
+                set: { if !$0 { message = nil } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(message ?? "")
+            }
+        }
+    }
+
+    private var shareCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Share your Plan", systemImage: "person.2.fill")
                 .font(AppTypography.cardTitle)
@@ -77,33 +122,43 @@ struct FavouritesView: View {
                 .font(AppTypography.cardMeta)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 8) {
-                Button {
-                    Task { await startShare() }
-                } label: {
-                    Label("Share", systemImage: "square.and.arrow.up")
-                        .font(AppTypography.controlLabel)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.glassProminent)
-                Button {
-                    Task { await joinFromClipboard() }
-                } label: {
-                    Label("Join", systemImage: "person.badge.plus")
-                        .font(AppTypography.controlLabel)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.glass)
+            Button {
+                Task { await startShare() }
+            } label: {
+                Label("Share Plan", systemImage: "square.and.arrow.up")
+                    .font(AppTypography.controlLabel)
+                    .frame(maxWidth: .infinity)
             }
-            .disabled(isBusy)
+            .buttonStyle(.glassProminent)
+            .disabled(isBusy || !canShare)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .glassEffect(.regular, in: .rect(cornerRadius: 20))
     }
 
-    private func delete(at offsets: IndexSet) {
-        PlanStore.shared.delete(offsets.map { favourites[$0] })
+    private var joinCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Join a shared Plan", systemImage: "person.badge.plus")
+                .font(AppTypography.cardTitle)
+                .foregroundStyle(.primary)
+            Text("Got an invite? Copy the link the other person shared, then tap Join to add their Plan to yours.")
+                .font(AppTypography.cardMeta)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button {
+                Task { await joinFromClipboard() }
+            } label: {
+                Label("Join from Link", systemImage: "link")
+                    .font(AppTypography.controlLabel)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.glass)
+            .disabled(isBusy)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .glassEffect(.regular, in: .rect(cornerRadius: 20))
     }
 
     private func startShare() async {
@@ -124,7 +179,7 @@ struct FavouritesView: View {
         isBusy = true
         defer { isBusy = false }
         guard let clip = UIPasteboard.general.string, let url = shareURL(in: clip) else {
-            message = "Copy the invite link first (other phone → Plan → Share Plan → Copy Link), then tap \u{201C}Join a shared Plan\u{201D}."
+            message = "Copy the invite link first (other phone → Plan → cog → Share Plan → Copy Link), then tap \u{201C}Join from Link\u{201D}."
             return
         }
         do {
