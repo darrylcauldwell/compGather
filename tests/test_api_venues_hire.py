@@ -115,3 +115,19 @@ async def test_hire_link_prefers_seed_url_then_slot_url():
     # Event-derived venue surfaces the booking link from its hire slot.
     assert by_name["Slot Venue"]["hire_url"] == "https://slot.example/book"
     assert by_name["Slot Venue"]["has_slots"] is True
+
+
+@pytest.mark.asyncio
+async def test_hire_viewport_bbox_narrows_to_visible_region():
+    app = _get_app()
+    await _seed_hire_venues()
+    # A box around Abbey Farm (53.1, -1.6) that excludes Slot Venue (53.8, -1.5).
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            "/api/venues/hire",
+            params={"min_lat": 53.0, "max_lat": 53.5, "min_lng": -2.0, "max_lng": -1.0},
+        )
+
+    names = {v["name"] for v in resp.json()}
+    assert "Abbey Farm" in names
+    assert "Slot Venue" not in names

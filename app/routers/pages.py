@@ -727,6 +727,19 @@ async def admin_page(request: Request, session: AsyncSession = Depends(get_sessi
     )
 
 
+def _bbox_conditions(min_lat, max_lat, min_lng, max_lng):
+    """Bounding-box (viewport) filter for Explore. Empty when any bound is None,
+    so the map only narrows to the visible region once the client sends one."""
+    if None in (min_lat, max_lat, min_lng, max_lng):
+        return []
+    return [
+        Venue.latitude >= min_lat,
+        Venue.latitude <= max_lat,
+        Venue.longitude >= min_lng,
+        Venue.longitude <= max_lng,
+    ]
+
+
 @router.get("/api/venues/map")
 async def venues_map_api(
     postcode: str | None = Query(None),
@@ -735,6 +748,10 @@ async def venues_map_api(
     max_distance: float | None = Query(None),
     discipline: str | None = Query(None),
     tag: list[str] | None = Query(None),
+    min_lat: float | None = Query(None),
+    max_lat: float | None = Query(None),
+    min_lng: float | None = Query(None),
+    max_lng: float | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
     """Return venue map markers as JSON (lazy-loaded by the map view).
@@ -779,6 +796,7 @@ async def venues_map_api(
         token = raw_tag.strip()
         if re.fullmatch(r"[a-z][a-z-]*:[a-z0-9-]+", token):
             conditions.append(Competition.tags.like(f'%"{token}"%'))
+    conditions += _bbox_conditions(min_lat, max_lat, min_lng, max_lng)
 
     map_stmt = (
         select(
@@ -794,6 +812,10 @@ async def venues_map_api(
         .join(Competition, Competition.venue_id == Venue.id)
         .where(*conditions)
         .group_by(Venue.id)
+        # Cap the markers so a fully zoomed-out viewport can't return thousands of
+        # pins — keep the busiest venues; zoom in to reveal the rest.
+        .order_by(func.count(Competition.id).desc())
+        .limit(600)
     )
     map_rows = (await session.execute(map_stmt)).all()
 
@@ -830,6 +852,10 @@ async def venues_map_api(
 async def venues_hire_api(
     postcode: str | None = Query(None),
     max_distance: float | None = Query(None),
+    min_lat: float | None = Query(None),
+    max_lat: float | None = Query(None),
+    min_lng: float | None = Query(None),
+    max_lng: float | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
     """Venues that offer arena/venue hire — for Explore's "Arena hire" mode.
@@ -863,7 +889,11 @@ async def venues_hire_api(
                 or_(Competition.date_start >= today, Competition.date_end >= today),
             ),
         )
-        .where(Venue.latitude != None, Venue.longitude != None)
+        .where(
+            Venue.latitude != None,
+            Venue.longitude != None,
+            *_bbox_conditions(min_lat, max_lat, min_lng, max_lng),
+        )
         .group_by(Venue.id)
         .having(or_(Venue.hire_url.is_not(None), func.count(Competition.id) > 0))
     )
