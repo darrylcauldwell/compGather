@@ -916,7 +916,19 @@ async def venues_hire_api(
             "distance_miles": dist,
             "hire_url": row.hire_url or row.slot_url or "",
             "has_slots": row.slot_count > 0,
+            "_curated": row.hire_url is not None,
         })
+
+    # A venue can surface twice — as a canonicalised record with hire slots and as
+    # its seed-flagged form with a hire_url. Collapse by postcode, preferring the
+    # curated hire link (the venue's own arena-hire page over a single slot URL).
+    deduped: dict[str, dict] = {}
+    for v in venues_json:
+        key = v["postcode"].replace(" ", "").upper() or f"id:{v['id']}"
+        current = deduped.get(key)
+        if current is None or (v["_curated"] and not current["_curated"]):
+            deduped[key] = v
+    venues_json = [{k: val for k, val in v.items() if k != "_curated"} for v in deduped.values()]
 
     return JSONResponse(
         content=venues_json,

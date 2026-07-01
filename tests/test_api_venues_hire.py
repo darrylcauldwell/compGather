@@ -70,13 +70,23 @@ async def _seed_hire_venues() -> None:
         # D: seed-flagged but no coords — excluded (can't pin on the map)
         d = Venue(name="No Coords Hire", postcode="ZZ1 1ZZ",
                   hire_url="https://example.com/hire")
-        for v in (a, b, c, d):
+        # E/F: the same venue two ways — a curated seed hire_url and an event-
+        # derived record at the SAME postcode. The endpoint must collapse them to
+        # one pin, keeping the curated arena-hire link over the single slot URL.
+        e = Venue(name="Dupe (Curated)", postcode="PE1 1PE", latitude=52.5, longitude=-0.2,
+                  hire_url="https://curated.example/arena-hire")
+        f = Venue(name="Dupe Equestrian Centre", postcode="PE1 1PE", latitude=52.5, longitude=-0.2)
+        for v in (a, b, c, d, e, f):
             session.add(v)
         await session.flush()
 
         session.add(Competition(source_id=src.id, name="Indoor Arena Hire", date_start=soon,
                                 venue_id=b.id, event_type="venue_hire",
                                 url="https://slot.example/book", first_seen_at=datetime.utcnow(),
+                                last_seen_at=datetime.utcnow()))
+        session.add(Competition(source_id=src.id, name="Arena Hire Slot", date_start=soon,
+                                venue_id=f.id, event_type="venue_hire",
+                                url="https://slots.example/book", first_seen_at=datetime.utcnow(),
                                 last_seen_at=datetime.utcnow()))
         session.add(Competition(source_id=src.id, name="Summer Show", date_start=soon,
                                 venue_id=c.id, event_type="competition",
@@ -131,3 +141,15 @@ async def test_hire_viewport_bbox_narrows_to_visible_region():
     names = {v["name"] for v in resp.json()}
     assert "Abbey Farm" in names
     assert "Slot Venue" not in names
+
+
+@pytest.mark.asyncio
+async def test_hire_dedupes_same_postcode_preferring_curated():
+    app = _get_app()
+    await _seed_hire_venues()
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get("/api/venues/hire")
+
+    pe = [v for v in resp.json() if v["postcode"] == "PE1 1PE"]
+    assert len(pe) == 1  # the two records collapse to a single pin
+    assert pe[0]["hire_url"] == "https://curated.example/arena-hire"  # curated link wins
