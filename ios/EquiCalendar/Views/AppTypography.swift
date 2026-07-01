@@ -12,4 +12,10 @@ enum AppTypography {
     static let badge: Font = .caption2.weight(.semibold)
     static let controlLabel: Font = .callout.weight(.medium)
     static let toast: Font = .callout
+    /// Monospaced style for raw URLs / share links (dynamic type doesn't suit a
+    /// single-line link field). Justified fixed-style exception.
+    static let linkMono: Font = .footnote.monospaced()
+    /// Decorative hero SF Symbol size for empty/onboarding cards (fixed, like
+    /// canvas glyphs — not body text, so it doesn't scale with dynamic type).
+    static let heroSymbol: Font = .system(size: 44)
 }

@@ -255,6 +255,104 @@ final class PlanStore {
         }
     }
 
+    // MARK: - Share management (custom sheet)
+
+    /// Which sharing state the UI should render.
+    enum ShareRole { case notShared, owner, participant }
+
+    var shareRole: ShareRole {
+        if sharedPlan != nil { return .participant }   // joined someone else's Plan
+        return isShared ? .owner : .notShared
+    }
+
+    /// A person on the share, flattened for the view. No CloudKit types leak out.
+    struct PlanPerson: Identifiable {
+        let id = UUID()
+        let name: String
+        let handle: String?          // email/phone, shown for pending invitees with no name
+        let isOwner: Bool
+        let isCurrentUser: Bool
+        let status: Status
+        enum Status { case owner, joined, invited }
+    }
+
+    /// The CKShare on the user's OWN Plan (nil if never shared).
+    private var ownedShare: CKShare? {
+        guard let plan = privatePlan else { return nil }
+        return try? container.fetchShares(matching: [plan.objectID])[plan.objectID]
+    }
+
+    /// The CKShare on a Plan shared *with* this user (participant side).
+    private var acceptedShare: CKShare? {
+        guard let plan = sharedPlan else { return nil }
+        return try? container.fetchShares(matching: [plan.objectID])[plan.objectID]
+    }
+
+    /// Whichever share is relevant to the current role.
+    private var currentShare: CKShare? { acceptedShare ?? ownedShare }
+
+    /// Invite URL for the user's shared Plan. Nil until `makeShare()` has persisted
+    /// the share to CloudKit (the server assigns the URL).
+    var shareURL: URL? { ownedShare?.url }
+
+    /// The given name of the person who shared their Plan with you (participant side).
+    var ownerName: String? {
+        guard let comps = acceptedShare?.owner.userIdentity.nameComponents else { return nil }
+        let name = PersonNameComponentsFormatter().string(from: comps)
+        return name.isEmpty ? nil : name
+    }
+
+    /// Read-only people list for the current share (owner first).
+    func participants() -> [PlanPerson] {
+        guard let share = currentShare else { return [] }
+        let formatter = PersonNameComponentsFormatter()
+        let meID = share.currentUserParticipant?.userIdentity.userRecordID
+        return share.participants.compactMap { p -> PlanPerson? in
+            guard p.acceptanceStatus != .removed else { return nil }
+            let isOwner = p.role == .owner
+            let handle = p.userIdentity.lookupInfo?.emailAddress
+                ?? p.userIdentity.lookupInfo?.phoneNumber
+            let name = p.userIdentity.nameComponents
+                .map { formatter.string(from: $0) }
+                .flatMap { $0.isEmpty ? nil : $0 }
+            let status: PlanPerson.Status = isOwner
+                ? .owner
+                : (p.acceptanceStatus == .accepted ? .joined : .invited)
+            let isCurrentUser = meID != nil && p.userIdentity.userRecordID == meID
+            return PlanPerson(
+                name: name ?? handle ?? (isOwner ? "Plan owner" : "Invited"),
+                handle: name == nil ? nil : handle,
+                isOwner: isOwner,
+                isCurrentUser: isCurrentUser,
+                status: status
+            )
+        }
+        .sorted { $0.isOwner && !$1.isOwner }
+    }
+
+    /// OWNER: stop sharing. Deletes the CKShare on the server; the owner's events
+    /// remain in the private store. The other person's copy stops syncing and is
+    /// purged on their next sync.
+    func stopSharing() async throws {
+        guard let share = ownedShare else { throw PlanError.noPlan }
+        let ckContainer = CKContainer(identifier: Self.containerID)
+        _ = try await ckContainer.privateCloudDatabase.deleteRecord(withID: share.recordID)
+        log.info("Stopped sharing Plan")
+    }
+
+    /// PARTICIPANT: leave a Plan shared with you. Purges the shared objects from
+    /// the shared store (local mirror); the owner keeps everything.
+    func leaveSharedPlan() async throws {
+        guard let sharedStore, let share = acceptedShare else { throw PlanError.noPlan }
+        let zoneID = share.recordID.zoneID
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            container.purgeObjectsAndRecordsInZone(with: zoneID, in: sharedStore) { _, error in
+                if let error { cont.resume(throwing: error) } else { cont.resume() }
+            }
+        }
+        log.info("Left shared Plan")
+    }
+
     // MARK: -
 
     private func save() {
