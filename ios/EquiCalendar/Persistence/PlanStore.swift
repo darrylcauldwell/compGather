@@ -73,6 +73,13 @@ final class PlanStore {
     /// environment by running a debug build. Then promote it to Production in the
     /// CloudKit Dashboard so TestFlight/App Store builds can sync/share.
     private func initializeSchemaForDevelopmentIfNeeded() {
+        // initializeCloudKitSchema needs a real device signed into iCloud — it hard
+        // TRAPS on the Simulator and during unit/UI-test runs (no CloudKit account),
+        // which crashes the app on launch. Only attempt it on a device, outside tests.
+        #if targetEnvironment(simulator)
+        return
+        #else
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
         let key = "ck_dev_schema_initialized_v1"
         guard !UserDefaults.standard.bool(forKey: key) else { return }
         do {
@@ -83,6 +90,7 @@ final class PlanStore {
             // Most likely not signed into iCloud — retried on the next launch.
             log.error("initializeCloudKitSchema failed: \(error.localizedDescription, privacy: .public)")
         }
+        #endif
     }
     #endif
 
