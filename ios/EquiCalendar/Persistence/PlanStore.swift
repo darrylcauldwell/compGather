@@ -29,10 +29,23 @@ final class PlanStore {
         )
         let base = NSPersistentContainer.defaultDirectoryURL()
 
+        // CloudKit mirroring setup (PFCloudKitContainerProvider) hard-traps on the
+        // Simulator — there's no iCloud/CloudKit container there — which crashes the
+        // app on launch during UI tests/screenshots. So on the Simulator, run the
+        // Plan as plain local Core Data (no cloudKitContainerOptions). Full CloudKit
+        // sync + sharing stays on device.
+        let cloudKit: Bool = {
+            #if targetEnvironment(simulator)
+            return false
+            #else
+            return true
+            #endif
+        }()
+
         // Private store — the user's own Plan.
         let priv = container.persistentStoreDescriptions.first!
         priv.url = base.appendingPathComponent("private.sqlite")
-        priv.cloudKitContainerOptions = Self.options(scope: .private)
+        if cloudKit { priv.cloudKitContainerOptions = Self.options(scope: .private) }
         priv.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
         priv.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
 
@@ -41,7 +54,7 @@ final class PlanStore {
             fatalError("NSPersistentStoreDescription.copy() must return NSPersistentStoreDescription")
         }
         shared.url = base.appendingPathComponent("shared.sqlite")
-        shared.cloudKitContainerOptions = Self.options(scope: .shared)
+        if cloudKit { shared.cloudKitContainerOptions = Self.options(scope: .shared) }
         container.persistentStoreDescriptions.append(shared)
 
         container.loadPersistentStores { [weak self] description, error in
