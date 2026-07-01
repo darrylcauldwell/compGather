@@ -339,8 +339,9 @@
             });
         }
 
-        var clusterMode = 'venues';
+        var dataMode = 'events';
         var allMarkers = [];
+        var postcode = '{{ postcode }}';
 
         function buildClusterGroup(mode) {
             var opts = { maxClusterRadius: 60 };
@@ -352,70 +353,78 @@
             return group;
         }
 
-        // Fetch map data from API
-        var postcode = '{{ postcode }}';
-        var apiUrl = '/api/venues/map' + (postcode ? '?postcode=' + encodeURIComponent(postcode) : '');
-        fetch(apiUrl)
-            .then(function(resp) { return resp.json(); })
-            .then(function(venues) {
-                if (venues.length === 0) {
-                    document.getElementById('map-empty-msg').style.display = 'block';
-                    return;
-                }
-                venues.forEach(function(v) {
-                    var popupParts = [];
-                    popupParts.push('<div class="popup-venue-name">' + escHtml(v.name) + '</div>');
-                    if (v.postcode) {
-                        popupParts.push('<div class="popup-postcode">' + escHtml(v.postcode) + '</div>');
-                    }
-                    if (v.distance_miles !== null) {
-                        popupParts.push('<div class="popup-distance">' + v.distance_miles + ' miles from home</div>');
-                    }
-                    popupParts.push('<div class="popup-events"><i class="bi bi-calendar3"></i> ' + v.event_count + ' upcoming event' + (v.event_count !== 1 ? 's' : '') + '</div>');
-                    if (v.disciplines.length > 0) {
-                        popupParts.push('<div class="popup-disciplines">' + v.disciplines.map(escHtml).join(' &bull; ') + '</div>');
-                    }
-                    popupParts.push('<a class="popup-link" href="/?venue=' + encodeURIComponent(v.name) + '">Browse events &rarr;</a>');
+        function eventPopup(v) {
+            var p = [];
+            p.push('<div class="popup-venue-name">' + escHtml(v.name) + '</div>');
+            if (v.postcode) p.push('<div class="popup-postcode">' + escHtml(v.postcode) + '</div>');
+            if (v.distance_miles !== null) p.push('<div class="popup-distance">' + v.distance_miles + ' miles from home</div>');
+            p.push('<div class="popup-events"><i class="bi bi-calendar3"></i> ' + v.event_count + ' upcoming event' + (v.event_count !== 1 ? 's' : '') + '</div>');
+            if (v.disciplines && v.disciplines.length > 0) p.push('<div class="popup-disciplines">' + v.disciplines.map(escHtml).join(' &bull; ') + '</div>');
+            p.push('<a class="popup-link" href="/?venue=' + encodeURIComponent(v.name) + '">Browse events &rarr;</a>');
+            return p.join('');
+        }
 
-                    var marker = L.marker([v.lat, v.lng]);
-                    marker.options.eventCount = v.event_count || 0;
-                    marker.bindPopup(popupParts.join(''), { maxWidth: 260 });
-                    allMarkers.push(marker);
+        function hirePopup(v) {
+            var p = [];
+            p.push('<div class="popup-venue-name">' + escHtml(v.name) + '</div>');
+            if (v.postcode) p.push('<div class="popup-postcode">' + escHtml(v.postcode) + '</div>');
+            if (v.distance_miles !== null) p.push('<div class="popup-distance">' + v.distance_miles + ' miles from home</div>');
+            p.push('<div class="popup-disciplines">Offers arena hire &mdash; check availability with the venue.</div>');
+            if (v.hire_url) p.push('<a class="popup-link" href="' + escHtml(v.hire_url) + '" target="_blank" rel="noopener">Check availability &rarr;</a>');
+            return p.join('');
+        }
+
+        // Fetch venues for the active data mode (events map, or the arena-hire directory)
+        function loadData(mode) {
+            dataMode = mode;
+            allMarkers = [];
+            if (clusterGroup) { map.removeLayer(clusterGroup); clusterGroup = null; }
+            document.getElementById('map-empty-msg').style.display = 'none';
+            var url = (mode === 'hire' ? '/api/venues/hire' : '/api/venues/map')
+                    + (postcode ? '?postcode=' + encodeURIComponent(postcode) : '');
+            fetch(url)
+                .then(function(resp) { return resp.json(); })
+                .then(function(venues) {
+                    if (dataMode !== mode) return;  // superseded by a newer toggle
+                    if (!venues.length) {
+                        document.getElementById('map-empty-msg').style.display = 'block';
+                        return;
+                    }
+                    venues.forEach(function(v) {
+                        var marker = L.marker([v.lat, v.lng]);
+                        marker.options.eventCount = v.event_count || 0;
+                        marker.bindPopup(mode === 'hire' ? hirePopup(v) : eventPopup(v), { maxWidth: 260 });
+                        allMarkers.push(marker);
+                    });
+                    clusterGroup = buildClusterGroup(mode === 'events' ? 'events' : 'venues');
+                    map.addLayer(clusterGroup);
                 });
+        }
 
-                clusterGroup = buildClusterGroup(clusterMode);
-                map.addLayer(clusterGroup);
-            });
+        loadData('events');
 
-        // Cluster toggle control (Venues/Events)
-        var ToggleControl = L.Control.extend({
-            options: { position: 'topright' },
+        // Data-mode toggle (Events / Arena hire)
+        var DataToggle = L.Control.extend({
+            options: { position: 'topleft' },
             onAdd: function() {
                 var container = L.DomUtil.create('div', 'cluster-toggle leaflet-bar');
                 L.DomEvent.disableClickPropagation(container);
-
-                var btnVenues = L.DomUtil.create('button', 'active', container);
-                btnVenues.textContent = 'Venues';
-                var btnEvents = L.DomUtil.create('button', '', container);
+                var btnEvents = L.DomUtil.create('button', 'active', container);
                 btnEvents.textContent = 'Events';
-
-                function setMode(mode) {
-                    if (mode === clusterMode) return;
-                    clusterMode = mode;
-                    btnVenues.className = mode === 'venues' ? 'active' : '';
+                var btnHire = L.DomUtil.create('button', '', container);
+                btnHire.textContent = 'Arena hire';
+                function set(mode) {
+                    if (mode === dataMode) return;
                     btnEvents.className = mode === 'events' ? 'active' : '';
-                    if (clusterGroup) map.removeLayer(clusterGroup);
-                    clusterGroup = buildClusterGroup(mode);
-                    map.addLayer(clusterGroup);
+                    btnHire.className = mode === 'hire' ? 'active' : '';
+                    loadData(mode);
                 }
-
-                btnVenues.addEventListener('click', function() { setMode('venues'); });
-                btnEvents.addEventListener('click', function() { setMode('events'); });
-
+                btnEvents.addEventListener('click', function() { set('events'); });
+                btnHire.addEventListener('click', function() { set('hire'); });
                 return container;
             }
         });
-        map.addControl(new ToggleControl());
+        map.addControl(new DataToggle());
     }
 
     // Show initial view on DOM ready
