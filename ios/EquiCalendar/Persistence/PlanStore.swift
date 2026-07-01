@@ -203,6 +203,12 @@ final class PlanStore {
     /// Accept a share invitation (called from the scene delegate when the system
     /// link-tap routes here).
     func accept(_ metadata: CKShare.Metadata) {
+        // One Plan at a time: don't accept a second share while already sharing
+        // (owner) or already in someone else's Plan (participant).
+        guard shareRole == .notShared else {
+            log.info("Ignoring share invite — already in a sharing relationship")
+            return
+        }
         guard let sharedStore else {
             log.error("Cannot accept share: shared store not loaded")
             return
@@ -218,6 +224,7 @@ final class PlanStore {
     /// link-tap won't route to the app. Fetches the share metadata for the URL,
     /// then accepts it the same way.
     func acceptShare(from url: URL) async throws {
+        guard shareRole == .notShared else { throw PlanError.alreadySharing }
         let metadata = try await fetchShareMetadata(for: url)
         accept(metadata)
     }
@@ -246,11 +253,14 @@ final class PlanStore {
     enum PlanError: LocalizedError {
         case noPlan
         case noShareAtURL
+        case alreadySharing
 
         var errorDescription: String? {
             switch self {
             case .noPlan: "Couldn't find your Plan."
             case .noShareAtURL: "That link isn't a valid Plan invite."
+            case .alreadySharing:
+                "You're already sharing a Plan. Stop sharing or leave it first to share with someone else."
             }
         }
     }
@@ -273,6 +283,7 @@ final class PlanStore {
         let isOwner: Bool
         let isCurrentUser: Bool
         let status: Status
+        let removeKey: String?       // stable participant id; nil = not removable
         enum Status { case owner, joined, invited }
     }
 
@@ -319,15 +330,32 @@ final class PlanStore {
                 ? .owner
                 : (p.acceptanceStatus == .accepted ? .joined : .invited)
             let isCurrentUser = meID != nil && p.userIdentity.userRecordID == meID
+            let pkey = p.userIdentity.userRecordID?.recordName ?? handle
             return PlanPerson(
                 name: name ?? handle ?? (isOwner ? "Plan owner" : "Invited"),
                 handle: name == nil ? nil : handle,
                 isOwner: isOwner,
                 isCurrentUser: isCurrentUser,
-                status: status
+                status: status,
+                removeKey: (isOwner || isCurrentUser) ? nil : pkey
             )
         }
         .sorted { $0.isOwner && !$1.isOwner }
+    }
+
+    /// OWNER: remove a participant — cancels a pending invite, or revokes access
+    /// for someone who has joined. Matched by the stable key from `participants()`.
+    func removeParticipant(_ person: PlanPerson) async throws {
+        guard let key = person.removeKey, let share = ownedShare else { throw PlanError.noPlan }
+        guard let participant = share.participants.first(where: { p in
+            let pk = p.userIdentity.userRecordID?.recordName
+                ?? p.userIdentity.lookupInfo?.emailAddress
+                ?? p.userIdentity.lookupInfo?.phoneNumber
+            return pk == key
+        }) else { return }
+        share.removeParticipant(participant)
+        try await persistShare(share)
+        log.info("Removed a participant from the Plan share")
     }
 
     /// OWNER: stop sharing. Deletes the CKShare on the server; the owner's events

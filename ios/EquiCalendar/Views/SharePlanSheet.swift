@@ -22,6 +22,7 @@ struct SharePlanSheet: View {
     @State private var message: String?
     @State private var confirmStop = false
     @State private var confirmLeave = false
+    @State private var personToRemove: PlanStore.PlanPerson?
 
     private let log = Logger(subsystem: "dev.dreamfold.equicalendar", category: "Share")
 
@@ -55,6 +56,21 @@ struct SharePlanSheet: View {
             )) {
                 Button("OK", role: .cancel) {}
             } message: { Text(message ?? "") }
+            .confirmationDialog(
+                personToRemove.map { "Remove \($0.name)?" } ?? "Remove?",
+                isPresented: .init(
+                    get: { personToRemove != nil },
+                    set: { if !$0 { personToRemove = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Remove", role: .destructive) {
+                    if let p = personToRemove { Task { await removePerson(p) } }
+                }
+                Button("Cancel", role: .cancel) { personToRemove = nil }
+            } message: {
+                Text("They'll lose access to this Plan. If they haven't accepted the invite yet, it's cancelled.")
+            }
         }
     }
 
@@ -140,7 +156,7 @@ struct SharePlanSheet: View {
                     .font(AppTypography.cardMeta).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            peopleCard
+            peopleCard(allowRemove: true)
             card {   // Stop sharing
                 Button(role: .destructive) { confirmStop = true } label: {
                     Label("Stop Sharing", systemImage: "person.2.slash")
@@ -173,7 +189,7 @@ struct SharePlanSheet: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            peopleCard
+            peopleCard(allowRemove: false)
             card {   // Leave
                 Button(role: .destructive) { confirmLeave = true } label: {
                     Label("Leave shared Plan",
@@ -194,19 +210,19 @@ struct SharePlanSheet: View {
 
     // MARK: People list (shared by states b & c)
 
-    @ViewBuilder private var peopleCard: some View {
+    @ViewBuilder private func peopleCard(allowRemove: Bool) -> some View {
         if !people.isEmpty {
             card {
                 Label("On this Plan", systemImage: "person.2").font(AppTypography.cardTitle)
                 ForEach(Array(people.enumerated()), id: \.element.id) { index, person in
                     if index > 0 { Divider() }
-                    personRow(person)
+                    personRow(person, allowRemove: allowRemove)
                 }
             }
         }
     }
 
-    private func personRow(_ p: PlanStore.PlanPerson) -> some View {
+    private func personRow(_ p: PlanStore.PlanPerson, allowRemove: Bool) -> some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle().fill(Color.accentColor.opacity(0.15))
@@ -229,11 +245,24 @@ struct SharePlanSheet: View {
                 }
             }
             Spacer()
-            switch p.status {
-            case .owner:   EmptyView()
-            case .joined:  TagBadge(text: "Joined", systemImage: "checkmark.circle.fill", tint: .green)
-            case .invited: TagBadge(text: "Invited", systemImage: "hourglass", tint: .orange)
+            statusBadge(p)
+            if allowRemove, p.removeKey != nil {
+                Button { personToRemove = p } label: {
+                    Image(systemName: "minus.circle.fill")
+                        .font(AppTypography.controlLabel)
+                        .foregroundStyle(.red)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Remove \(p.name)")
             }
+        }
+    }
+
+    @ViewBuilder private func statusBadge(_ p: PlanStore.PlanPerson) -> some View {
+        switch p.status {
+        case .owner:   EmptyView()
+        case .joined:  TagBadge(text: "Joined", systemImage: "checkmark.circle.fill", tint: .green)
+        case .invited: TagBadge(text: "Invited", systemImage: "hourglass", tint: .orange)
         }
     }
 
@@ -293,6 +322,13 @@ struct SharePlanSheet: View {
         isBusy = true; defer { isBusy = false }
         do { try await PlanStore.shared.leaveSharedPlan(); dismiss() }
         catch { present(error, "Couldn't leave") }
+    }
+
+    private func removePerson(_ p: PlanStore.PlanPerson) async {
+        isBusy = true; defer { isBusy = false }
+        do { try await PlanStore.shared.removeParticipant(p); reload() }
+        catch { present(error, "Couldn't remove") }
+        personToRemove = nil
     }
 
     private func joinFromClipboard() async {
