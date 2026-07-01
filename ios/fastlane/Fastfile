@@ -84,11 +84,17 @@ platform :ios do
   lane :promote do
     key = api_key
 
+    # Attach the LATEST processed TestFlight build to the App Store version — never
+    # submit whatever stale build happens to still be selected on the version.
+    build = latest_testflight_build_number(api_key: key, app_identifier: APP_IDENTIFIER).to_s
+    UI.message("Promoting build #{build} to App Store review")
+
     upload_to_app_store(
       api_key: key,
       app_identifier: APP_IDENTIFIER,
       # Reuse the build already processed on TestFlight — don't build/upload one.
       skip_binary_upload: true,
+      build_number: build,
       # Submit metadata + screenshots from the fastlane/ tree.
       skip_metadata: false,
       skip_screenshots: false,
