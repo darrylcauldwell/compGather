@@ -763,6 +763,7 @@ async def seed_venue_postcodes() -> None:
     async with async_session() as session:
         seeded = 0
         coords_set = 0
+        hire_set = 0
         for name, data in get_venue_seeds().items():
             postcode = data.get("postcode")
             if not postcode:
@@ -787,6 +788,7 @@ async def seed_venue_postcodes() -> None:
                     coords_set += 1
                 if hire_url and not venue.hire_url:
                     venue.hire_url = hire_url
+                    hire_set += 1
             else:
                 session.add(Venue(
                     name=name, postcode=postcode,
@@ -797,9 +799,12 @@ async def seed_venue_postcodes() -> None:
                 if lat is not None:
                     coords_set += 1
 
-        if seeded or coords_set:
+        if seeded or coords_set or hire_set:
             await session.commit()
-            logger.info("Venue seed: %d postcodes, %d coordinates added", seeded, coords_set)
+            logger.info(
+                "Venue seed: %d postcodes, %d coordinates, %d hire links added",
+                seeded, coords_set, hire_set,
+            )
         else:
             logger.info("Venue seed: all data already present")
 
