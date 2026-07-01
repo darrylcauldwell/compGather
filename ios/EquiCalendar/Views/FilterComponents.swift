@@ -23,6 +23,9 @@ struct FilterBar<Model: FilterDriving>: View {
                     if model.showsTier {
                         tierMenu
                     }
+                    if model.showsChampionships {
+                        championshipsPill
+                    }
                     if model.showsDiscipline {
                         disciplineMenu
                     }
@@ -102,6 +105,19 @@ struct FilterBar<Model: FilterDriving>: View {
                  active: model.tier != nil)
         }
     }
+
+    /// Watch-only toggle for championship/final fixtures. Uses the series slot,
+    /// which carries the special:championship-final tag.
+    private var championshipsPill: some View {
+        let active = model.series == championshipToken
+        return Button {
+            Task { await model.setSeries(active ? nil : championshipToken) }
+        } label: {
+            pill("Championships", icon: "trophy.fill", active: active, showsChevron: false)
+        }
+    }
+
+    private var championshipToken: String { "special:championship-final" }
 
     private var disciplineMenu: some View {
         Menu {

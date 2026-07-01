@@ -47,10 +47,13 @@ protocol FilterDriving: AnyObject, Observable {
     var showsSeries: Bool { get }
     var showsDiscipline: Bool { get }
     var showsDate: Bool { get }
+    /// A dedicated Championships toggle (Watch only — Compete has it in Series).
+    var showsChampionships: Bool { get }
 }
 
 extension FilterDriving {
     var showsSeries: Bool { true }
     var showsDiscipline: Bool { true }
     var showsDate: Bool { true }
+    var showsChampionships: Bool { false }
 }

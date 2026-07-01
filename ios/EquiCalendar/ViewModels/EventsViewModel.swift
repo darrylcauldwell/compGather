@@ -145,8 +145,12 @@ final class EventsViewModel: FilterDriving {
     /// Current discipline filter (FilterDriving surface).
     var discipline: String? { filter.discipline }
 
-    /// Compete/Watch always show the tier pill (Level/Type).
-    var showsTier: Bool { true }
+    /// Compete shows Series + the Level tier pill; Watch drops both (amateur
+    /// pathways don't apply to spectating) and instead surfaces a Championships
+    /// toggle for the big fixtures worth watching.
+    var showsTier: Bool { !isWatch }
+    var showsSeries: Bool { !isWatch }
+    var showsChampionships: Bool { isWatch }
 
     func load() async {
         isLoading = true
