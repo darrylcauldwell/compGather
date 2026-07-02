@@ -53,6 +53,26 @@ def _date_from_slug(url: str) -> date | None:
     return None
 
 
+# The /pony-club-rallies/ section is overwhelmingly TRAINING — rallies, lessons,
+# clinics, efficiency TESTS (B/C+/Spurs/Lunge), camps, fun rides, badges. Only
+# clear competition signals keep an event as a competition, so PC training doesn't
+# leak into the Compete feed. (Derived from domain-categorising the corpus: 367 of
+# 400 disputed rally names were training; 18 genuine competitions.) "test" means
+# training ONLY in this PC-rally context, so this stays parser-scoped, not global.
+_PC_COMPETITION_RE = re.compile(
+    r"championship|qualif|zones?\b|team\s+(?:trial|entry)|entry\s+(?:to|fee)|"
+    r"\bcompetition\b|grassroots|postal\s+shoot|prince\s+philip|\bppc\b|"
+    r"mounted\s+games\s+(?:competition|friendly|day)",
+    re.IGNORECASE,
+)
+
+
+def _rally_event_type(name: str) -> str | None:
+    """Rallies default to event_type=training; None lets a clear competition be
+    classified normally by name."""
+    return None if _PC_COMPETITION_RE.search(name or "") else "training"
+
+
 @register_parser("horse_events")
 class HorseEventsParser(TwoPhaseParser):
     """Parser for horse-events.co.uk — bulk listing + concurrent detail fetches."""
@@ -187,8 +207,10 @@ class HorseEventsParser(TwoPhaseParser):
                 venue_name = from_name
 
         discipline = None
+        event_type = None
         if "/pony-club-rallies/" in event_url:
             discipline = "Pony Club"
+            event_type = _rally_event_type(name)
 
         return self._build_event(
             name=name,
@@ -196,6 +218,7 @@ class HorseEventsParser(TwoPhaseParser):
             date_end=end_date.isoformat() if end_date else None,
             venue_name=venue_name,
             discipline=discipline,
+            event_type=event_type,
             url=event_url,
         )
 
@@ -257,8 +280,10 @@ class HorseEventsParser(TwoPhaseParser):
         postcode = self._extract_postcode(html, soup)
 
         discipline = None
+        event_type = None
         if "/pony-club-rallies/" in url:
             discipline = "Pony Club"
+            event_type = _rally_event_type(name)
 
         end_date = end_date_str if end_date_str and end_date_str != start_date_str else None
 
@@ -269,6 +294,7 @@ class HorseEventsParser(TwoPhaseParser):
             venue_name=venue_name or "TBC",
             venue_postcode=postcode,
             discipline=discipline,
+            event_type=event_type,
             url=url,
         )
 
