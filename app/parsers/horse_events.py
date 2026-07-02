@@ -208,9 +208,14 @@ class HorseEventsParser(TwoPhaseParser):
 
         discipline = None
         event_type = None
+        affiliation = None
         if "/pony-club-rallies/" in event_url:
             discipline = "Pony Club"
             event_type = _rally_event_type(name)
+            # The whole /pony-club-rallies/ section is Pony Club, whatever the
+            # title says — so branch/hunt-named events ("Barlow Hunt MG Rally")
+            # are tagged from the source structure, not keyword-matched.
+            affiliation = "pony-club"
 
         return self._build_event(
             name=name,
@@ -219,6 +224,7 @@ class HorseEventsParser(TwoPhaseParser):
             venue_name=venue_name,
             discipline=discipline,
             event_type=event_type,
+            affiliation=affiliation,
             url=event_url,
         )
 
@@ -281,9 +287,11 @@ class HorseEventsParser(TwoPhaseParser):
 
         discipline = None
         event_type = None
+        affiliation = None
         if "/pony-club-rallies/" in url:
             discipline = "Pony Club"
             event_type = _rally_event_type(name)
+            affiliation = "pony-club"
 
         end_date = end_date_str if end_date_str and end_date_str != start_date_str else None
 
@@ -295,6 +303,7 @@ class HorseEventsParser(TwoPhaseParser):
             venue_postcode=postcode,
             discipline=discipline,
             event_type=event_type,
+            affiliation=affiliation,
             url=url,
         )
 

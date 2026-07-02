@@ -95,6 +95,11 @@ class ExtractedEvent(BaseModel):
     classes: list[str] = []
     url: str | None = None
     description: str | None = None
+    # Governing body the parser knows from the source structure (not the name),
+    # e.g. "pony-club" for events in a site's Pony Club section. The scanner
+    # turns this into an affiliation: tag, so hunt/branch-named PC events that
+    # never say "Pony Club" are still tagged correctly.
+    affiliation: str | None = None
 
 
 # Backward compatibility alias during migration

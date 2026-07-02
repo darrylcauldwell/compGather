@@ -544,6 +544,11 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 )
             ).scalars().first()
 
+        # A parser can mark an event's governing body from the source structure
+        # (e.g. a site's Pony Club section), independent of the event name;
+        # fall back to the source-level affiliation when it doesn't.
+        event_affiliation = comp_data.affiliation or source_affiliation
+
         if existing:
             existing.last_seen_at = datetime.utcnow()
             existing.discipline = discipline
@@ -566,7 +571,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 description=detail_text,
                 discipline=discipline,
                 event_type=event_type,
-                source_affiliation=source_affiliation,
+                source_affiliation=event_affiliation,
                 classes=comp_data.classes,
                 venue_name=venue_name_cleaned,
             )
@@ -578,7 +583,7 @@ async def _scan_source(session: AsyncSession, source: Source) -> tuple[int, dict
                 description=detail_text,
                 discipline=discipline,
                 event_type=event_type,
-                source_affiliation=source_affiliation,
+                source_affiliation=event_affiliation,
                 classes=comp_data.classes,
                 venue_name=venue_name_cleaned,
             )
