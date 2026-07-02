@@ -5657,7 +5657,11 @@
         "affiliated show jumping",
         "unaffiliated showjumping",
         "unaffiliated show jumping",
-        "sj"
+        "sj",
+        "jumping",
+        "jump",
+        "gridwork",
+        "grid work"
       ],
       "description": "Jumping over fences and obstacles"
     },
@@ -5668,7 +5672,9 @@
         "affiliated dressage",
         "unaffiliated dressage",
         "bd",
-        "dr"
+        "dr",
+        "flatwork",
+        "flat work"
       ],
       "description": "Precision flatwork and training"
     },
