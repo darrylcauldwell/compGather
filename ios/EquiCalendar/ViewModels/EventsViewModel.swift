@@ -148,8 +148,8 @@ final class EventsViewModel: FilterDriving {
     /// Compete shows Series + the Level tier pill; Watch drops both (amateur
     /// pathways don't apply to spectating) and instead surfaces a Championships
     /// toggle for the big fixtures worth watching.
-    var showsTier: Bool { !isWatch }
-    var showsSeries: Bool { !isWatch }
+    var showsTier: Bool { !isWatch && !isTraining }
+    var showsSeries: Bool { !isWatch && !isTraining }
     var showsChampionships: Bool { isWatch }
 
     func load() async {
@@ -176,6 +176,10 @@ final class EventsViewModel: FilterDriving {
 
     /// True on the Watch tab — drives the Level-vs-Type menu.
     var isWatch: Bool { filter.spectator == true }
+
+    /// True on the Prepare tab — clinics/training have no amateur series or
+    /// affiliation level ladder, so those pills are hidden (Discipline + Date only).
+    var isTraining: Bool { filter.eventType == "training" }
 
     func setSeries(_ token: String?) async {
         series = token

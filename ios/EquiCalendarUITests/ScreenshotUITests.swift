@@ -27,18 +27,23 @@ final class ScreenshotUITests: XCTestCase {
         waitForContent(app)
         snapshot("01Compete")
 
-        // 02 — Watch (spectator events).
+        // 02 — Prepare (clinics & training).
+        tapTab(app, "Prepare")
+        waitForContent(app)
+        snapshot("02Prepare")
+
+        // 03 — Watch (spectator events).
         tapTab(app, "Watch")
         waitForContent(app)
-        snapshot("02Watch")
+        snapshot("03Watch")
 
-        // 03 — Explore (venue map). The map view takes a beat to render tiles.
+        // 04 — Explore (venue map). The map view takes a beat to render tiles.
         tapTab(app, "Explore")
         _ = app.maps.firstMatch.waitForExistence(timeout: 30)
         sleep(4)
-        snapshot("03Explore")
+        snapshot("04Explore")
 
-        // 04 — Event detail: back to Compete, open the first event.
+        // 05 — Event detail: back to Compete, open the first event.
         tapTab(app, "Compete")
         waitForContent(app)
         let firstCell = app.cells.firstMatch
@@ -47,24 +52,24 @@ final class ScreenshotUITests: XCTestCase {
             // Detail shows an "Add to Calendar" button once loaded.
             _ = app.buttons["Add to Calendar"].waitForExistence(timeout: 20)
             sleep(2)
-            snapshot("04Detail")
+            snapshot("05Detail")
             // Return to the list for the next capture.
             app.navigationBars.buttons.firstMatch.tap()
         }
 
-        // 05 — Plan (saved favourites / empty state).
+        // 06 — Plan (saved favourites / empty state).
         tapTab(app, "Plan")
         sleep(2)
-        snapshot("05Plan")
+        snapshot("06Plan")
 
-        // 06 — Plan Sharing: share your Plan with family. The sheet renders a
+        // 07 — Plan Sharing: share your Plan with family. The sheet renders a
         // demo owner state under FASTLANE_SNAPSHOT (fake link + names), so no
         // iCloud account or real share is needed.
         let cog = app.buttons["Plan sharing"]
         if cog.waitForExistence(timeout: 10) {
             cog.tap()
             sleep(2)
-            snapshot("06Share")
+            snapshot("07Share")
         }
     }
 

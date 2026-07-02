@@ -6,7 +6,7 @@ import Observation
 @MainActor
 @Observable
 final class AppRouter {
-    enum Tab: Hashable { case compete, watch, explore, plan }
+    enum Tab: Hashable { case compete, prepare, watch, explore, plan }
 
     var selectedTab: Tab = .compete
 

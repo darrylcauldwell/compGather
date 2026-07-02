@@ -9,6 +9,9 @@ struct RootView: View {
             Tab("Compete", systemImage: "flag.checkered", value: AppRouter.Tab.compete) {
                 EventsView(title: "Compete", eventType: nil, respondsToVenueRouting: true)
             }
+            Tab("Prepare", systemImage: "graduationcap", value: AppRouter.Tab.prepare) {
+                EventsView(title: "Prepare", eventType: "training")
+            }
             Tab("Watch", systemImage: "binoculars", value: AppRouter.Tab.watch) {
                 EventsView(title: "Watch", spectator: true)
             }
