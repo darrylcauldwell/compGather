@@ -14,7 +14,13 @@ logger = logging.getLogger(__name__)
 SEARCH_URL = "https://horsemonkey.com/uk/search"
 DETAIL_URL = "https://horsemonkey.com/uk/equestrian_event/{id}"
 
-COMPETITION_TYPE_ID = 1
+# Horse Monkey event types: 1 = competitions (+ some clinics), 2 & 3 = the
+# platform's NON-competition categories (clinics / training days / arena hire),
+# 4 = memberships (not events — excluded). Type 1 is classified by name; types
+# 2 & 3 are forced to training / venue_hire so keyword-less clinics can never
+# default into the competition feed.
+COMPETITION_TYPE_IDS = [1]
+NONCOMP_TYPE_IDS = [2, 3]
 PER_PAGE = 100
 
 
@@ -35,19 +41,37 @@ class HorseMonkeyParser(HttpParser):
         import httpx
         limits = httpx.Limits(max_connections=15, max_keepalive_connections=10)
         async with self._make_client(limits=limits) as client:
-            all_rows = await self._fetch_all_events(client, date.today())
-            logger.info("Horse Monkey: %d competition events from API", len(all_rows))
+            comp_rows = await self._fetch_all_events(client, date.today(), COMPETITION_TYPE_IDS)
+            noncomp_rows = await self._fetch_all_events(client, date.today(), NONCOMP_TYPE_IDS)
+            logger.info(
+                "Horse Monkey: %d competition-type + %d clinic/training/hire-type events",
+                len(comp_rows), len(noncomp_rows),
+            )
 
             competitions: list[ExtractedEvent] = []
             seen: set[int] = set()
 
-            for row in all_rows:
+            # Type 1: classify by name (competition / training / hire).
+            for row in comp_rows:
                 event_id = row.get("id")
                 if not event_id or event_id in seen:
                     continue
                 seen.add(event_id)
-
                 comp = self._row_to_competition(row)
+                if comp:
+                    competitions.append(comp)
+
+            # Types 2 & 3 are non-competitions per the platform's own category, so
+            # force them: arena hire if the name says so, otherwise training. This
+            # captures keyword-less clinics without leaking them into Compete.
+            for row in noncomp_rows:
+                event_id = row.get("id")
+                if not event_id or event_id in seen:
+                    continue
+                seen.add(event_id)
+                name = (row.get("name") or "").lower()
+                hint = "venue_hire" if "hire" in name else "training"
+                comp = self._row_to_competition(row, event_type=hint)
                 if comp:
                     competitions.append(comp)
 
@@ -93,7 +117,7 @@ class HorseMonkeyParser(HttpParser):
         self._log_result("Horse Monkey", len(competitions))
         return competitions
 
-    async def _fetch_all_events(self, client, today):
+    async def _fetch_all_events(self, client, today, type_ids):
         all_rows: list[dict] = []
         page = 1
 
@@ -102,7 +126,7 @@ class HorseMonkeyParser(HttpParser):
                 "params": {
                     "filter": [
                         {"field": "order_by", "value": "start_asc", "type": "dropdown"},
-                        {"field": "events.event_type_id", "value": [COMPETITION_TYPE_ID], "type": "multiselect"},
+                        {"field": "events.event_type_id", "value": type_ids, "type": "multiselect"},
                         {"field": "events.start", "value": today.isoformat(), "type": "date"},
                     ],
                     "currentPage": page,
@@ -126,7 +150,7 @@ class HorseMonkeyParser(HttpParser):
 
         return all_rows
 
-    def _row_to_competition(self, row):
+    def _row_to_competition(self, row, event_type=None):
         name = (row.get("name") or "").strip()
         start = row.get("start", "")
         end = row.get("end", "")
@@ -153,6 +177,7 @@ class HorseMonkeyParser(HttpParser):
             discipline=discipline,
             classes=[],
             url=public_url or f"https://horsemonkey.com/uk/equestrian_event/{row.get('id')}",
+            event_type=event_type,
         )
 
     _LATLONG_RE = re.compile(r'"latitude":"(-?[\d.]+)","longitude":"(-?[\d.]+)"')
