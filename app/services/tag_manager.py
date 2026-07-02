@@ -390,7 +390,7 @@ def extract_tags(
         "british-dressage": ["british dressage", "bd"],
         "british-showjumping": ["british showjumping", "bs area"],
         "british-eventing": ["british eventing"],
-        "pony-club": ["pony club"],
+        "pony-club": ["pony club", "pc", "ppc", "prince philip"],
         "nsea": ["nsea"],
         "endurance-gb": ["endurance gb"],
         "bsps": ["bsps", "british show pony"],

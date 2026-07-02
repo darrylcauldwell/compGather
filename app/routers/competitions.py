@@ -30,6 +30,7 @@ async def list_competitions(
     spectator: bool | None = Query(None),
     postcode: str | None = Query(None),
     tag: list[str] | None = Query(None),
+    exclude_tag: list[str] | None = Query(None),
     venue_id: int | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
@@ -62,6 +63,15 @@ async def list_competitions(
         token = raw_tag.strip()
         if re.fullmatch(r"[a-z][a-z-]*:[a-z0-9-]+", token):
             stmt = stmt.where(Competition.tags.like(f'%"{token}"%'))
+
+    # Exclude tag token(s) — e.g. the Prepare tab hiding affiliation:pony-club.
+    # Keep events with no tags (NULL) or that don't carry the token.
+    for raw_tag in exclude_tag or []:
+        token = raw_tag.strip()
+        if re.fullmatch(r"[a-z][a-z-]*:[a-z0-9-]+", token):
+            stmt = stmt.where(
+                or_(Competition.tags.is_(None), Competition.tags.not_like(f'%"{token}"%'))
+            )
 
     has_discipline = bool(discipline and discipline.strip())
     has_event_type = bool(event_type and event_type.strip())
