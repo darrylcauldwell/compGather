@@ -25,6 +25,7 @@ from bs4 import BeautifulSoup
 
 from app.parsers.base import BaseParser
 from app.schemas import ExtractedEvent
+from app.services.url_guard import SSRFGuardTransport
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,7 @@ class HttpParser(BaseParser):
             "follow_redirects": True,
             "timeout": self.TIMEOUT,
             "headers": {**self.HEADERS},
+            "transport": SSRFGuardTransport(),  # block SSRF on every hop
         }
         kwargs.update(overrides)
         async with httpx.AsyncClient(**kwargs) as client:

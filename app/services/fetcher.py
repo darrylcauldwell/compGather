@@ -5,6 +5,8 @@ import logging
 import httpx
 from playwright.async_api import async_playwright
 
+from app.services.url_guard import SSRFGuardTransport, is_public_http_url
+
 logger = logging.getLogger(__name__)
 
 MIN_CONTENT_LENGTH = 500
@@ -24,7 +26,7 @@ async def fetch_page(url: str) -> str:
 async def _fetch_with_httpx(url: str) -> str | None:
     try:
         async with httpx.AsyncClient(
-            follow_redirects=True, timeout=30.0
+            transport=SSRFGuardTransport(), follow_redirects=True, timeout=30.0
         ) as client:
             resp = await client.get(url)
             resp.raise_for_status()
@@ -35,6 +37,10 @@ async def _fetch_with_httpx(url: str) -> str | None:
 
 
 async def _fetch_with_playwright(url: str) -> str:
+    # Playwright follows redirects inside the browser where the httpx transport
+    # can't guard them, so at least block a non-public initial URL here.
+    if not is_public_http_url(url):
+        raise RuntimeError(f"SSRF guard blocked non-public URL: {url}")
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
