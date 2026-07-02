@@ -1,4 +1,4 @@
-EquiCalendar is a free calendar of UK equestrian competitions and events — find what's on near you, filter to the disciplines and series you ride, and save the dates that matter. No account, no sign-in, no ads.
+EquiCalendar is a free calendar of UK equestrian competitions, clinics and training — find what's on near you, filter to the disciplines you ride, and save the dates that matter. No account, no sign-in, no ads.
 
 WHAT'S ON, NEAR YOU
 Browse upcoming dressage, show jumping, eventing, combined training and more from across the UK. Turn on location and EquiCalendar sorts events by distance and lets you set a radius — "within 30 miles" — so you only see what's actually reachable.
@@ -11,11 +11,11 @@ Powerful, tappable filters get you to the right events fast:
 • Date — today, this weekend, this month, or pick a specific day
 • Distance — set a radius around your location
 
-COMPETE AND WATCH
-Switch between Compete, for events you can enter, and Watch, for shows and fixtures worth going along to as a spectator.
+PREPARE, COMPETE AND WATCH
+Three views for your season: Compete, for events you can enter; Prepare, for clinics, lessons, training days and camps to get you and your horse ready; and Watch, for shows and fixtures worth going along to as a spectator.
 
 EXPLORE THE MAP
-Open the Explore tab to see venues with upcoming events plotted on a map. Tap a venue to see how many events are coming up and which disciplines it runs, then jump straight to that venue's event list.
+Open the Explore tab to see venues with upcoming events plotted on a map. Tap a venue to see how many events are coming up and which disciplines it runs, then jump straight to that venue's event list. Switch to Arena hire to find venues that hire out their arenas for schooling and practice.
 
 EVENT DETAILS THAT HELP YOU PLAN
 Every event has its own page with the date, venue, distance, class list and a map. From there you can:

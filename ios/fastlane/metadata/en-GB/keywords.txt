@@ -1,1 +1,1 @@
-horse,equestrian,dressage,showjumping,eventing,competition,NSEA,trailblazers,pony,riding,venue
+horse,equestrian,dressage,showjumping,eventing,competition,clinic,training,pony,riding,venue
