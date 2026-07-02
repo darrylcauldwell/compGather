@@ -51,3 +51,36 @@ def test_event_type_unaffected_by_new_aliases():
     discipline, event_type = EventClassifier.classify("Jumping Clinic with a Coach")
     assert event_type == "training"
     assert discipline == "Show Jumping"
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "Area 6 B+ Test",
+        "Wyre Forest PC Mounted Games Practice",
+        "Working Rallies",
+        "Nithsdale Pony Club Efficiency Tests for D, D+ and C test",
+        "Area 2 Senior Members Study Day",
+        "Tack Achievement Badge Afternoon",
+        "C+ Care Test Only",
+        "Area 5 Range Conducting Officer Course",
+    ],
+)
+def test_pony_club_training_terms_classified_training(name):
+    # PC efficiency tests / rallies / practice / badges are training, not competition.
+    _, event_type = EventClassifier.classify(name)
+    assert event_type == "training"
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "Area Showjumping Qualifier",
+        "Spring Dressage Championship",
+        "Winter Triathlon Finals 2026",
+    ],
+)
+def test_genuine_pc_competitions_stay_competition(name):
+    # PC-training keywords must not drag real competitions out of the Compete feed.
+    _, event_type = EventClassifier.classify(name)
+    assert event_type == "competition"
