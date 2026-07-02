@@ -217,6 +217,29 @@ maintenance is easier with classification rules centralized in one place.
 
 **Effort**: Medium. ~1 day.
 
+### 4.5 CDN Caching Hygiene (post-1.0 fast-follow)
+
+**Context**: The API middleware sets a sane `Cache-Control: public, max-age=60, s-maxage=600`
+for list endpoints, but Cloudflare's zone-level **Browser Cache TTL is overriding the
+browser `max-age` up to 4 hours** (observed `max-age=14400` on the wire). This made the
+iOS app serve stale filter results (Pony Club events reappearing after a re-tag). As a
+robust launch fix the app now fetches lists with `reloadIgnoringLocalCacheData` — correct
+regardless of the CDN, but it gives up the device-local cache (instant repeat-loads and
+offline/no-signal fallback for lists).
+
+**Fix (two parts)**:
+1. **Cloudflare** — ✅ **Done (2026-07-02).** Edited the host-scoped Cache Rule
+   "Cache equicalendar pages" (`http.host eq "equicalendar.dreamfold.dev"`) to add
+   **Browser TTL → "Respect origin TTL"**. Did *not* touch the zone-level Browser Cache TTL
+   (zone-wide). Verified on the wire: API + HTML now serve `max-age=60` (was 14400); other
+   apps in the zone unaffected.
+2. **iOS**: once (1) is verified live, revert `APIClient.get()` to the default
+   `.useProtocolCachePolicy`. A 60s local cache bounds staleness to ~1 min (imperceptible
+   for a filter) while restoring instant repeat-loads and offline resilience — the app is
+   used at rural venues, so offline fallback matters.
+
+**Effort**: Small. CF toggle + one-line iOS revert + device verify.
+
 ---
 
 ## Backlog (Ideas)
