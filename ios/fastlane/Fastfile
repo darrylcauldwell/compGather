@@ -100,6 +100,9 @@ platform :ios do
       skip_screenshots: false,
       # Don't prompt for the HTML preview before uploading.
       force: true,
+      # Reject any submission already in review / waiting for review so a newer
+      # build can replace it (the review-swap: build 7 -> build 10).
+      reject_if_possible: true,
       submit_for_review: true,
       # Auto-release as soon as Apple approves — no manual publish step.
       automatic_release: true,
