@@ -49,6 +49,10 @@ protocol FilterDriving: AnyObject, Observable {
     var showsDate: Bool { get }
     /// A dedicated Championships toggle (Watch only — Compete has it in Series).
     var showsChampionships: Bool { get }
+    /// A "Hide Pony Club" toggle (Prepare only — filters out members-only PC events).
+    var showsPonyClubFilter: Bool { get }
+    var hidePonyClub: Bool { get }
+    func setHidePonyClub(_ hide: Bool) async
 }
 
 extension FilterDriving {
@@ -56,4 +60,7 @@ extension FilterDriving {
     var showsDiscipline: Bool { true }
     var showsDate: Bool { true }
     var showsChampionships: Bool { false }
+    var showsPonyClubFilter: Bool { false }
+    var hidePonyClub: Bool { false }
+    func setHidePonyClub(_ hide: Bool) async {}
 }

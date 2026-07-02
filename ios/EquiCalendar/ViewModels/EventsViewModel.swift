@@ -181,6 +181,15 @@ final class EventsViewModel: FilterDriving {
     /// affiliation level ladder, so those pills are hidden (Discipline + Date only).
     var isTraining: Bool { filter.eventType == "training" }
 
+    // "Hide Pony Club" — Prepare only. Most PC prepare events are members-only,
+    // so a non-PC rider can filter them out (excludes affiliation:pony-club).
+    var showsPonyClubFilter: Bool { isTraining }
+    var hidePonyClub: Bool { filter.excludeTags.contains("affiliation:pony-club") }
+    func setHidePonyClub(_ hide: Bool) async {
+        filter.excludeTags = hide ? ["affiliation:pony-club"] : []
+        await load()
+    }
+
     func setSeries(_ token: String?) async {
         series = token
         rebuildTags()

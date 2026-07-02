@@ -29,6 +29,9 @@ struct FilterBar<Model: FilterDriving>: View {
                     if model.showsDiscipline {
                         disciplineMenu
                     }
+                    if model.showsPonyClubFilter {
+                        ponyClubPill
+                    }
                     if model.showsDate {
                         dateMenu
                     }
@@ -118,6 +121,15 @@ struct FilterBar<Model: FilterDriving>: View {
     }
 
     private var championshipToken: String { "special:championship-final" }
+
+    /// Prepare-only toggle to hide members-only Pony Club events.
+    private var ponyClubPill: some View {
+        Button {
+            Task { await model.setHidePonyClub(!model.hidePonyClub) }
+        } label: {
+            pill("Hide Pony Club", icon: "person.2.slash", active: model.hidePonyClub, showsChevron: false)
+        }
+    }
 
     private var disciplineMenu: some View {
         Menu {
