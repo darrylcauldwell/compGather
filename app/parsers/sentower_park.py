@@ -29,8 +29,9 @@ class SentowerParkParser(SingleVenueParser):
     BASE_URL = "https://www.sentowerpark.com"
     EVENTS_URL = "https://www.sentowerpark.com/events"
     LABEL = "Sentower"
-    # Non-competition listings that share the events feed (schooling, social).
-    SKIP = ("training", "village", "car event")
+    # Non-event listings to drop. Training/schooling is NOT skipped — it flows
+    # through to the classifier as event_type=training (Prepare data).
+    SKIP = ("village", "car event")
 
     async def fetch_and_parse(self, url: str) -> list[ExtractedEvent]:
         async with self._make_client() as client:

@@ -12,10 +12,10 @@ from app.schemas import ExtractedCompetition
 
 logger = logging.getLogger(__name__)
 
-EXTRACTION_PROMPT = """Extract all show jumping competitions from this webpage text.
+EXTRACTION_PROMPT = """Extract all equestrian events from this webpage text — competitions, shows, and also clinics, training days, lessons, camps and schooling sessions.
 The current year is {year}. Use this when dates don't include a year.
-For each competition return a JSON object with these fields:
-- name: competition/show name (string, required)
+For each event return a JSON object with these fields:
+- name: event name (string, required)
 - date_start: start date as YYYY-MM-DD (string, required)
 - date_end: end date as YYYY-MM-DD or null
 - venue_name: venue name (string, required)

@@ -645,12 +645,16 @@ _CONT_ELITE = re.compile(
 
 
 def continental_event_type(name: str) -> str:
-    """Decide ``"competition"`` vs ``"show"`` for a continental fixture name.
+    """Decide the event_type for a continental fixture name.
 
-    Entry-level markers take precedence so mixed-tier fixtures (e.g.
-    ``"CSI 3*/1*/YH"``) are enterable (Compete) as well as watchable.
+    Training/clinics take precedence (they were previously mislabelled as
+    competition/show and leaked into the competition feed). Then entry-level
+    markers, so mixed-tier fixtures (e.g. ``"CSI 3*/1*/YH"``) are enterable
+    (Compete) as well as watchable.
     """
     text = name or ""
+    if _detect_event_type(text.lower()) == "training":
+        return "training"
     if _CONT_ENTERABLE.search(text):
         return "competition"
     if _CONT_ELITE.search(text):

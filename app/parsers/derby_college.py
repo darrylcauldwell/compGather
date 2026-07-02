@@ -27,10 +27,13 @@ _DATE_RANGE_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Non-competition keywords to skip from What's On
+# Non-event / junk keywords to skip from What's On. Training-type entries
+# (clinic, gridwork, groundwork) are intentionally NOT skipped — they flow
+# through as event_type=training (Prepare data). Arena hire is kept out here
+# (handled as venue_hire); "lecture" is theory-only, not ridden prep.
 _SKIP_KEYWORDS = [
-    "arena hire", "clinic", "lecture", "gridwork", "course arena hire",
-    "dog show", "dog agility", "reiki", "groundwork", "hobby horse",
+    "arena hire", "lecture", "course arena hire",
+    "dog show", "dog agility", "reiki", "hobby horse",
     "he event", "ross cooper",
 ]
 
