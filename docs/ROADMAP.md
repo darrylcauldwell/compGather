@@ -233,10 +233,14 @@ offline/no-signal fallback for lists).
    **Browser TTL → "Respect origin TTL"**. Did *not* touch the zone-level Browser Cache TTL
    (zone-wide). Verified on the wire: API + HTML now serve `max-age=60` (was 14400); other
    apps in the zone unaffected.
-2. **iOS**: once (1) is verified live, revert `APIClient.get()` to the default
-   `.useProtocolCachePolicy`. A 60s local cache bounds staleness to ~1 min (imperceptible
+2. **iOS** — ✅ **Done (2026-07-07).** Reverted `APIClient.get()` to the default
+   `.useProtocolCachePolicy` after verifying on the wire that Cloudflare serves
+   `max-age=60` on HITs. A 60s local cache bounds staleness to ~1 min (imperceptible
    for a filter) while restoring instant repeat-loads and offline resilience — the app is
-   used at rural venues, so offline fallback matters.
+   used at rural venues, so offline fallback matters. Also added a 5-minute freshness
+   window to `EventsViewModel.start()` so tab switches skip the network entirely while
+   the list is fresh (pull-to-refresh and filter changes still always fetch) — fixes the
+   per-tab-switch wait reported on 4G.
 
 **Effort**: Small. CF toggle + one-line iOS revert + device verify.
 

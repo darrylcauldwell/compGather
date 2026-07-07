@@ -117,6 +117,10 @@ final class EventsViewModel: FilterDriving {
     private let api: APIClient
     private let location: LocationManager
     private var didStart = false
+    /// When the list last fetched successfully; bounds tab-switch refetches.
+    private var lastLoaded: Date?
+    /// Re-appearing within this window keeps the current list untouched.
+    private static let freshnessWindow: TimeInterval = 5 * 60
 
     init(
         api: APIClient = APIClient(),
@@ -158,6 +162,7 @@ final class EventsViewModel: FilterDriving {
         defer { isLoading = false }
         do {
             events = try await api.competitions(filter: filter)
+            lastLoaded = .now
         } catch is CancellationError {
             // ignore
         } catch {
@@ -228,11 +233,17 @@ final class EventsViewModel: FilterDriving {
     var dateFilterActive: Bool { customDate != nil || dateScope != .upcoming }
 
     /// First appearance: auto-acquire location, apply the default radius, load.
+    /// Re-appearance (tab switch) skips the refetch while the list is fresh —
+    /// pull-to-refresh and every filter change call load() directly, so those
+    /// always hit the network.
     func start() async {
         if !didStart {
             didStart = true
             filter.maxDistance = radiusMiles
             await acquireLocation()
+        }
+        if let lastLoaded, Date.now.timeIntervalSince(lastLoaded) < Self.freshnessWindow {
+            return
         }
         await load()
     }

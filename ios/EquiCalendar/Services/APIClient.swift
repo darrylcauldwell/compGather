@@ -121,11 +121,12 @@ struct APIClient: Sendable {
     private func get<T: Decodable>(_ type: T.Type, from url: URL) async throws -> T {
         var request = URLRequest(url: url)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        // These lists are filter-driven, so a toggle must reflect live server
-        // state. The CDN rewrites our short max-age up to a 4-hour browser TTL,
-        // which would otherwise let URLSession serve stale results after a data
-        // change — so always fetch fresh and let the CDN edge absorb load.
-        request.cachePolicy = .reloadIgnoringLocalCacheData
+        // Default protocol cache policy: the CDN passes the origin's
+        // Cache-Control through (max-age=60 on API lists), so URLSession may
+        // serve a cached response for at most a minute — fresh enough for
+        // filter toggles, and repeat fetches on flaky networks become free.
+        // (An earlier CDN config rewrote max-age to 4 hours, which forced
+        // reloadIgnoringLocalCacheData; that rewrite no longer happens.)
         let (data, response) = try await URLSession.shared.data(for: request)
         if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
             throw APIError.badStatus(http.statusCode)
