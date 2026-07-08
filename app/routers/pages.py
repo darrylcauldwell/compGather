@@ -848,6 +848,63 @@ async def venues_map_api(
     )
 
 
+@router.get("/api/venues/search")
+async def venues_search_api(
+    q: str = Query(..., min_length=2, max_length=80),
+    session: AsyncSession = Depends(get_session),
+):
+    """Search venues by name (or postcode prefix) for the app's venue picker.
+
+    Only venues with at least one upcoming event are returned — the picker's
+    purpose is jumping to a venue's event list, so an empty venue would be a
+    dead end. Ordered busiest-first, like the map markers.
+    """
+    from fastapi.responses import JSONResponse
+
+    today = date.today()
+    term = q.strip().replace("%", "").replace("_", "")
+    if len(term) < 2:
+        return JSONResponse(content=[])
+
+    stmt = (
+        select(
+            Venue.id,
+            Venue.name,
+            Venue.postcode,
+            func.count(Competition.id).label("event_count"),
+        )
+        .select_from(Venue)
+        .join(Competition, Competition.venue_id == Venue.id)
+        .where(
+            Competition.hidden.is_not(True),
+            Competition.event_type != "venue_hire",
+            func.lower(Venue.name).not_in(["tbc", "tba", "tbd", "various", "unknown", "online"]),
+            or_(Competition.date_start >= today, Competition.date_end >= today),
+            or_(
+                Venue.name.ilike(f"%{term}%"),
+                Venue.postcode.ilike(f"{term}%"),
+            ),
+        )
+        .group_by(Venue.id)
+        .order_by(func.count(Competition.id).desc())
+        .limit(25)
+    )
+    rows = (await session.execute(stmt)).all()
+
+    return JSONResponse(
+        content=[
+            {
+                "id": row.id,
+                "name": row.name,
+                "postcode": row.postcode or "",
+                "event_count": row.event_count,
+            }
+            for row in rows
+        ],
+        headers={"Cache-Control": "public, max-age=300, s-maxage=3600"},
+    )
+
+
 @router.get("/api/venues/hire")
 async def venues_hire_api(
     postcode: str | None = Query(None),

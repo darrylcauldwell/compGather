@@ -37,9 +37,13 @@ protocol FilterDriving: AnyObject, Observable {
     func setRadius(_ miles: Double?) async
     func retryLocation() async
 
-    // Venue hand-off (only the Compete list sets one; map/Watch report nil)
+    // Venue pin — set by the Explore map hand-off or the venue search pill.
     var venueName: String? { get }
+    func applyVenue(id: Int, name: String) async
     func clearVenue() async
+    /// Whether the bar offers the venue-search pill (event lists yes; the
+    /// Explore map has its own venue affordance — the pins).
+    var showsVenueSearch: Bool { get }
 
     // Per-view pill visibility — which filter pills this view shows. Defaults
     // (see extension) keep the full set on Compete/Watch; Explore overrides them
@@ -56,6 +60,8 @@ protocol FilterDriving: AnyObject, Observable {
 }
 
 extension FilterDriving {
+    var showsVenueSearch: Bool { true }
+    func applyVenue(id: Int, name: String) async {}
     var showsSeries: Bool { true }
     var showsDiscipline: Bool { true }
     var showsDate: Bool { true }

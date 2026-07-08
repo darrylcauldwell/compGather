@@ -9,6 +9,7 @@ struct FilterBar<Model: FilterDriving>: View {
 
     @State private var showDatePicker = false
     @State private var pickedDate = Date()
+    @State private var showVenueSearch = false
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -16,6 +17,8 @@ struct FilterBar<Model: FilterDriving>: View {
                 HStack(spacing: 8) {
                     if let venue = model.venueName {
                         venuePill(venue)
+                    } else if model.showsVenueSearch {
+                        venueSearchPill
                     }
                     if model.showsSeries {
                         seriesMenu
@@ -46,6 +49,22 @@ struct FilterBar<Model: FilterDriving>: View {
             }
             .presentationDetents([.medium])
         }
+        .sheet(isPresented: $showVenueSearch) {
+            VenueSearchSheet { venue in
+                Task { await model.applyVenue(id: venue.id, name: venue.name) }
+            }
+        }
+    }
+
+    /// Unpinned state: opens the venue search sheet; picking a venue pins the
+    /// list to it (the same state the Explore map hand-off produces).
+    private var venueSearchPill: some View {
+        Button {
+            showVenueSearch = true
+        } label: {
+            pill("Any venue", icon: "mappin.circle", active: false)
+        }
+        .buttonStyle(.plain)
     }
 
     /// Shown when the list is pinned to a venue (map hand-off); tap to clear.
@@ -176,13 +195,18 @@ struct FilterBar<Model: FilterDriving>: View {
     /// defaults to 30 mi; pick another radius or "Any distance".
     private var distanceMenu: some View {
         Menu {
-            if model.locationDenied {
+            // No postcode with a radius set covers both denied location and a
+            // failed reverse-geocode — either way, offer a retry. Settings
+            // only helps when the actual permission is off.
+            if model.locationDenied || (model.radiusMiles != nil && model.activePostcode == nil) {
                 Button("Try again", systemImage: "arrow.clockwise") {
                     Task { await model.retryLocation() }
                 }
-                Button("Open Settings", systemImage: "gear") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(url)
+                if model.locationDenied {
+                    Button("Open Settings", systemImage: "gear") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
                     }
                 }
                 Divider()

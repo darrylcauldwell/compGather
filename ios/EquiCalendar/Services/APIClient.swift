@@ -103,6 +103,19 @@ struct APIClient: Sendable {
         return try await get([VenueMarker].self, from: url)
     }
 
+    /// Search venues by name or postcode prefix for the venue picker. The
+    /// server requires at least two characters and only returns venues with
+    /// upcoming events, so every result is a useful jump target.
+    func searchVenues(query: String) async throws -> [VenueSearchResult] {
+        let base = baseURL.appending(path: "api/venues/search")
+        guard var components = URLComponents(url: base, resolvingAgainstBaseURL: false) else {
+            throw APIError.invalidURL
+        }
+        components.queryItems = [.init(name: "q", value: query)]
+        guard let url = components.url else { throw APIError.invalidURL }
+        return try await get([VenueSearchResult].self, from: url)
+    }
+
     /// Resolve a device coordinate to a UK postcode via the backend.
     func reverseGeocode(latitude: Double, longitude: Double) async throws -> String {
         let url = baseURL.appending(path: "api/geocode/reverse")
