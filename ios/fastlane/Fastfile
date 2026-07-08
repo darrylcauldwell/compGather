@@ -14,7 +14,7 @@ SCHEME = "EquiCalendar"
 # SemVer marketing version — bump BY HAND per release, decoupled from the build
 # number: patch=fix (1.0 -> 1.0.1), minor=feature (1.0 -> 1.1), major=rewrite (-> 2.0).
 # The build number below is the monotonic TestFlight counter (agvtool), not part of this.
-MARKETING_VERSION = "1.0"
+MARKETING_VERSION = "1.1"
 
 # App Store Connect API key from team-level env vars (no fallbacks — required).
 def api_key
