@@ -21,7 +21,7 @@ struct FavouritesView: View {
                         Button {
                             showingSettings = true
                         } label: {
-                            Label("Plan sharing", systemImage: "gearshape")
+                            Label("Plan settings", systemImage: "gearshape")
                         }
                     }
                 }

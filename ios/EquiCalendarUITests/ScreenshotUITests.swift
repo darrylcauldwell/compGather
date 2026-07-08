@@ -62,10 +62,11 @@ final class ScreenshotUITests: XCTestCase {
         sleep(2)
         snapshot("06Plan")
 
-        // 07 — Plan Sharing: share your Plan with family. The sheet renders a
-        // demo owner state under FASTLANE_SNAPSHOT (fake link + names), so no
-        // iCloud account or real share is needed.
-        let cog = app.buttons["Plan sharing"]
+        // 07 — Plan settings: share your Plan with family + Apple Calendar
+        // mirroring. The sheet renders a demo owner state under
+        // FASTLANE_SNAPSHOT (fake link + names), so no iCloud account or real
+        // share is needed.
+        let cog = app.buttons["Plan settings"]
         if cog.waitForExistence(timeout: 10) {
             cog.tap()
             sleep(2)

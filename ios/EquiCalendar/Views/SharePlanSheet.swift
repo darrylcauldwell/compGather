@@ -23,6 +23,7 @@ struct SharePlanSheet: View {
     @State private var confirmStop = false
     @State private var confirmLeave = false
     @State private var personToRemove: PlanStore.PlanPerson?
+    @State private var calendarSyncEnabled = false
 
     private let log = Logger(subsystem: "dev.dreamfold.equicalendar", category: "Share")
 
@@ -39,15 +40,17 @@ struct SharePlanSheet: View {
                         case .participant: participantState
                         }
                     }
+                    calendarCard
                 }
                 .padding(16)
             }
-            .navigationTitle("Plan Sharing")
+            .navigationTitle("Plan Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
             }
             .task {
+                calendarSyncEnabled = PlanCalendarSync.shared.isEnabled
                 if Self.isSnapshot { loadSnapshotDemo(); return }
                 canShare = await PlanStore.shared.iCloudAvailable()
                 reload()
@@ -264,6 +267,37 @@ struct SharePlanSheet: View {
         case .owner:   EmptyView()
         case .joined:  TagBadge(text: "Joined", systemImage: "checkmark.circle.fill", tint: .green)
         case .invited: TagBadge(text: "Invited", systemImage: "hourglass", tint: .orange)
+        }
+    }
+
+    // MARK: Apple Calendar mirroring
+
+    private var calendarCard: some View {
+        card {
+            Label("Apple Calendar", systemImage: "calendar.badge.checkmark")
+                .font(AppTypography.cardTitle)
+            Text("Keeps an \u{201C}EquiCalendar Plan\u{201D} calendar in Apple Calendar that mirrors this Plan"
+                 + " — events appear, update, and disappear as the Plan changes."
+                 + " Show or hide it from the Calendars list like any other calendar.")
+                .font(AppTypography.cardMeta).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Toggle("Show in Apple Calendar", isOn: $calendarSyncEnabled)
+                .font(AppTypography.controlLabel)
+                .disabled(isBusy)
+                .onChange(of: calendarSyncEnabled) { _, on in
+                    guard on != PlanCalendarSync.shared.isEnabled else { return }
+                    Task { await setCalendarSync(on) }
+                }
+        }
+    }
+
+    private func setCalendarSync(_ on: Bool) async {
+        isBusy = true; defer { isBusy = false }
+        do {
+            try await PlanCalendarSync.shared.setEnabled(on)
+        } catch {
+            calendarSyncEnabled = false
+            present(error, "Couldn't sync to Apple Calendar")
         }
     }
 

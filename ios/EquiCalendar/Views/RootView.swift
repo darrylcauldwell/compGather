@@ -23,5 +23,7 @@ struct RootView: View {
             }
         }
         .environment(router)
+        // Resume Plan → Apple Calendar mirroring if the user has it enabled.
+        .task { PlanCalendarSync.shared.startIfEnabled() }
     }
 }

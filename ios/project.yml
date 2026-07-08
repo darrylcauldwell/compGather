@@ -55,6 +55,10 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Your location is used to show equestrian events near you and sort them by distance."
         INFOPLIST_KEY_NSCalendarsWriteOnlyAccessUsageDescription: "Lets you add events to your calendar."
+        # Full access is only requested when the user turns on Plan → Apple
+        # Calendar mirroring (PlanCalendarSync) — needed to update and remove
+        # the app's own calendar events when the Plan changes.
+        INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: "Keeps the EquiCalendar Plan calendar in sync with your Plan — events are added, updated, and removed as your Plan changes."
 
   EquiCalendarTests:
     type: bundle.unit-test
