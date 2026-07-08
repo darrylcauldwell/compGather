@@ -1,5 +1,4 @@
 import CoreLocation
-import Observation
 
 /// One-shot device location for distance-based queries.
 ///
@@ -7,23 +6,28 @@ import Observation
 /// server-side via `APIClient.reverseGeocode` (the device-side `CLGeocoder` is
 /// deprecated on iOS 26 and the backend already resolves postcodes).
 ///
-/// Uses `startUpdatingLocation` and waits for the first good fix (with a
-/// timeout) rather than the one-shot `requestLocation`, which frequently fails
-/// with a transient "location unknown" error right after launch.
+/// Shared across all view models (`.shared`) so the tabs don't each run their
+/// own cold GPS fix. A recent cached fix answers instantly without touching
+/// the radio; otherwise the first `CLLocationUpdate.liveUpdates()` fix wins,
+/// falling back to a stale cached coordinate when the radio can't get a fix in
+/// time — for sorting venues by distance, yesterday's coordinate still beats
+/// failing. Concurrent callers share one in-flight request.
 @MainActor
-@Observable
-final class LocationManager: NSObject, CLLocationManagerDelegate {
+final class LocationManager {
     enum LocationError: Error { case denied, unavailable }
 
-    private let manager = CLLocationManager()
-    private var continuation: CheckedContinuation<CLLocationCoordinate2D, Error>?
-    private var timeoutTask: Task<Void, Never>?
+    static let shared = LocationManager()
 
-    override init() {
-        super.init()
-        manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyKilometer
-    }
+    /// A fix younger than this answers a request without touching the radio.
+    private static let freshFixMaxAge: TimeInterval = 5 * 60
+    /// On timeout, fall back to a cached fix up to this old rather than fail.
+    private static let staleFixMaxAge: TimeInterval = 24 * 3600
+    /// How long to wait for a live fix (clock starts once any permission
+    /// prompt has been answered).
+    private static let fixTimeout: Duration = .seconds(30)
+
+    private let manager = CLLocationManager()
+    private var inflight: Task<CLLocationCoordinate2D, Error>?
 
     var isDenied: Bool {
         switch manager.authorizationStatus {
@@ -35,53 +39,58 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
     /// Request the device location once, returning its coordinate.
     func currentCoordinate() async throws -> CLLocationCoordinate2D {
         if isDenied { throw LocationError.denied }
-        return try await withCheckedThrowingContinuation { continuation in
-            self.continuation = continuation
-            timeoutTask = Task { @MainActor in
-                try? await Task.sleep(for: .seconds(10))
-                resume(.failure(LocationError.unavailable))
+        if let cached = manager.location, Self.usable(cached, within: Self.freshFixMaxAge) {
+            return cached.coordinate
+        }
+        if let inflight { return try await inflight.value }
+        let task = Task { () throws -> CLLocationCoordinate2D in
+            do {
+                return try await Self.firstLiveFix()
+            } catch LocationError.denied {
+                throw LocationError.denied
+            } catch {
+                if let cached = self.manager.location,
+                   Self.usable(cached, within: Self.staleFixMaxAge) {
+                    return cached.coordinate
+                }
+                throw LocationError.unavailable
             }
-            switch manager.authorizationStatus {
-            case .notDetermined:
-                manager.requestWhenInUseAuthorization()  // prompt, then start in didChange
-            default:
-                manager.startUpdatingLocation()
+        }
+        inflight = task
+        defer { inflight = nil }
+        return try await task.value
+    }
+
+    /// First coordinate from the async updates stream, raced against a timeout.
+    /// Starting the stream shows the When-In-Use prompt if authorization is
+    /// undetermined; the timeout clock only starts once that's resolved, so a
+    /// user reading the prompt can't time the request out.
+    private nonisolated static func firstLiveFix() async throws -> CLLocationCoordinate2D {
+        try await withThrowingTaskGroup(of: CLLocationCoordinate2D.self) { group in
+            group.addTask {
+                for try await update in CLLocationUpdate.liveUpdates() {
+                    if update.authorizationDenied { throw LocationError.denied }
+                    if let location = update.location { return location.coordinate }
+                }
+                throw LocationError.unavailable
             }
+            group.addTask {
+                let status = CLLocationManager()
+                while status.authorizationStatus == .notDetermined {
+                    try await Task.sleep(for: .milliseconds(500))
+                }
+                try await Task.sleep(for: fixTimeout)
+                throw LocationError.unavailable
+            }
+            defer { group.cancelAll() }
+            guard let first = try await group.next() else { throw LocationError.unavailable }
+            return first
         }
     }
 
-    private func resume(_ result: Result<CLLocationCoordinate2D, Error>) {
-        guard let continuation else { return }
-        self.continuation = nil
-        timeoutTask?.cancel()
-        timeoutTask = nil
-        manager.stopUpdatingLocation()
-        continuation.resume(with: result)
-    }
-
-    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        let status = manager.authorizationStatus
-        Task { @MainActor in
-            guard continuation != nil else { return }
-            switch status {
-            case .authorizedWhenInUse, .authorizedAlways:
-                self.manager.startUpdatingLocation()
-            case .denied, .restricted:
-                resume(.failure(LocationError.denied))
-            default:
-                break  // still undetermined — keep waiting for the prompt result
-            }
-        }
-    }
-
-    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let coordinate = locations.last?.coordinate else { return }
-        Task { @MainActor in resume(.success(coordinate)) }
-    }
-
-    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        // "Location unknown" is transient — keep waiting for the next update.
-        if (error as? CLError)?.code == .locationUnknown { return }
-        Task { @MainActor in resume(.failure(LocationError.unavailable)) }
+    /// Whether a cached fix is valid and young enough to stand in for a fresh one.
+    nonisolated static func usable(_ location: CLLocation, within maxAge: TimeInterval,
+                                   now: Date = .now) -> Bool {
+        location.horizontalAccuracy >= 0 && now.timeIntervalSince(location.timestamp) < maxAge
     }
 }

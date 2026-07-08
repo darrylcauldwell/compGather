@@ -38,7 +38,7 @@ final class VenuesViewModel: FilterDriving {
     /// Last visible map region, so a mode switch re-queries the same viewport.
     private var lastRegion: MKCoordinateRegion?
 
-    init(api: APIClient = APIClient(), location: LocationManager = LocationManager()) {
+    init(api: APIClient = APIClient(), location: LocationManager = .shared) {
         self.api = api
         self.location = location
         let bounds = DateScope.upcoming.range()
@@ -165,8 +165,9 @@ final class VenuesViewModel: FilterDriving {
         await load()
     }
 
-    /// No venue pin on the map itself.
+    /// No venue pin or search on the map itself — the pins are the affordance.
     func clearVenue() async {}
+    var showsVenueSearch: Bool { false }
 
     /// The device coordinate, for the zoom-to-me map button.
     func userCoordinate() async throws -> CLLocationCoordinate2D {
@@ -174,15 +175,23 @@ final class VenuesViewModel: FilterDriving {
     }
 
     private func acquireLocation() async {
+        let coord: CLLocationCoordinate2D
         do {
-            let coord = try await location.currentCoordinate()
-            let postcode = try await api.reverseGeocode(latitude: coord.latitude, longitude: coord.longitude)
-            filter.postcode = postcode
-            activePostcode = postcode
+            coord = try await location.currentCoordinate()
             locationDenied = false
         } catch {
             activePostcode = nil
             locationDenied = true
+            return
+        }
+        do {
+            let postcode = try await api.reverseGeocode(latitude: coord.latitude, longitude: coord.longitude)
+            filter.postcode = postcode
+            activePostcode = postcode
+        } catch {
+            // Fix succeeded but the reverse-geocode call failed — not a
+            // location problem, so don't claim "Location off".
+            activePostcode = nil
         }
     }
 }

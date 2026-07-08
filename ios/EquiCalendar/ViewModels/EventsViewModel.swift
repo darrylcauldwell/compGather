@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 import Observation
 
@@ -124,7 +125,7 @@ final class EventsViewModel: FilterDriving {
 
     init(
         api: APIClient = APIClient(),
-        location: LocationManager = LocationManager(),
+        location: LocationManager = .shared,
         baseEventType: String? = nil,
         baseSpectator: Bool? = nil
     ) {
@@ -285,17 +286,26 @@ final class EventsViewModel: FilterDriving {
 
     /// Best-effort device location → postcode (server-side reverse geocode).
     private func acquireLocation() async {
+        let coord: CLLocationCoordinate2D
         do {
-            let coord = try await location.currentCoordinate()
-            let postcode = try await api.reverseGeocode(latitude: coord.latitude, longitude: coord.longitude)
-            filter.postcode = postcode
-            activePostcode = postcode
+            coord = try await location.currentCoordinate()
             locationDenied = false
         } catch {
             // No location: the distance filter is inert without a postcode, so
             // all events still show. Flag it for the UI.
             activePostcode = nil
             locationDenied = true
+            return
+        }
+        do {
+            let postcode = try await api.reverseGeocode(latitude: coord.latitude, longitude: coord.longitude)
+            filter.postcode = postcode
+            activePostcode = postcode
+        } catch {
+            // The fix succeeded but the reverse-geocode call failed (patchy
+            // signal, server unreachable) — that's not a location problem, so
+            // don't claim "Location off"; "Try again" re-runs just this.
+            activePostcode = nil
         }
     }
 }
