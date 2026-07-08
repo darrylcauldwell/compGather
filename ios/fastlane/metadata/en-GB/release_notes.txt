@@ -1,1 +1,4 @@
-Welcome to EquiCalendar — a free calendar of UK equestrian events. Find what's on near you, filter by discipline, series and distance, explore venues on a map, and build a Plan you can share with family and keep in sync across your devices.
+New in 1.1:
+• Find a venue — search any venue by name or postcode from the filter bar and jump straight to its upcoming events.
+• See your Plan in Apple Calendar — an optional "EquiCalendar Plan" calendar mirrors your Plan, stays in sync as it changes, and follows you across your devices.
+• Faster, more reliable location — distance sorting now answers instantly from a recent fix and copes better with patchy rural signal.
