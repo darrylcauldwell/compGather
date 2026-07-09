@@ -11,7 +11,10 @@ attributes:
 settings:
   base:
     SWIFT_VERSION: "6.2"
-    MARKETING_VERSION: "1.1"
+    # Overridden per-release: keep in lockstep with MARKETING_VERSION in
+    # fastlane/Fastfile — this build setting wins over the agvtool bump because
+    # the beta lane regenerates the project from this file first.
+    MARKETING_VERSION: "1.2"
     CURRENT_PROJECT_VERSION: "1"
     VERSIONING_SYSTEM: apple-generic
     GENERATE_INFOPLIST_FILE: YES
