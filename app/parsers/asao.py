@@ -160,6 +160,7 @@ class ASAOParser(TwoPhaseParser):
             venue_name=venue_name, venue_postcode=venue_postcode,
             latitude=latitude, longitude=longitude,
             discipline="Agricultural Show",
+            event_type="show",
             url=website or stub["url"],
         )
 
@@ -171,6 +172,7 @@ class ASAOParser(TwoPhaseParser):
             name=stub["name"], date_start=date_start,
             date_end=date_end if date_end and date_end != date_start else None,
             venue_name="TBC", discipline="Agricultural Show",
+            event_type="show",
             url=stub["url"],
         )
 
