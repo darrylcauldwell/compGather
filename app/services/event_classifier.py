@@ -14,7 +14,8 @@ from app.parsers.utils import (
 _INTL_CODE = re.compile(r"\b(?:CSIO?|CDIO?|CCIO?|CHIO?)\b", re.IGNORECASE)
 _STAR = re.compile(r"\d\s*\*")
 _SPECTATOR_TERMS = re.compile(
-    r"\b(?:county show|country fair|agricultural|national championship|"
+    r"\b(?:county show|country fair|country festival|village show|"
+    r"ploughing match|hedgelaying|agricultural|national championship|"
     r"world championship|european championship|world cup|nations cup|"
     r"international horse show)\b",
     re.IGNORECASE,

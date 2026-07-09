@@ -129,6 +129,11 @@ _SOURCE_DEFS: list[dict[str, str | None]] = [
     {"name": "National Equine Show", "parser_key": "national_equine_show", "url": "https://nationalequineshow.com"},
     {"name": "Osberton Horse Trials", "parser_key": "osberton", "url": "https://osbertonhorse.co.uk"},
     {"name": "Hope Show", "parser_key": "hope_show", "url": "https://www.hopeshow.co.uk"},
+    {"name": "Bakewell Country Festival", "parser_key": "bakewell_country_festival", "url": "https://www.bakewellahs.co.uk/bakewell-country-festival"},
+    {"name": "Ashbourne Show", "parser_key": "ashbourne_show", "url": "https://ashbourneshow.co.uk"},
+    {"name": "Turnditch & Windley Show", "parser_key": "turnditch_windley_show", "url": "https://turnditchandwindley.co.uk"},
+    {"name": "Southwell Ploughing Match", "parser_key": "southwell_ploughing_match", "url": "https://www.southwellploughingmatch.co.uk"},
+    {"name": "National Hedgelaying Championship", "parser_key": "national_hedgelaying_championship", "url": "https://www.hedgelaying.org.uk/national-championship-2026/"},
     {"name": "Trailblazers Championships", "parser_key": "trailblazers", "url": "https://www.trailblazerschampionships.com"},
     # International spectator events
     {"name": "Sunshine Tour", "parser_key": "sunshine_tour", "url": "https://www.sunshinetour.net"},

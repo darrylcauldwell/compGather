@@ -1732,5 +1732,85 @@
         "event_type": "show"
       }
     ]
+  },
+  "bakewell_country_festival": {
+    "valid_until": "2026-07-12",
+    "events": [
+      {
+        "name": "Bakewell Country Festival 2026",
+        "date_start": "2026-07-12",
+        "date_end": null,
+        "venue_name": "Bakewell Showground",
+        "venue_postcode": "DE45 1AH",
+        "latitude": 53.213,
+        "longitude": -1.6695,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "ashbourne_show": {
+    "valid_until": "2026-08-15",
+    "events": [
+      {
+        "name": "Ashbourne Show 2026",
+        "date_start": "2026-08-15",
+        "date_end": null,
+        "venue_name": "Polo Ground, Osmaston",
+        "venue_postcode": "DE6 1LW",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "competition"
+      }
+    ]
+  },
+  "turnditch_windley_show": {
+    "valid_until": "2026-09-05",
+    "events": [
+      {
+        "name": "Turnditch & Windley Village Show 2026",
+        "date_start": "2026-09-05",
+        "date_end": null,
+        "venue_name": "Turnditch",
+        "venue_postcode": null,
+        "latitude": 53.0157,
+        "longitude": -1.5598,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "southwell_ploughing_match": {
+    "valid_until": "2026-09-26",
+    "events": [
+      {
+        "name": "Southwell Ploughing Match & Show 2026",
+        "date_start": "2026-09-26",
+        "date_end": null,
+        "venue_name": "Farnsfield",
+        "venue_postcode": "NG22 8HW",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "national_hedgelaying_championship": {
+    "valid_until": "2026-10-10",
+    "events": [
+      {
+        "name": "National Hedgelaying Championship 2026",
+        "date_start": "2026-10-10",
+        "date_end": null,
+        "venue_name": "Chipping Norton",
+        "venue_postcode": "OX7 5XH",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
   }
 }
