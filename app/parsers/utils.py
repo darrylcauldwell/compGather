@@ -21,8 +21,11 @@ POSTCODE_RE = re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b", re.IGNORECASE
 
 # ── Event type keyword patterns ──────────────────────────────────────
 # Loaded from tag_keywords in venue_seeds.json on demand.
-# Returns (keyword, event_type) pairs, e.g. ("clinic", "training").
-_EVENT_TYPE_PATTERNS_CACHED: list[tuple[str, str]] | None = None
+# Returns (keyword, event_type, compiled word-boundary pattern) triples,
+# e.g. ("clinic", "training", re.compile(r"\bclinic\b")). Word boundaries
+# matter: plain substring matching turned "Staffordshire" into a venue_hire
+# event via the "hire" keyword.
+_EVENT_TYPE_PATTERNS_CACHED: list[tuple[str, str, re.Pattern]] | None = None
 
 # Map from tag_keywords key → DB event_type value
 _TAG_TO_EVENT_TYPE = {
@@ -34,17 +37,18 @@ _TAG_TO_EVENT_TYPE = {
 }
 
 
-def _load_event_type_patterns() -> list[tuple[str, str]]:
+def _load_event_type_patterns() -> list[tuple[str, str, re.Pattern]]:
     """Load event type keywords from tag_keywords in seed data.
 
-    Returns list of (keyword, event_type) tuples sorted by specificity
-    (longer keywords first to match more specific patterns).
+    Returns list of (keyword, event_type, pattern) triples sorted by
+    specificity (longer keywords first to match more specific patterns).
+    Each pattern matches the keyword on word boundaries only.
     """
     global _EVENT_TYPE_PATTERNS_CACHED
     if _EVENT_TYPE_PATTERNS_CACHED is not None:
         return _EVENT_TYPE_PATTERNS_CACHED
 
-    patterns: list[tuple[str, str]] = []
+    pairs: list[tuple[str, str]] = []
 
     try:
         from app.seed_data import get_tag_keywords
@@ -55,11 +59,11 @@ def _load_event_type_patterns() -> list[tuple[str, str]]:
             if not event_type:
                 continue
             for kw in keywords:
-                patterns.append((kw.lower(), event_type))
+                pairs.append((kw.lower(), event_type))
 
     except Exception:
         # Fallback
-        patterns = [
+        pairs = [
             ("arena hire", "venue_hire"),
             ("school hire", "venue_hire"),
             ("course hire", "venue_hire"),
@@ -70,25 +74,21 @@ def _load_event_type_patterns() -> list[tuple[str, str]]:
         ]
 
     # Sort by length (longest first) to match more specific patterns first
-    patterns.sort(key=lambda x: -len(x[0]))
+    pairs.sort(key=lambda x: -len(x[0]))
 
-    _EVENT_TYPE_PATTERNS_CACHED = patterns
-    return patterns
+    # Word boundaries with an optional plural suffix: "efficiency test" must
+    # still match "Efficiency Tests", but "hire" must not fire inside
+    # "Staffordshire".
+    _EVENT_TYPE_PATTERNS_CACHED = [
+        (kw, event_type, re.compile(rf"\b{re.escape(kw)}(?:e?s)?\b"))
+        for kw, event_type in pairs
+    ]
+    return _EVENT_TYPE_PATTERNS_CACHED
 
 
-def _get_event_type_patterns() -> list[tuple[str, str]]:
+def _get_event_type_patterns() -> list[tuple[str, str, re.Pattern]]:
     """Get cached event type patterns (loads on first call)."""
     return _load_event_type_patterns()
-
-
-# Backward compat aliases
-def _get_non_competition_patterns() -> list[tuple[str, str]]:
-    """Get event type patterns as (keyword, event_type) tuples.
-
-    Backward-compatible wrapper — callers that used this for non-competition
-    detection can now check event_type != "competition".
-    """
-    return _get_event_type_patterns()
 
 
 def is_future_event(date_start: str, date_end: str | None = None) -> bool:
@@ -209,10 +209,11 @@ def _detect_event_type(name_lower: str) -> str:
     then training, defaulting to competition.
 
     Guards against false positives like "Combined Training" (a discipline,
-    not event_type=training).
+    not event_type=training). Keywords match on word boundaries so "hire"
+    can't fire inside "Staffordshire" or "Yorkshire".
     """
-    for keyword, event_type in _get_event_type_patterns():
-        if keyword in name_lower:
+    for keyword, event_type, pattern in _get_event_type_patterns():
+        if pattern.search(name_lower):
             # Guard: "training" inside "combined training" is a discipline name
             if keyword == "training" and _TRAINING_FALSE_POSITIVES.search(name_lower):
                 continue

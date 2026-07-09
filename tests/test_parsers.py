@@ -154,6 +154,20 @@ class TestClassifyEvent:
         discipline, event_type = classify_event("Stabling & Hook Ups")
         assert event_type == "venue_hire"
 
+    def test_shire_county_name_is_not_venue_hire(self):
+        """"hire" must not match inside "Staffordshire"/"Yorkshire"."""
+        from app.parsers.utils import classify_event
+        discipline, event_type = classify_event(
+            "NSEA County Challenge Dressage Qualifiers for Staffordshire"
+        )
+        assert event_type == "competition"
+
+    def test_plural_keyword_still_matches(self):
+        """Word-boundary matching keeps plural forms ("Efficiency Tests")."""
+        from app.parsers.utils import classify_event
+        discipline, event_type = classify_event("Arena Hires by the hour")
+        assert event_type == "venue_hire"
+
     def test_dressage_training_independent(self):
         """Discipline and event_type are determined independently."""
         from app.parsers.utils import classify_event
