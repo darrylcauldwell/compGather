@@ -106,6 +106,8 @@ final class EventsViewModel: FilterDriving {
     var dateScope: DateScope = .upcoming
     /// A specific chosen day; when set it overrides `dateScope`.
     var customDate: Date?
+    /// End of a custom date range; nil when filtering a single day.
+    var customDateEnd: Date?
     /// Selected radius in miles; nil == any distance. Defaults to 30 on launch.
     var radiusMiles: Double? = defaultRadiusMiles
     /// True if the device location was requested but unavailable/denied.
@@ -223,18 +225,22 @@ final class EventsViewModel: FilterDriving {
     func setDateScope(_ scope: DateScope) async {
         dateScope = scope
         customDate = nil
+        customDateEnd = nil
         let bounds = scope.range()
         filter.dateFrom = bounds.from
         filter.dateTo = bounds.to
         await load()
     }
 
-    /// Filter to a single specific day.
-    func setCustomDate(_ date: Date) async {
-        customDate = date
-        let day = Calendar.current.startOfDay(for: date)
-        filter.dateFrom = day
-        filter.dateTo = day
+    /// Filter to a specific day or an inclusive range of days.
+    func setCustomDates(from start: Date, to end: Date) async {
+        let calendar = Calendar.current
+        let from = calendar.startOfDay(for: min(start, end))
+        let to = calendar.startOfDay(for: max(start, end))
+        customDate = from
+        customDateEnd = to == from ? nil : to
+        filter.dateFrom = from
+        filter.dateTo = to
         await load()
     }
 

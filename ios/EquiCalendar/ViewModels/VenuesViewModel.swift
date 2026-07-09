@@ -25,6 +25,8 @@ final class VenuesViewModel: FilterDriving {
     var activePostcode: String?
     var dateScope: DateScope = .upcoming
     var customDate: Date?
+    /// End of a custom date range; nil when filtering a single day.
+    var customDateEnd: Date?
     /// nil == any distance; the map opens framing every venue.
     var radiusMiles: Double?
     var locationDenied = false
@@ -137,17 +139,22 @@ final class VenuesViewModel: FilterDriving {
     func setDateScope(_ scope: DateScope) async {
         dateScope = scope
         customDate = nil
+        customDateEnd = nil
         let bounds = scope.range()
         filter.dateFrom = bounds.from
         filter.dateTo = bounds.to
         await load()
     }
 
-    func setCustomDate(_ date: Date) async {
-        customDate = date
-        let day = Calendar.current.startOfDay(for: date)
-        filter.dateFrom = day
-        filter.dateTo = day
+    /// Filter to a specific day or an inclusive range of days.
+    func setCustomDates(from start: Date, to end: Date) async {
+        let calendar = Calendar.current
+        let from = calendar.startOfDay(for: min(start, end))
+        let to = calendar.startOfDay(for: max(start, end))
+        customDate = from
+        customDateEnd = to == from ? nil : to
+        filter.dateFrom = from
+        filter.dateTo = to
         await load()
     }
 

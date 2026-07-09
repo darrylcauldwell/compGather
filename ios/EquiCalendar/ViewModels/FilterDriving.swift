@@ -23,12 +23,13 @@ protocol FilterDriving: AnyObject, Observable {
     var availableDisciplines: [String] { get }
     func setDiscipline(_ discipline: String?) async
 
-    // Date scope / specific day
+    // Date scope / specific day or inclusive range (customDateEnd nil == single day)
     var dateScope: DateScope { get }
     var customDate: Date? { get }
+    var customDateEnd: Date? { get }
     var dateFilterActive: Bool { get }
     func setDateScope(_ scope: DateScope) async
-    func setCustomDate(_ date: Date) async
+    func setCustomDates(from start: Date, to end: Date) async
 
     // Distance radius + resolved location state
     var radiusMiles: Double? { get }

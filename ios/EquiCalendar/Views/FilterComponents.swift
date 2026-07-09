@@ -8,17 +8,24 @@ struct FilterBar<Model: FilterDriving>: View {
     let model: Model
 
     @State private var showDatePicker = false
-    @State private var pickedDate = Date()
     @State private var showVenueSearch = false
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             GlassEffectContainer(spacing: 8) {
                 HStack(spacing: 8) {
+                    // Ordered by how riders narrow down: where → what → when,
+                    // then the secondary refinements. A venue pin replaces the
+                    // distance pill as the "where".
                     if let venue = model.venueName {
                         venuePill(venue)
-                    } else if model.showsVenueSearch {
-                        venueSearchPill
+                    }
+                    distanceMenu
+                    if model.showsDiscipline {
+                        disciplineMenu
+                    }
+                    if model.showsDate {
+                        dateMenu
                     }
                     if model.showsSeries {
                         seriesMenu
@@ -29,23 +36,22 @@ struct FilterBar<Model: FilterDriving>: View {
                     if model.showsChampionships {
                         championshipsPill
                     }
-                    if model.showsDiscipline {
-                        disciplineMenu
-                    }
                     if model.showsPonyClubFilter {
                         ponyClubPill
                     }
-                    if model.showsDate {
-                        dateMenu
+                    if model.venueName == nil && model.showsVenueSearch {
+                        venueSearchPill
                     }
-                    distanceMenu
                 }
                 .padding(.horizontal)
             }
         }
         .sheet(isPresented: $showDatePicker) {
-            DatePickerSheet(initialDate: model.customDate ?? Date()) { chosen in
-                Task { await model.setCustomDate(chosen) }
+            DateRangeSheet(
+                initialFrom: model.customDate ?? Date(),
+                initialTo: model.customDateEnd ?? model.customDate ?? Date()
+            ) { from, to in
+                Task { await model.setCustomDates(from: from, to: to) }
             }
             .presentationDetents([.medium])
         }
@@ -175,8 +181,7 @@ struct FilterBar<Model: FilterDriving>: View {
                 }
             }
             Divider()
-            Button("Pick a date…", systemImage: "calendar") {
-                pickedDate = model.customDate ?? Date()
+            Button("Pick dates…", systemImage: "calendar") {
                 showDatePicker = true
             }
         } label: {
@@ -186,7 +191,7 @@ struct FilterBar<Model: FilterDriving>: View {
 
     private var dateLabel: String {
         if let date = model.customDate {
-            return EventFormatting.dateText(start: date, end: nil)
+            return EventFormatting.dateText(start: date, end: model.customDateEnd)
         }
         return model.dateScope.title
     }
@@ -256,34 +261,40 @@ struct FilterBar<Model: FilterDriving>: View {
     }
 }
 
-/// A modal calendar for choosing a single day to filter on.
-private struct DatePickerSheet: View {
-    let onPick: (Date) -> Void
+/// A modal picker for a single day or an inclusive range of days — leave
+/// "To" on the same day as "From" to filter a single date.
+private struct DateRangeSheet: View {
+    let onPick: (Date, Date) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var date: Date
+    @State private var from: Date
+    @State private var to: Date
 
-    init(initialDate: Date, onPick: @escaping (Date) -> Void) {
+    init(initialFrom: Date, initialTo: Date, onPick: @escaping (Date, Date) -> Void) {
         self.onPick = onPick
-        _date = State(initialValue: initialDate)
+        _from = State(initialValue: initialFrom)
+        _to = State(initialValue: max(initialFrom, initialTo))
     }
 
     var body: some View {
         NavigationStack {
-            DatePicker("Event date", selection: $date, displayedComponents: .date)
-                .datePickerStyle(.graphical)
-                .padding()
-                .frame(maxHeight: .infinity, alignment: .top)
-                .navigationTitle("Pick a date")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Show") { onPick(date); dismiss() }
-                    }
+            Form {
+                DatePicker("From", selection: $from, displayedComponents: .date)
+                DatePicker("To", selection: $to, in: from..., displayedComponents: .date)
+            }
+            .onChange(of: from) { _, newFrom in
+                if to < newFrom { to = newFrom }
+            }
+            .navigationTitle("Pick dates")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
                 }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Show") { onPick(from, to); dismiss() }
+                }
+            }
         }
     }
 }
