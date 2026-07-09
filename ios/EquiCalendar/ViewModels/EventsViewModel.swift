@@ -161,6 +161,14 @@ final class EventsViewModel: FilterDriving {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
+        // No resolved postcode makes the distance filter inert — the server
+        // ignores max_distance (so far-away events leak in) and annotates no
+        // distances. Re-acquire on every load so a transient reverse-geocode
+        // failure heals on the next refresh, unless location is denied or the
+        // list is pinned to a venue (where distance doesn't apply).
+        if activePostcode == nil, !locationDenied, filter.venueID == nil {
+            await acquireLocation()
+        }
         do {
             events = try await api.competitions(filter: filter)
             lastLoaded = .now
@@ -233,15 +241,14 @@ final class EventsViewModel: FilterDriving {
     /// True if any non-default date filter is active.
     var dateFilterActive: Bool { customDate != nil || dateScope != .upcoming }
 
-    /// First appearance: auto-acquire location, apply the default radius, load.
-    /// Re-appearance (tab switch) skips the refetch while the list is fresh —
-    /// pull-to-refresh and every filter change call load() directly, so those
-    /// always hit the network.
+    /// First appearance: apply the default radius and load — load() acquires
+    /// the device location as part of every fetch. Re-appearance (tab switch)
+    /// skips the refetch while the list is fresh — pull-to-refresh and every
+    /// filter change call load() directly, so those always hit the network.
     func start() async {
         if !didStart {
             didStart = true
             filter.maxDistance = radiusMiles
-            await acquireLocation()
         }
         if let lastLoaded, Date.now.timeIntervalSince(lastLoaded) < Self.freshnessWindow {
             return
@@ -249,13 +256,11 @@ final class EventsViewModel: FilterDriving {
         await load()
     }
 
-    /// Change the distance radius (nil == any). Acquires location on demand.
+    /// Change the distance radius (nil == any). load() acquires location on
+    /// demand when none is resolved yet.
     func setRadius(_ miles: Double?) async {
         radiusMiles = miles
         filter.maxDistance = miles
-        if miles != nil && activePostcode == nil {
-            await acquireLocation()
-        }
         await load()
     }
 
