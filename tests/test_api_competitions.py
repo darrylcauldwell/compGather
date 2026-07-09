@@ -232,6 +232,45 @@ class TestListCompetitions:
         assert data[0]["event_type"] == "show"
 
     @pytest.mark.asyncio
+    async def test_discipline_filter_excludes_venue_hire(self):
+        # A discipline-filtered Compete list must stay competitions-only: a
+        # venue_hire row that carries a discipline (e.g. "SJ Course Hire")
+        # must not leak in alongside real Show Jumping competitions.
+        app = _get_app()
+
+        async with TestSession() as session:
+            src = Source(
+                name="S", url="https://e.com", parser_key="t",
+                enabled=True, created_at=datetime.utcnow(),
+            )
+            session.add(src)
+            await session.flush()
+            venue = Venue(name="Beaver Hall", postcode=None)
+            session.add(venue)
+            await session.flush()
+            session.add(Competition(
+                source_id=src.id, name="SJ Course Hire", date_start=date(2026, 7, 3),
+                venue_id=venue.id, discipline="Show Jumping", event_type="venue_hire",
+                first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+            ))
+            session.add(Competition(
+                source_id=src.id, name="Unaffiliated SJ", date_start=date(2026, 7, 5),
+                venue_id=venue.id, discipline="Show Jumping", event_type="competition",
+                first_seen_at=datetime.utcnow(), last_seen_at=datetime.utcnow(),
+            ))
+            await session.commit()
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.get("/api/competitions?discipline=Show+Jumping")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["name"] == "Unaffiliated SJ"
+
+    @pytest.mark.asyncio
     async def test_empty_list(self):
         app = _get_app()
         # No seeding
