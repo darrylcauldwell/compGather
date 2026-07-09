@@ -221,7 +221,7 @@ def _bs_class_tags(classes: list[str]) -> list[str]:
                 break
         if re.search(r"\bpony\b", text):
             out.append("audience:pony")
-        elif re.search(r"\bjunior\b", text):
+        elif re.search(r"\b(?:junior|children)\b", text):
             out.append("audience:junior")
         elif re.search(r"\bseniors?\b", text):
             out.append("audience:senior")

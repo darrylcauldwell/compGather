@@ -428,6 +428,7 @@ async def competitions_page(
                 ("class:newcomers", "Newcomers"),
                 ("class:british-novice", "British Novice"),
                 ("class:discovery", "Discovery"),
+                ("class:children-on-horses", "Children on Horses"),
                 ("special:qualifier", "Qualifiers"),
             ],
             "postcode": postcode or "",

@@ -233,6 +233,14 @@
       "height_cm": 110,
       "audience": "pony"
     },
+    "children-on-horses": {
+      "display": "Children on Horses",
+      "keywords": [
+        "children on horses"
+      ],
+      "audience": "junior",
+      "note": "BS category for under-14s riding horses (not ponies). No canonical height — runs at 90cm/1m/1.10m, parsed from the class name."
+    },
     "senior-foxhunter": {
       "display": "Senior Foxhunter",
       "deferred": true,
