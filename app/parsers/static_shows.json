@@ -27,12 +27,12 @@
     ]
   },
   "al_shiraaa": {
-    "valid_until": "2026-01-25",
+    "valid_until": "2027-01-24",
     "events": [
       {
-        "name": "Al Shira'aa International Horse Show 2026",
-        "date_start": "2026-01-20",
-        "date_end": "2026-01-25",
+        "name": "Al Shira'aa International Horse Show 2027",
+        "date_start": "2027-01-19",
+        "date_end": "2027-01-24",
         "venue_name": "Al Forsan International Sports Resort",
         "venue_postcode": null,
         "latitude": 24.419,
@@ -59,23 +59,12 @@
     ]
   },
   "bolesworth": {
-    "valid_until": "2026-07-05",
+    "valid_until": "2027-07-04",
     "events": [
       {
-        "name": "Bolesworth International CSI4* Week 1",
-        "date_start": "2026-06-25",
-        "date_end": "2026-06-28",
-        "venue_name": "Bolesworth Castle",
-        "venue_postcode": "SY14 8DD",
-        "latitude": 53.0975,
-        "longitude": -2.7175,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      },
-      {
-        "name": "Bolesworth International CSI4* Week 2",
-        "date_start": "2026-07-02",
-        "date_end": "2026-07-05",
+        "name": "Bolesworth International 2027",
+        "date_start": "2027-06-24",
+        "date_end": "2027-07-04",
         "venue_name": "Bolesworth Castle",
         "venue_postcode": "SY14 8DD",
         "latitude": 53.0975,
@@ -102,12 +91,12 @@
     ]
   },
   "carolina_international": {
-    "valid_until": "2026-03-22",
+    "valid_until": "2027-03-21",
     "events": [
       {
-        "name": "Carolina International CCI4*-S 2026",
-        "date_start": "2026-03-19",
-        "date_end": "2026-03-22",
+        "name": "Carolina International CCI4*-S 2027",
+        "date_start": "2027-03-18",
+        "date_end": "2027-03-21",
         "venue_name": "Carolina Horse Park, Raeford",
         "venue_postcode": null,
         "latitude": 35.04,
@@ -118,12 +107,12 @@
     ]
   },
   "cavaliada": {
-    "valid_until": "2026-03-01",
+    "valid_until": "2027-02-21",
     "events": [
       {
-        "name": "CAVALIADA Krakow 2026",
-        "date_start": "2026-02-26",
-        "date_end": "2026-03-01",
+        "name": "CAVALIADA Krakow 2027",
+        "date_start": "2027-02-18",
+        "date_end": "2027-02-21",
         "venue_name": "Tauron Arena, Krakow",
         "venue_postcode": null,
         "latitude": 50.0645,
@@ -182,12 +171,12 @@
     ]
   },
   "chio_rotterdam": {
-    "valid_until": "2026-06-21",
+    "valid_until": "2027-06-20",
     "events": [
       {
-        "name": "CHIO Rotterdam 2026",
-        "date_start": "2026-06-18",
-        "date_end": "2026-06-21",
+        "name": "CHIO Rotterdam 2027",
+        "date_start": "2027-06-17",
+        "date_end": "2027-06-20",
         "venue_name": "Kralingse Bos, Rotterdam",
         "venue_postcode": null,
         "latitude": 51.9265,
@@ -214,12 +203,12 @@
     ]
   },
   "csio_roma": {
-    "valid_until": "2026-05-31",
+    "valid_until": "2027-05-30",
     "events": [
       {
-        "name": "CSIO Roma — Piazza di Siena 2026",
-        "date_start": "2026-05-28",
-        "date_end": "2026-05-31",
+        "name": "CSIO Roma — Piazza di Siena 2027",
+        "date_start": "2027-05-26",
+        "date_end": "2027-05-30",
         "venue_name": "Piazza di Siena, Roma",
         "venue_postcode": null,
         "latitude": 41.9147,
@@ -246,12 +235,12 @@
     ]
   },
   "desert_international": {
-    "valid_until": "2026-02-15",
+    "valid_until": "2027-04-04",
     "events": [
       {
-        "name": "Desert Circuit 1 — CSI3*",
-        "date_start": "2026-01-06",
-        "date_end": "2026-01-11",
+        "name": "Desert Circuit 1 — CSI2*",
+        "date_start": "2027-01-13",
+        "date_end": "2027-01-17",
         "venue_name": "Desert International Horse Park, Thermal",
         "venue_postcode": null,
         "latitude": 33.615,
@@ -260,9 +249,9 @@
         "event_type": "show"
       },
       {
-        "name": "Desert Circuit 2 — CSI4*",
-        "date_start": "2026-01-13",
-        "date_end": "2026-01-18",
+        "name": "Desert Circuit 2",
+        "date_start": "2027-01-20",
+        "date_end": "2027-01-24",
         "venue_name": "Desert International Horse Park, Thermal",
         "venue_postcode": null,
         "latitude": 33.615,
@@ -271,9 +260,9 @@
         "event_type": "show"
       },
       {
-        "name": "Desert Circuit 3 — CSI5*",
-        "date_start": "2026-01-20",
-        "date_end": "2026-01-25",
+        "name": "Desert Circuit 3",
+        "date_start": "2027-01-27",
+        "date_end": "2027-01-31",
         "venue_name": "Desert International Horse Park, Thermal",
         "venue_postcode": null,
         "latitude": 33.615,
@@ -283,8 +272,8 @@
       },
       {
         "name": "Desert Circuit 4 — CSI5*-W World Cup",
-        "date_start": "2026-01-27",
-        "date_end": "2026-02-01",
+        "date_start": "2027-02-03",
+        "date_end": "2027-02-07",
         "venue_name": "Desert International Horse Park, Thermal",
         "venue_postcode": null,
         "latitude": 33.615,
@@ -293,9 +282,9 @@
         "event_type": "show"
       },
       {
-        "name": "Desert Circuit 5 — CSI3*",
-        "date_start": "2026-02-03",
-        "date_end": "2026-02-08",
+        "name": "Desert Circuit 5",
+        "date_start": "2027-02-10",
+        "date_end": "2027-02-14",
         "venue_name": "Desert International Horse Park, Thermal",
         "venue_postcode": null,
         "latitude": 33.615,
@@ -304,9 +293,75 @@
         "event_type": "show"
       },
       {
-        "name": "Desert Circuit 6 — CSI3*",
-        "date_start": "2026-02-10",
-        "date_end": "2026-02-15",
+        "name": "Desert Circuit 6",
+        "date_start": "2027-02-17",
+        "date_end": "2027-02-21",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "Desert Circuit 7",
+        "date_start": "2027-02-24",
+        "date_end": "2027-02-28",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "Desert Circuit 8",
+        "date_start": "2027-03-03",
+        "date_end": "2027-03-07",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "Desert Circuit 9",
+        "date_start": "2027-03-10",
+        "date_end": "2027-03-14",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "Desert Circuit 10",
+        "date_start": "2027-03-17",
+        "date_end": "2027-03-21",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "Desert Circuit 11",
+        "date_start": "2027-03-24",
+        "date_end": "2027-03-28",
+        "venue_name": "Desert International Horse Park, Thermal",
+        "venue_postcode": null,
+        "latitude": 33.615,
+        "longitude": -116.14,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "Desert Circuit 12 — CSI4*",
+        "date_start": "2027-03-31",
+        "date_end": "2027-04-04",
         "venue_name": "Desert International Horse Park, Thermal",
         "venue_postcode": null,
         "latitude": 33.615,
@@ -317,12 +372,12 @@
     ]
   },
   "devon_horse_show": {
-    "valid_until": "2026-06-01",
+    "valid_until": "2027-06-06",
     "events": [
       {
-        "name": "Devon Horse Show 2026",
-        "date_start": "2026-05-21",
-        "date_end": "2026-06-01",
+        "name": "Devon Horse Show 2027",
+        "date_start": "2027-05-26",
+        "date_end": "2027-06-06",
         "venue_name": "Devon Horse Show Grounds",
         "venue_postcode": null,
         "latitude": 40.0474,
@@ -397,12 +452,12 @@
     ]
   },
   "dutch_masters": {
-    "valid_until": "2026-03-15",
+    "valid_until": "2027-03-14",
     "events": [
       {
-        "name": "The Dutch Masters 2026",
-        "date_start": "2026-03-12",
-        "date_end": "2026-03-15",
+        "name": "The Dutch Masters 2027",
+        "date_start": "2027-03-11",
+        "date_end": "2027-03-14",
         "venue_name": "Brabanthallen, Den Bosch",
         "venue_postcode": null,
         "latitude": 51.6978,
@@ -445,28 +500,28 @@
     ]
   },
   "fei_world_cup_finals": {
-    "valid_until": "2026-04-12",
+    "valid_until": "2027-03-28",
     "events": [
       {
-        "name": "FEI World Cup Finals 2026",
-        "date_start": "2026-04-08",
-        "date_end": "2026-04-12",
-        "venue_name": "Dickies Arena, Fort Worth",
+        "name": "Gothenburg Horse Show 2027 — FEI World Cup Finals",
+        "date_start": "2027-03-24",
+        "date_end": "2027-03-28",
+        "venue_name": "Scandinavium, Gothenburg",
         "venue_postcode": null,
-        "latitude": 32.7409,
-        "longitude": -97.3689,
+        "latitude": null,
+        "longitude": null,
         "discipline": null,
         "event_type": "show"
       }
     ]
   },
   "fontainebleau": {
-    "valid_until": "2026-04-26",
+    "valid_until": "2027-04-25",
     "events": [
       {
-        "name": "Grand Parquet Fontainebleau 2026",
-        "date_start": "2026-04-16",
-        "date_end": "2026-04-26",
+        "name": "Grand Parquet Fontainebleau 2027",
+        "date_start": "2027-04-15",
+        "date_end": "2027-04-25",
         "venue_name": "Grand Parquet, Fontainebleau",
         "venue_postcode": null,
         "latitude": 48.4167,
@@ -477,127 +532,94 @@
     ]
   },
   "global_dressage_festival": {
-    "valid_until": "2026-03-22",
+    "valid_until": "2027-03-14",
     "events": [
       {
-        "name": "GDF Week 1 — CDI3*/National",
-        "date_start": "2026-01-07",
-        "date_end": "2026-01-11",
-        "venue_name": "Equestrian Village, Wellington",
+        "name": "GDF Week 1 — CDI-W/National",
+        "date_start": "2027-01-13",
+        "date_end": "2027-01-17",
+        "venue_name": "Wellington International",
         "venue_postcode": null,
-        "latitude": 26.653,
-        "longitude": -80.2525,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
         "discipline": "Dressage",
         "event_type": "show"
       },
       {
-        "name": "GDF Week 2 — CDI3*",
-        "date_start": "2026-01-14",
-        "date_end": "2026-01-18",
-        "venue_name": "Equestrian Village, Wellington",
+        "name": "GDF Week 3 — CDI5*/CPEDI3*",
+        "date_start": "2027-01-27",
+        "date_end": "2027-01-31",
+        "venue_name": "Wellington International",
         "venue_postcode": null,
-        "latitude": 26.653,
-        "longitude": -80.2525,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
         "discipline": "Dressage",
         "event_type": "show"
       },
       {
-        "name": "GDF Week 3 — CDI-W World Cup Qualifier",
-        "date_start": "2026-01-21",
-        "date_end": "2026-01-25",
-        "venue_name": "Equestrian Village, Wellington",
+        "name": "GDF Week 5 — CDI-W",
+        "date_start": "2027-02-10",
+        "date_end": "2027-02-14",
+        "venue_name": "Wellington International",
         "venue_postcode": null,
-        "latitude": 26.653,
-        "longitude": -80.2525,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
         "discipline": "Dressage",
         "event_type": "show"
       },
       {
-        "name": "GDF Week 4 — CDI3*/CDI4*",
-        "date_start": "2026-01-28",
-        "date_end": "2026-02-01",
-        "venue_name": "Equestrian Village, Wellington",
+        "name": "GDF Week 6 — National",
+        "date_start": "2027-02-19",
+        "date_end": "2027-02-21",
+        "venue_name": "Wellington International",
         "venue_postcode": null,
-        "latitude": 26.653,
-        "longitude": -80.2525,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
         "discipline": "Dressage",
         "event_type": "show"
       },
       {
-        "name": "GDF Week 5 — CDI3*/CDI4*",
-        "date_start": "2026-02-04",
-        "date_end": "2026-02-08",
-        "venue_name": "Equestrian Village, Wellington",
+        "name": "GDF Week 7 — CDI-W",
+        "date_start": "2027-02-24",
+        "date_end": "2027-02-28",
+        "venue_name": "Wellington International",
         "venue_postcode": null,
-        "latitude": 26.653,
-        "longitude": -80.2525,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
         "discipline": "Dressage",
         "event_type": "show"
       },
       {
-        "name": "GDF Week 6 — CDI4*/CDI-W",
-        "date_start": "2026-02-11",
-        "date_end": "2026-02-15",
-        "venue_name": "Equestrian Village, Wellington",
+        "name": "GDF Week 8 — CDIO3* Palm Beach Derby",
+        "date_start": "2027-03-03",
+        "date_end": "2027-03-07",
+        "venue_name": "Wellington International",
         "venue_postcode": null,
-        "latitude": 26.653,
-        "longitude": -80.2525,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
         "discipline": "Dressage",
         "event_type": "show"
       },
       {
-        "name": "GDF Week 7 — CDI4*",
-        "date_start": "2026-02-18",
-        "date_end": "2026-02-22",
-        "venue_name": "Equestrian Village, Wellington",
+        "name": "GDF Week 9 — CPEDI3*",
+        "date_start": "2027-03-11",
+        "date_end": "2027-03-14",
+        "venue_name": "Wellington International",
         "venue_postcode": null,
-        "latitude": 26.653,
-        "longitude": -80.2525,
-        "discipline": "Dressage",
-        "event_type": "show"
-      },
-      {
-        "name": "GDF Week 8 — CDI5* Palm Beach Derby",
-        "date_start": "2026-02-25",
-        "date_end": "2026-03-01",
-        "venue_name": "Equestrian Village, Wellington",
-        "venue_postcode": null,
-        "latitude": 26.653,
-        "longitude": -80.2525,
-        "discipline": "Dressage",
-        "event_type": "show"
-      },
-      {
-        "name": "GDF Week 9 — CDI3*",
-        "date_start": "2026-03-04",
-        "date_end": "2026-03-08",
-        "venue_name": "Equestrian Village, Wellington",
-        "venue_postcode": null,
-        "latitude": 26.653,
-        "longitude": -80.2525,
-        "discipline": "Dressage",
-        "event_type": "show"
-      },
-      {
-        "name": "GDF Week 10 — CDI4*/CDI-W Finale",
-        "date_start": "2026-03-18",
-        "date_end": "2026-03-22",
-        "venue_name": "Equestrian Village, Wellington",
-        "venue_postcode": null,
-        "latitude": 26.653,
-        "longitude": -80.2525,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
         "discipline": "Dressage",
         "event_type": "show"
       }
     ]
   },
   "gothenburg": {
-    "valid_until": "2026-02-22",
+    "valid_until": "2027-03-28",
     "events": [
       {
-        "name": "Gothenburg Horse Show 2026",
-        "date_start": "2026-02-18",
-        "date_end": "2026-02-22",
+        "name": "Gothenburg Horse Show 2027 — FEI World Cup Finals",
+        "date_start": "2027-03-24",
+        "date_end": "2027-03-28",
         "venue_name": "Scandinavium, Gothenburg",
         "venue_postcode": null,
         "latitude": 57.6928,
@@ -672,12 +694,12 @@
     ]
   },
   "hof_kasselmann": {
-    "valid_until": "2026-07-05",
+    "valid_until": "2027-07-04",
     "events": [
       {
-        "name": "Horses & Dreams 2026",
-        "date_start": "2026-04-22",
-        "date_end": "2026-04-26",
+        "name": "Horses & Dreams 2027",
+        "date_start": "2027-04-21",
+        "date_end": "2027-04-25",
         "venue_name": "Hof Kasselmann",
         "venue_postcode": null,
         "latitude": 52.1972,
@@ -686,9 +708,9 @@
         "event_type": "show"
       },
       {
-        "name": "Nations Cup Hagen 2026",
-        "date_start": "2026-07-01",
-        "date_end": "2026-07-05",
+        "name": "Nations Cup Hagen 2027",
+        "date_start": "2027-06-30",
+        "date_end": "2027-07-04",
         "venue_name": "Hof Kasselmann",
         "venue_postcode": null,
         "latitude": 52.1972,
@@ -731,12 +753,12 @@
     ]
   },
   "jumping_amsterdam": {
-    "valid_until": "2026-01-25",
+    "valid_until": "2027-01-31",
     "events": [
       {
-        "name": "Jumping Amsterdam 2026",
-        "date_start": "2026-01-22",
-        "date_end": "2026-01-25",
+        "name": "Jumping Amsterdam 2027",
+        "date_start": "2027-01-28",
+        "date_end": "2027-01-31",
         "venue_name": "RAI Amsterdam",
         "venue_postcode": null,
         "latitude": 52.3414,
@@ -779,12 +801,12 @@
     ]
   },
   "kentucky_three_day": {
-    "valid_until": "2026-04-26",
+    "valid_until": "2027-04-25",
     "events": [
       {
-        "name": "Kentucky Three-Day Event CCI5*-L 2026",
-        "date_start": "2026-04-23",
-        "date_end": "2026-04-26",
+        "name": "Kentucky Three-Day Event CCI5*-L 2027",
+        "date_start": "2027-04-22",
+        "date_end": "2027-04-25",
         "venue_name": "Kentucky Horse Park, Lexington",
         "venue_postcode": null,
         "latitude": 38.15,
@@ -811,12 +833,12 @@
     ]
   },
   "la_baule": {
-    "valid_until": "2026-06-14",
+    "valid_until": "2027-06-13",
     "events": [
       {
-        "name": "Jumping La Baule CSIO5* 2026",
-        "date_start": "2026-06-11",
-        "date_end": "2026-06-14",
+        "name": "Jumping La Baule CSIO5* 2027",
+        "date_start": "2027-06-10",
+        "date_end": "2027-06-13",
         "venue_name": "Stade Francois Andre, La Baule",
         "venue_postcode": null,
         "latitude": 47.2806,
@@ -827,12 +849,12 @@
     ]
   },
   "lake_placid": {
-    "valid_until": "2026-07-05",
+    "valid_until": "2027-07-11",
     "events": [
       {
-        "name": "Lake Placid Horse Show CSI3* 2026",
-        "date_start": "2026-06-23",
-        "date_end": "2026-06-28",
+        "name": "Lake Placid Horse Show CSI3* 2027",
+        "date_start": "2027-06-29",
+        "date_end": "2027-07-04",
         "venue_name": "Lake Placid Horse Show Grounds",
         "venue_postcode": null,
         "latitude": 44.2779,
@@ -841,9 +863,9 @@
         "event_type": "show"
       },
       {
-        "name": "I Love New York Horse Show CSI3* 2026",
-        "date_start": "2026-06-30",
-        "date_end": "2026-07-05",
+        "name": "I Love New York Horse Show CSI3* 2027",
+        "date_start": "2027-07-06",
+        "date_end": "2027-07-11",
         "venue_name": "Lake Placid Horse Show Grounds",
         "venue_postcode": null,
         "latitude": 44.2779,
@@ -854,12 +876,12 @@
     ]
   },
   "live_oak": {
-    "valid_until": "2026-03-15",
+    "valid_until": "2027-03-14",
     "events": [
       {
-        "name": "Live Oak International 2026",
-        "date_start": "2026-03-12",
-        "date_end": "2026-03-15",
+        "name": "Live Oak International 2027",
+        "date_start": "2027-03-11",
+        "date_end": "2027-03-14",
         "venue_name": "Live Oak Stud, Ocala",
         "venue_postcode": null,
         "latitude": 29.2017,
@@ -886,12 +908,12 @@
     ]
   },
   "luhmuhlen": {
-    "valid_until": "2026-06-21",
+    "valid_until": "2027-06-20",
     "events": [
       {
-        "name": "Luhmuhlen Horse Trials 2026",
-        "date_start": "2026-06-18",
-        "date_end": "2026-06-21",
+        "name": "Luhmuhlen Horse Trials 2027",
+        "date_start": "2027-06-17",
+        "date_end": "2027-06-20",
         "venue_name": "Luhmuhlen",
         "venue_postcode": null,
         "latitude": 53.2567,
@@ -950,12 +972,12 @@
     ]
   },
   "munich_riem": {
-    "valid_until": "2026-05-17",
+    "valid_until": "2027-05-09",
     "events": [
       {
-        "name": "Pferd International München 2026",
-        "date_start": "2026-05-14",
-        "date_end": "2026-05-17",
+        "name": "Pferd International München 2027",
+        "date_start": "2027-05-06",
+        "date_end": "2027-05-09",
         "venue_name": "Olympia-Reitanlage München-Riem",
         "venue_postcode": null,
         "latitude": 48.1431,
@@ -966,12 +988,12 @@
     ]
   },
   "national_equine_show": {
-    "valid_until": "2026-03-01",
+    "valid_until": "2027-02-28",
     "events": [
       {
-        "name": "National Equine Show 2026",
-        "date_start": "2026-02-28",
-        "date_end": "2026-03-01",
+        "name": "National Equine Show 2027",
+        "date_start": "2027-02-27",
+        "date_end": "2027-02-28",
         "venue_name": "NEC Birmingham",
         "venue_postcode": "B40 1NT",
         "latitude": null,
@@ -998,12 +1020,12 @@
     ]
   },
   "ocala": {
-    "valid_until": "2026-03-22",
+    "valid_until": "2027-03-28",
     "events": [
       {
-        "name": "Ocala Winter Spectacular 2026",
-        "date_start": "2025-12-31",
-        "date_end": "2026-03-22",
+        "name": "Ocala Winter Spectacular 2027",
+        "date_start": "2027-01-05",
+        "date_end": "2027-03-28",
         "venue_name": "World Equestrian Center, Ocala",
         "venue_postcode": null,
         "latitude": 29.1872,
@@ -1127,12 +1149,12 @@
     ]
   },
   "royal_cornwall": {
-    "valid_until": "2026-06-06",
+    "valid_until": "2027-06-12",
     "events": [
       {
-        "name": "Royal Cornwall Show 2026",
-        "date_start": "2026-06-04",
-        "date_end": "2026-06-06",
+        "name": "Royal Cornwall Show 2027",
+        "date_start": "2027-06-10",
+        "date_end": "2027-06-12",
         "venue_name": "Royal Cornwall Showground",
         "venue_postcode": "PL27 7JE",
         "latitude": null,
@@ -1143,12 +1165,12 @@
     ]
   },
   "royal_highland": {
-    "valid_until": "2026-06-21",
+    "valid_until": "2027-06-20",
     "events": [
       {
-        "name": "Royal Highland Show 2026",
-        "date_start": "2026-06-18",
-        "date_end": "2026-06-21",
+        "name": "Royal Highland Show 2027",
+        "date_start": "2027-06-17",
+        "date_end": "2027-06-20",
         "venue_name": "Royal Highland Showground",
         "venue_postcode": "EH28 8NB",
         "latitude": null,
@@ -1175,12 +1197,12 @@
     ]
   },
   "royal_windsor": {
-    "valid_until": "2026-05-17",
+    "valid_until": "2027-05-16",
     "events": [
       {
-        "name": "Royal Windsor Horse Show 2026",
-        "date_start": "2026-05-14",
-        "date_end": "2026-05-17",
+        "name": "Royal Windsor Horse Show 2027",
+        "date_start": "2027-05-13",
+        "date_end": "2027-05-16",
         "venue_name": "Royal Windsor Horse Show",
         "venue_postcode": "SL4 1NG",
         "latitude": null,
@@ -1229,12 +1251,12 @@
     ]
   },
   "saut_hermes": {
-    "valid_until": "2026-03-22",
+    "valid_until": "2027-03-21",
     "events": [
       {
-        "name": "Saut Hermès 2026",
-        "date_start": "2026-03-20",
-        "date_end": "2026-03-22",
+        "name": "Saut Hermès 2027",
+        "date_start": "2027-03-19",
+        "date_end": "2027-03-21",
         "venue_name": "Grand Palais, Paris",
         "venue_postcode": null,
         "latitude": 48.8661,
@@ -1245,12 +1267,12 @@
     ]
   },
   "scandinavia_jumping": {
-    "valid_until": "2026-02-14",
+    "valid_until": "2027-02-13",
     "events": [
       {
-        "name": "Scandinavia Jumping Tour 2026",
-        "date_start": "2026-02-06",
-        "date_end": "2026-02-14",
+        "name": "Scandinavia Jumping Tour 2027",
+        "date_start": "2027-02-05",
+        "date_end": "2027-02-13",
         "venue_name": "Odense Congress Center",
         "venue_postcode": null,
         "latitude": 55.396,
@@ -1293,45 +1315,12 @@
     ]
   },
   "toscana_tour": {
-    "valid_until": "2026-04-12",
+    "valid_until": "2027-04-11",
     "events": [
       {
-        "name": "Toscana Tour Week 1 — CSI2*/CSI3*",
-        "date_start": "2026-03-17",
-        "date_end": "2026-03-22",
-        "venue_name": "Arezzo Equestrian Centre",
-        "venue_postcode": null,
-        "latitude": 43.4617,
-        "longitude": 11.8819,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      },
-      {
-        "name": "Toscana Tour Week 2 — CSI2*/CSI3*",
-        "date_start": "2026-03-24",
-        "date_end": "2026-03-29",
-        "venue_name": "Arezzo Equestrian Centre",
-        "venue_postcode": null,
-        "latitude": 43.4617,
-        "longitude": 11.8819,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      },
-      {
-        "name": "Toscana Tour Week 3 — CSI3*/CSI4*",
-        "date_start": "2026-03-31",
-        "date_end": "2026-04-05",
-        "venue_name": "Arezzo Equestrian Centre",
-        "venue_postcode": null,
-        "latitude": 43.4617,
-        "longitude": 11.8819,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      },
-      {
-        "name": "Toscana Tour Week 4 — CSI3*/CSI4*",
-        "date_start": "2026-04-07",
-        "date_end": "2026-04-12",
+        "name": "Toscana Tour 2027 — CSI2*/CSI3*/CSI4*",
+        "date_start": "2027-03-16",
+        "date_end": "2027-04-11",
         "venue_name": "Arezzo Equestrian Centre",
         "venue_postcode": null,
         "latitude": 43.4617,
@@ -1451,12 +1440,12 @@
     ]
   },
   "uae_presidents_cup": {
-    "valid_until": "2026-01-11",
+    "valid_until": "2027-01-10",
     "events": [
       {
-        "name": "CSI5* UAE President's Cup 2026",
-        "date_start": "2026-01-07",
-        "date_end": "2026-01-11",
+        "name": "CSI5* UAE President's Cup 2027",
+        "date_start": "2027-01-06",
+        "date_end": "2027-01-10",
         "venue_name": "Abu Dhabi Equestrian Club",
         "venue_postcode": null,
         "latitude": 24.455,
@@ -1467,12 +1456,12 @@
     ]
   },
   "upperville": {
-    "valid_until": "2026-06-07",
+    "valid_until": "2027-06-13",
     "events": [
       {
-        "name": "Upperville Colt & Horse Show 2026",
-        "date_start": "2026-06-01",
-        "date_end": "2026-06-07",
+        "name": "Upperville Colt & Horse Show 2027",
+        "date_start": "2027-06-07",
+        "date_end": "2027-06-13",
         "venue_name": "Grafton & Salem Showgrounds, Upperville",
         "venue_postcode": null,
         "latitude": 38.9693,
@@ -1570,12 +1559,12 @@
     ]
   },
   "wef": {
-    "valid_until": "2026-03-29",
+    "valid_until": "2027-04-04",
     "events": [
       {
-        "name": "WEF Week 1 — CSI2*/CSI3*",
-        "date_start": "2025-12-31",
-        "date_end": "2026-01-04",
+        "name": "WEF Premiere Week — USEF Premier AA",
+        "date_start": "2027-01-06",
+        "date_end": "2027-01-10",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1584,9 +1573,9 @@
         "event_type": "show"
       },
       {
-        "name": "WEF Week 2 — CSI2*/CSI3*",
-        "date_start": "2026-01-07",
-        "date_end": "2026-01-11",
+        "name": "WEF Week 1 — CSI3*",
+        "date_start": "2027-01-13",
+        "date_end": "2027-01-17",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1595,9 +1584,9 @@
         "event_type": "show"
       },
       {
-        "name": "WEF Week 3 — CSI3*/CSI4*",
-        "date_start": "2026-01-14",
-        "date_end": "2026-01-18",
+        "name": "WEF Week 2 — CSI3*",
+        "date_start": "2027-01-20",
+        "date_end": "2027-01-24",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1606,9 +1595,9 @@
         "event_type": "show"
       },
       {
-        "name": "WEF Week 4 — CSI3*/CSI4*",
-        "date_start": "2026-01-21",
-        "date_end": "2026-01-25",
+        "name": "WEF Week 3 — CSI4*/CSI2*",
+        "date_start": "2027-01-27",
+        "date_end": "2027-01-31",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1617,9 +1606,9 @@
         "event_type": "show"
       },
       {
-        "name": "WEF Week 5 — CSI4*",
-        "date_start": "2026-01-28",
-        "date_end": "2026-02-01",
+        "name": "WEF Week 4 — CSI4*/CSI2*",
+        "date_start": "2027-02-03",
+        "date_end": "2027-02-07",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1628,9 +1617,9 @@
         "event_type": "show"
       },
       {
-        "name": "WEF Week 6 — CSI3*/CSI4*",
-        "date_start": "2026-02-04",
-        "date_end": "2026-02-08",
+        "name": "WEF Week 5 — CSI5*/CSI2*",
+        "date_start": "2027-02-10",
+        "date_end": "2027-02-14",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1639,9 +1628,9 @@
         "event_type": "show"
       },
       {
-        "name": "WEF Week 7 — CSI4*/CSI5*",
-        "date_start": "2026-02-11",
-        "date_end": "2026-02-15",
+        "name": "WEF Week 6 — CSI3*",
+        "date_start": "2027-02-17",
+        "date_end": "2027-02-21",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1650,9 +1639,9 @@
         "event_type": "show"
       },
       {
-        "name": "WEF Week 8 — CSI5*",
-        "date_start": "2026-02-18",
-        "date_end": "2026-02-22",
+        "name": "WEF Week 7 — CSI5*/CSI2*",
+        "date_start": "2027-02-24",
+        "date_end": "2027-02-28",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1661,9 +1650,20 @@
         "event_type": "show"
       },
       {
-        "name": "WEF Week 9 — CSI4*/CSI5*",
-        "date_start": "2026-02-25",
-        "date_end": "2026-03-01",
+        "name": "WEF Week 8 — CSIO4*",
+        "date_start": "2027-03-03",
+        "date_end": "2027-03-07",
+        "venue_name": "Wellington International",
+        "venue_postcode": null,
+        "latitude": 26.6588,
+        "longitude": -80.2414,
+        "discipline": "Show Jumping",
+        "event_type": "show"
+      },
+      {
+        "name": "WEF Week 9 — CSI5*",
+        "date_start": "2027-03-10",
+        "date_end": "2027-03-14",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1673,8 +1673,8 @@
       },
       {
         "name": "WEF Week 10 — CSI4*",
-        "date_start": "2026-03-04",
-        "date_end": "2026-03-08",
+        "date_start": "2027-03-17",
+        "date_end": "2027-03-21",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1683,9 +1683,9 @@
         "event_type": "show"
       },
       {
-        "name": "WEF Week 11 — CSI3*/CSI5*",
-        "date_start": "2026-03-11",
-        "date_end": "2026-03-15",
+        "name": "WEF Week 11 — CSI4*/CSI2*",
+        "date_start": "2027-03-24",
+        "date_end": "2027-03-28",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1694,20 +1694,9 @@
         "event_type": "show"
       },
       {
-        "name": "WEF Week 12 — CSI5*",
-        "date_start": "2026-03-18",
-        "date_end": "2026-03-22",
-        "venue_name": "Wellington International",
-        "venue_postcode": null,
-        "latitude": 26.6588,
-        "longitude": -80.2414,
-        "discipline": "Show Jumping",
-        "event_type": "show"
-      },
-      {
-        "name": "WEF Week 13 — CSI5* Grand Finale",
-        "date_start": "2026-03-25",
-        "date_end": "2026-03-29",
+        "name": "WEF Week 12 — CSI5* Rolex Finale",
+        "date_start": "2027-03-31",
+        "date_end": "2027-04-04",
         "venue_name": "Wellington International",
         "venue_postcode": null,
         "latitude": 26.6588,
@@ -1806,6 +1795,358 @@
         "date_end": null,
         "venue_name": "Chipping Norton",
         "venue_postcode": "OX7 5XH",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "burghley_horse_trials": {
+    "valid_until": "2026-09-06",
+    "events": [
+      {
+        "name": "Defender Burghley Horse Trials 2026",
+        "date_start": "2026-09-03",
+        "date_end": "2026-09-06",
+        "venue_name": "Burghley House",
+        "venue_postcode": "PE9 3JY",
+        "latitude": null,
+        "longitude": null,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "blenheim_palace_horse_trials": {
+    "valid_until": "2026-09-20",
+    "events": [
+      {
+        "name": "Blenheim Palace International Horse Trials 2026",
+        "date_start": "2026-09-17",
+        "date_end": "2026-09-20",
+        "venue_name": "Blenheim Palace",
+        "venue_postcode": "OX20 1UL",
+        "latitude": null,
+        "longitude": null,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "badminton_horse_trials": {
+    "valid_until": "2027-05-09",
+    "events": [
+      {
+        "name": "Badminton Horse Trials 2027",
+        "date_start": "2027-05-05",
+        "date_end": "2027-05-09",
+        "venue_name": "Badminton Estate",
+        "venue_postcode": "GL9 1DF",
+        "latitude": null,
+        "longitude": null,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "bramham_horse_trials": {
+    "valid_until": "2027-06-13",
+    "events": [
+      {
+        "name": "Defender Bramham Horse Trials 2027",
+        "date_start": "2027-06-10",
+        "date_end": "2027-06-13",
+        "venue_name": "Bramham Park",
+        "venue_postcode": "LS23 6ND",
+        "latitude": null,
+        "longitude": null,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "thoresby_park_international": {
+    "valid_until": "2027-04-04",
+    "events": [
+      {
+        "name": "Eventing Spring Carnival at Thoresby Park 2027",
+        "date_start": "2027-04-02",
+        "date_end": "2027-04-04",
+        "venue_name": "Thoresby Park",
+        "venue_postcode": "NG22 9EP",
+        "latitude": null,
+        "longitude": null,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "scone_palace_international": {
+    "valid_until": "2026-08-30",
+    "events": [
+      {
+        "name": "Scone Palace International Horse Trials 2026",
+        "date_start": "2026-08-27",
+        "date_end": "2026-08-30",
+        "venue_name": "Scone Palace",
+        "venue_postcode": "PH2 6BB",
+        "latitude": null,
+        "longitude": null,
+        "discipline": "Eventing",
+        "event_type": "show"
+      }
+    ]
+  },
+  "ashover_show": {
+    "valid_until": "2026-08-12",
+    "events": [
+      {
+        "name": "Ashover Show 2026",
+        "date_start": "2026-08-12",
+        "date_end": null,
+        "venue_name": "Rectory Fields, Ashover",
+        "venue_postcode": "S45 0BA",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "manifold_valley_show": {
+    "valid_until": "2026-08-08",
+    "events": [
+      {
+        "name": "Manifold Valley Agricultural Show 2026",
+        "date_start": "2026-08-08",
+        "date_end": null,
+        "venue_name": "The Arbour, Ilam",
+        "venue_postcode": "DE6 2BA",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "poynton_show": {
+    "valid_until": "2026-08-29",
+    "events": [
+      {
+        "name": "Poynton Show 2026",
+        "date_start": "2026-08-29",
+        "date_end": null,
+        "venue_name": "Poynton Park",
+        "venue_postcode": "SK12 1JY",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "leek_district_show": {
+    "valid_until": "2026-07-25",
+    "events": [
+      {
+        "name": "Leek & District Show 2026",
+        "date_start": "2026-07-25",
+        "date_end": null,
+        "venue_name": "Dunwood Fields Showground, Longsdon",
+        "venue_postcode": "ST9 9AR",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "penistone_show": {
+    "valid_until": "2026-09-12",
+    "events": [
+      {
+        "name": "Penistone Agricultural Show 2026",
+        "date_start": "2026-09-12",
+        "date_end": null,
+        "venue_name": "Penistone Showground",
+        "venue_postcode": "S36 6DW",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "derbyshire_county_show": {
+    "valid_until": "2027-06-27",
+    "events": [
+      {
+        "name": "Derbyshire County Show 2027",
+        "date_start": "2027-06-27",
+        "date_end": null,
+        "venue_name": "Derbyshire Showground, Elvaston",
+        "venue_postcode": "DE72 3EN",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "royal_cheshire_show": {
+    "valid_until": "2027-06-16",
+    "events": [
+      {
+        "name": "Royal Cheshire County Show 2027",
+        "date_start": "2027-06-15",
+        "date_end": "2027-06-16",
+        "venue_name": "Tabley Showground, Knutsford",
+        "venue_postcode": "WA16 0HJ",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "ashby_show": {
+    "valid_until": "2026-07-12",
+    "events": [
+      {
+        "name": "Ashby Show 2026",
+        "date_start": "2026-07-12",
+        "date_end": null,
+        "venue_name": "Cattows Farm, Heather",
+        "venue_postcode": "LE67 2TD",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "staffordshire_county_show": {
+    "valid_until": "2027-05-27",
+    "events": [
+      {
+        "name": "Staffordshire County Show 2027",
+        "date_start": "2027-05-26",
+        "date_end": "2027-05-27",
+        "venue_name": "Staffordshire County Showground",
+        "venue_postcode": "ST18 0BD",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "notts_county_show": {
+    "valid_until": "2027-05-08",
+    "events": [
+      {
+        "name": "Nottinghamshire County Show 2027",
+        "date_start": "2027-05-08",
+        "date_end": null,
+        "venue_name": "Newark Showground, Winthorpe",
+        "venue_postcode": "NG24 2NY",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "longnor_races": {
+    "valid_until": "2026-09-10",
+    "events": [
+      {
+        "name": "Longnor Races 2026",
+        "date_start": "2026-09-10",
+        "date_end": null,
+        "venue_name": "Longnor",
+        "venue_postcode": null,
+        "latitude": 53.183,
+        "longitude": -1.885,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "brailsford_ploughing_match": {
+    "valid_until": "2026-10-07",
+    "events": [
+      {
+        "name": "Brailsford Ploughing Match 2026",
+        "date_start": "2026-10-07",
+        "date_end": null,
+        "venue_name": "Sapperton Manor, Church Broughton",
+        "venue_postcode": null,
+        "latitude": 52.902,
+        "longitude": -1.712,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "lincolnshire_show": {
+    "valid_until": "2027-06-24",
+    "events": [
+      {
+        "name": "Lincolnshire Show 2027",
+        "date_start": "2027-06-23",
+        "date_end": "2027-06-24",
+        "venue_name": "Lincolnshire Showground",
+        "venue_postcode": "LN2 2NA",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "heckington_show": {
+    "valid_until": "2026-07-26",
+    "events": [
+      {
+        "name": "Heckington Show 2026",
+        "date_start": "2026-07-25",
+        "date_end": "2026-07-26",
+        "venue_name": "Heckington Showground",
+        "venue_postcode": "NG34 9RA",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "national_shire_horse_show_summer": {
+    "valid_until": "2026-08-27",
+    "events": [
+      {
+        "name": "National Shire Horse Summer Show 2026",
+        "date_start": "2026-08-27",
+        "date_end": null,
+        "venue_name": "Rockingham Castle",
+        "venue_postcode": "LE16 8TH",
+        "latitude": null,
+        "longitude": null,
+        "discipline": null,
+        "event_type": "show"
+      }
+    ]
+  },
+  "royal_three_counties_show": {
+    "valid_until": "2027-06-20",
+    "events": [
+      {
+        "name": "Royal Three Counties Show 2027",
+        "date_start": "2027-06-18",
+        "date_end": "2027-06-20",
+        "venue_name": "Three Counties Showground, Malvern",
+        "venue_postcode": "WR13 6NW",
         "latitude": null,
         "longitude": null,
         "discipline": null,
