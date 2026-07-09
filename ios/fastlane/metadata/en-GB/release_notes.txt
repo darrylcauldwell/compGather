@@ -1,4 +1,4 @@
-New in 1.1:
-• Find a venue — search any venue by name or postcode from the filter bar and jump straight to its upcoming events.
-• See your Plan in Apple Calendar — an optional "EquiCalendar Plan" calendar mirrors your Plan, stays in sync as it changes, and follows you across your devices.
-• Faster, more reliable location — distance sorting now answers instantly from a recent fix and copes better with patchy rural signal.
+New in 1.2:
+• Filter by a date range — pick From and To dates to see everything across a show weekend or holiday week, not just a single day.
+• Filters reordered to match how you search: distance, then discipline, then date.
+• Distance filtering now works reliably in rural areas — events show their distance and the radius filter applies even when you're far from the nearest postcode.
