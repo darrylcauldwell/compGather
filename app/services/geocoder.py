@@ -111,18 +111,24 @@ async def _nominatim_postcode(
 
 
 async def reverse_geocode(lat: float, lng: float) -> str | None:
-    """Look up the nearest UK postcode for given coordinates, or None."""
+    """Look up the nearest UK postcode for given coordinates, or None.
+
+    postcodes.io's default reverse-lookup radius is only 100m, which returns
+    no result for anyone more than a field away from a postcode centroid —
+    i.e. much of this app's rural audience. Search at the 2km maximum first,
+    then fall back to wideSearch (up to 20km) for remote spots.
+    """
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(
-                POSTCODES_IO_URL,
-                params={"lat": lat, "lon": lng, "limit": 1},
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                result = data.get("result")
-                if result and len(result) > 0:
-                    return result[0]["postcode"]
+            for extra in ({"radius": 2000}, {"wideSearch": "true"}):
+                resp = await client.get(
+                    POSTCODES_IO_URL,
+                    params={"lat": lat, "lon": lng, "limit": 1, **extra},
+                )
+                if resp.status_code == 200:
+                    result = resp.json().get("result")
+                    if result:
+                        return result[0]["postcode"]
     except httpx.HTTPError as e:
         logger.warning("Reverse geocode error for (%.4f, %.4f): %s", lat, lng, e)
     return None
